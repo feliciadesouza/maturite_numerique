@@ -1,0 +1,143 @@
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+from core.models import Dimension, TypeChamp, Formulaire, VersionFormulaire, Question, OptionReponse
+
+
+DIMENSIONS = [
+    ("Infrastructure TIC", "Équipements, réseaux, serveurs et connectivité disponibles", 0.20, 1),
+    ("Services en ligne", "Disponibilité et accessibilité des services publics numériques", 0.20, 2),
+    ("Compétences numériques", "Niveau de formation et d'aptitudes numériques des agents", 0.20, 3),
+    ("Cadre juridique", "Lois sur la protection des données, cybersécurité, signature électronique", 0.20, 4),
+    ("Engagement institutionnel", "Implication de la direction, stratégie numérique, ressources", 0.20, 5),
+]
+
+TYPES_CHAMP = [
+    ("Choix unique (Oui/Non)", "oui_non"),
+    ("Choix unique (Oui/Non/Partiel)", "oui_non_partiel"),
+    ("Choix unique (tranches %)", "tranches"),
+    ("Échelle 1-5", "echelle_1_5"),
+    ("Texte libre", "texte_libre"),
+    ("Liste déroulante", "liste"),
+]
+
+# Formulaire A - questions par dimension (code, texte, type_champ_code)
+FORMULAIRE_A = {
+    "Infrastructure TIC": [
+        ("1.1", "L'administration dispose-t-elle d'une connexion internet stable ?", "echelle_1_5"),
+        ("1.2", "Quel est le taux d'équipement en ordinateurs par agent ?", "tranches"),
+        ("1.3", "L'administration dispose-t-elle de serveurs propres ou d'un accès à un cloud gouvernemental ?", "oui_non_partiel"),
+        ("1.4", "Existe-t-il un réseau local interconnectant les services ?", "oui_non_partiel"),
+        ("1.5", "Un dispositif de sauvegarde des données est-il en place ?", "oui_non_partiel"),
+        ("1.6", "Un service de maintenance informatique est-il disponible (interne ou externalisé) ?", "oui_non"),
+    ],
+    "Services en ligne": [
+        ("2.1", "Quel pourcentage des services de l'administration est disponible en ligne ?", "tranches"),
+        ("2.2", "Les usagers peuvent-ils soumettre une demande sans se déplacer physiquement ?", "oui_non_partiel"),
+        ("2.3", "Existe-t-il un site web ou portail officiel actif et à jour ?", "oui_non"),
+        ("2.4", "Un système de suivi de dossier en ligne est-il proposé ?", "oui_non"),
+        ("2.5", "Les paiements en ligne sont-ils possibles pour les services concernés ?", "oui_non"),
+        ("2.6", "Une plateforme de dépôt de réclamations en ligne existe-t-elle ?", "oui_non"),
+    ],
+    "Cadre juridique": [
+        ("4.1", "L'administration applique-t-elle une politique de protection des données personnelles ?", "oui_non_partiel"),
+        ("4.2", "Un texte encadrant la signature électronique existe-t-il dans vos procédures ?", "oui_non"),
+        ("4.3", "Une charte ou politique de cybersécurité est-elle formalisée ?", "oui_non"),
+        ("4.4", "L'administration est-elle en conformité avec la loi nationale sur les données personnelles ?", "oui_non"),
+        ("4.5", "Les agents sont-ils sensibilisés aux risques de cybersécurité ?", "oui_non_partiel"),
+    ],
+    "Engagement institutionnel": [
+        ("5.1", "Existe-t-il une stratégie numérique formalisée et validée par la direction ?", "oui_non_partiel"),
+        ("5.2", "Un budget dédié à la transformation numérique est-il alloué chaque année ?", "oui_non_partiel"),
+        ("5.3", "La direction communique-t-elle régulièrement sur les avancées numériques ?", "oui_non"),
+        ("5.4", "Un responsable ou comité de pilotage de la transformation numérique existe-t-il ?", "oui_non"),
+        ("5.5", "Le personnel est-il impliqué dans la définition des priorités numériques ?", "echelle_1_5"),
+    ],
+}
+
+# Formulaire B - questions (code, texte, type_champ_code) - toutes rattachées
+# à la dimension "Compétences numériques"
+FORMULAIRE_B = [
+    ("B1.1", "Poste occupé / fonction", "texte_libre"),
+    ("B1.2", "Service / direction", "liste"),
+    ("B1.3", "Tranche d'âge", "liste"),
+    ("B1.4", "Ancienneté dans l'administration", "liste"),
+    ("B1.5", "Niveau d'études", "liste"),
+    ("B1.6", "Formulaire rempli en mode :", "liste"),
+    ("B2.1", "Avez-vous déjà utilisé un ordinateur, ne serait-ce qu'une fois ?", "oui_non"),
+    ("B3.1", "Savez-vous allumer/éteindre un ordinateur seul ?", "oui_non"),
+    ("B3.2", "Savez-vous utiliser une souris et un clavier ?", "oui_non"),
+    ("B3.3", "Possédez-vous un téléphone portable ?", "liste"),
+    ("B3.4", "Si smartphone, utilisez-vous WhatsApp ou les réseaux sociaux ?", "oui_non"),
+    ("B3.5", "Avez-vous une adresse email personnelle ou professionnelle ?", "oui_non"),
+    ("B3.6", "Si oui, la consultez-vous au moins une fois par semaine ?", "oui_non"),
+    ("B4.1", "Utilisez-vous Word ou un traitement de texte dans votre travail ?", "liste"),
+    ("B4.2", "Utilisez-vous Excel ou un tableur dans votre travail ?", "liste"),
+    ("B4.3", "Avez-vous déjà rempli un formulaire administratif en ligne ?", "oui_non"),
+    ("B4.4", "Utilisez-vous un logiciel métier propre à l'administration ?", "oui_non"),
+    ("B4.5", "Vous sentez-vous capable d'apprendre seul(e) un nouvel outil numérique ?", "echelle_1_5"),
+    ("B4.6", "Seriez-vous capable d'aider un collègue sur un outil numérique ?", "oui_non"),
+    ("B5.1", "Avez-vous déjà suivi une formation en informatique ?", "oui_non"),
+    ("B5.2", "Quel est le principal frein à votre usage du numérique ?", "liste"),
+    ("B5.3", "Seriez-vous intéressé(e) par une formation aux outils numériques ?", "oui_non"),
+]
+
+
+class Command(BaseCommand):
+    help = "Charge les données initiales : dimensions, types de champ, formulaires A et B avec leurs questions."
+
+    @transaction.atomic
+    def handle(self, *args, **options):
+        dim_objs = {}
+        for nom, description, poids, ordre in DIMENSIONS:
+            dim, _ = Dimension.objects.update_or_create(
+                nom=nom, defaults={"description": description, "poids": poids, "ordre": ordre}
+            )
+            dim_objs[nom] = dim
+        self.stdout.write(self.style.SUCCESS(f"{len(dim_objs)} dimensions chargées."))
+
+        type_objs = {}
+        for libelle, code in TYPES_CHAMP:
+            t, _ = TypeChamp.objects.update_or_create(code=code, defaults={"libelle": libelle})
+            type_objs[code] = t
+        self.stdout.write(self.style.SUCCESS(f"{len(type_objs)} types de champ chargés."))
+
+        form_a, _ = Formulaire.objects.update_or_create(
+            code="A", defaults={"nom": "Formulaire A - Fiche Administration"}
+        )
+        form_b, _ = Formulaire.objects.update_or_create(
+            code="B", defaults={"nom": "Formulaire B - Enquête individuelle agent"}
+        )
+        version_a, _ = VersionFormulaire.objects.get_or_create(
+            formulaire=form_a, numero_version=1, defaults={"est_active": True}
+        )
+        version_b, _ = VersionFormulaire.objects.get_or_create(
+            formulaire=form_b, numero_version=1, defaults={"est_active": True}
+        )
+
+        count = 0
+        for dim_nom, questions in FORMULAIRE_A.items():
+            for i, (code, texte, type_code) in enumerate(questions):
+                Question.objects.update_or_create(
+                    code=code, version_formulaire=version_a,
+                    defaults={
+                        "dimension": dim_objs[dim_nom], "texte": texte,
+                        "type_champ": type_objs[type_code], "ordre": i,
+                    },
+                )
+                count += 1
+        self.stdout.write(self.style.SUCCESS(f"{count} questions du Formulaire A chargées."))
+
+        count_b = 0
+        for i, (code, texte, type_code) in enumerate(FORMULAIRE_B):
+            Question.objects.update_or_create(
+                code=code, version_formulaire=version_b,
+                defaults={
+                    "dimension": dim_objs["Compétences numériques"], "texte": texte,
+                    "type_champ": type_objs[type_code], "ordre": i,
+                },
+            )
+            count_b += 1
+        self.stdout.write(self.style.SUCCESS(f"{count_b} questions du Formulaire B chargées."))
+
+        self.stdout.write(self.style.SUCCESS("Chargement des données initiales terminé."))

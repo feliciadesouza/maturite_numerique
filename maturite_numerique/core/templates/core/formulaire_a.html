@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Formulaire A - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Formulaire A — Fiche Administration</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

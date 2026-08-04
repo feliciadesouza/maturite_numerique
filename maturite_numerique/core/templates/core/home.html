@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Accueil - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Outil de suivi de la maturité numérique</h1>
+    <p>Cette page d’accueil sert de base de travail avant la maquette finale.</p>
+    <div class="grid">
+        {% for administration in administrations %}
+            <div class="card">
+                <a href="{% url 'administration_detail' administration.id %}">{{ administration.nom }}</a>
+            </div>
+        {% endfor %}
+    </div>
+    <p><a class="btn" href="{% url 'dashboard' %}">Voir le tableau de bord</a></p>
+</div>
+{% endblock %}

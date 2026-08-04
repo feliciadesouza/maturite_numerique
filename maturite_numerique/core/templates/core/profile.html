@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Profil - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Profil utilisateur</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Enregistrer le profil</button>
+    </form>
+</div>
+{% endblock %}

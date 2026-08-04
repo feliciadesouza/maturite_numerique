@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Maturité numérique{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'core/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container nav-bar">
+            <div class="brand">Maturité numérique</div>
+            <nav>
+                <a href="{% url 'home' %}">Accueil</a>
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="{% url 'formulaire_a' %}">Formulaire A</a>
+                <a href="{% url 'formulaire_b' %}">Formulaire B</a>
+                <a href="{% url 'profile' %}">Profil</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}">Déconnexion</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Connexion</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page-content">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

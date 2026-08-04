@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ administration.nom }} - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ administration.nom }}</h1>
+    <p>Score global : {{ resultat.score_global }}</p>
+    <p>Dimension la plus faible : {{ resultat.dimension_la_plus_faible.nom|default:'Aucune' }}</p>
+
+    <h2>Détails par dimension</h2>
+    <ul>
+        {% for score in resultat.scores_par_dimension %}
+            <li>{{ score.dimension.nom }} — score brut : {{ score.score_brut }} — score pondéré : {{ score.score_pondere }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Distribution des niveaux d’agents</h2>
+    <ul>
+        {% for niveau, total in distribution.items %}
+            <li>Niveau {{ niveau }} : {{ total }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

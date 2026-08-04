@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Formulaire B - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Formulaire B — Enquête individuelle agent</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ agent_form.as_p }}
+        <hr>
+        {{ question_form.as_p }}
+        <button type="submit">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}
