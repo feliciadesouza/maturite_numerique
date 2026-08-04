@@ -42,12 +42,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r ../requirements-dev.txt
 
       - name: Django system check
         run: python manage.py check
 
+      - name: Lint Python sources
+        run: flake8 .
+
       - name: Run tests
         run: python manage.py test
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
 
       - name: Compile Python sources
         run: python -m compileall .
@@ -86,8 +93,6 @@ jobs:
     needs: build-image
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment:
-      name: staging
     steps:
       - name: Gate deployment with environment approval
         run: |
