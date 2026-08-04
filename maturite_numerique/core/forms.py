@@ -86,6 +86,6 @@ def build_question_form(form_code: str, data=None, files=None):
         else:
             field = forms.CharField(label=field_label, required=False, widget=forms.Textarea)
 
-        setattr(DynamicQuestionForm, field_name, field)
+        DynamicQuestionForm.base_fields[field_name] = field
 
     return DynamicQuestionForm(data=data, files=files)
