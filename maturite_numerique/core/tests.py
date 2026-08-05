@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 
 from core.models import (
@@ -6,6 +7,7 @@ from core.models import (
     Agent,
     Dimension,
     Formulaire,
+    OptionReponse,
     Question,
     Reponse,
     TypeChamp,
@@ -119,6 +121,17 @@ class FormSubmissionTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Agent.objects.filter(poste="Agent test", administration=self.administration).exists())
         self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent test").exists())
+
+
+class SeedDataTests(TestCase):
+    def test_seed_data_creates_response_options_for_list_questions(self):
+        call_command("seed_data")
+
+        question = Question.objects.get(code="B1.2", version_formulaire__formulaire__code="B")
+        options = OptionReponse.objects.filter(question=question)
+
+        self.assertTrue(options.exists())
+        self.assertGreaterEqual(options.count(), 3)
 
 
 class ScoringEngineTests(TestCase):

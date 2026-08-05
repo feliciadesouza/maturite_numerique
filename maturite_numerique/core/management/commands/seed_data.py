@@ -82,6 +82,57 @@ FORMULAIRE_B = [
     ("B5.3", "Seriez-vous intéressé(e) par une formation aux outils numériques ?", "oui_non"),
 ]
 
+LIST_OPTIONS = {
+    "B1.2": [
+        ("direction", "Direction"),
+        ("service", "Service"),
+        ("cellule", "Cellule"),
+    ],
+    "B1.3": [
+        ("<30", "Moins de 30 ans"),
+        ("30-45", "30 à 45 ans"),
+        ("45-55", "45 à 55 ans"),
+        (">55", "Plus de 55 ans"),
+    ],
+    "B1.4": [
+        ("<1an", "Moins d'un an"),
+        ("1-3", "1 à 3 ans"),
+        ("3-5", "3 à 5 ans"),
+        (">5", "Plus de 5 ans"),
+    ],
+    "B1.5": [
+        ("primaire", "Primaire"),
+        ("secondaire", "Secondaire"),
+        ("bac", "Bac"),
+        ("licence", "Licence"),
+        ("master", "Master"),
+    ],
+    "B1.6": [
+        ("autonome", "Autonome"),
+        ("assisté", "Assisté par un enquêteur"),
+    ],
+    "B3.3": [
+        ("oui", "Oui"),
+        ("non", "Non"),
+    ],
+    "B4.1": [
+        ("jamais", "Jamais"),
+        ("occasionnellement", "Occasionnellement"),
+        ("souvent", "Souvent"),
+    ],
+    "B4.2": [
+        ("jamais", "Jamais"),
+        ("occasionnellement", "Occasionnellement"),
+        ("souvent", "Souvent"),
+    ],
+    "B5.2": [
+        ("manque_materiel", "Manque de matériel"),
+        ("manque_competence", "Manque de compétences"),
+        ("manque_temps", "Manque de temps"),
+        ("peur", "Peur de la technologie"),
+    ],
+}
+
 
 class Command(BaseCommand):
     help = "Charge les données initiales : dimensions, types de champ, formulaires A et B avec leurs questions."
@@ -130,13 +181,20 @@ class Command(BaseCommand):
 
         count_b = 0
         for i, (code, texte, type_code) in enumerate(FORMULAIRE_B):
-            Question.objects.update_or_create(
+            question, _ = Question.objects.update_or_create(
                 code=code, version_formulaire=version_b,
                 defaults={
                     "dimension": dim_objs["Compétences numériques"], "texte": texte,
                     "type_champ": type_objs[type_code], "ordre": i,
                 },
             )
+            if type_code == "liste" and code in LIST_OPTIONS:
+                for ordre, (valeur, libelle) in enumerate(LIST_OPTIONS[code]):
+                    OptionReponse.objects.update_or_create(
+                        question=question,
+                        valeur=valeur,
+                        defaults={"libelle": libelle, "ordre": ordre},
+                    )
             count_b += 1
         self.stdout.write(self.style.SUCCESS(f"{count_b} questions du Formulaire B chargées."))
 
