@@ -62,10 +62,25 @@ class AdministrationAdmin(admin.ModelAdmin):
 
 @admin.register(Utilisateur)
 class UtilisateurAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "administration")
+    list_display = ("username", "email", "role", "administration")
     list_filter = ("role", "administration")
-    search_fields = ("user__username", "user__first_name", "user__last_name", "administration__nom")
+    search_fields = ("user__username", "user__email", "user__first_name", "user__last_name", "administration__nom")
     autocomplete_fields = ("user", "administration")
+    ordering = ("user__username",)
+    list_display_links = ("username",)
+    fieldsets = (
+        ("Compte", {"fields": ("user", "username", "email")}),
+        ("Rôle métier", {"fields": ("role", "administration")}),
+    )
+    readonly_fields = ("username", "email")
+
+    @admin.display(description="Nom d’utilisateur")
+    def username(self, obj):
+        return obj.user.username
+
+    @admin.display(description="Email")
+    def email(self, obj):
+        return obj.user.email or "-"
 
 
 @admin.register(Agent)
