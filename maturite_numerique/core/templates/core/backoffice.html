@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Back-office - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Back-office</h1>
+    <p>Gestion du référentiel de contenu, dimensions et questions.</p>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Dimensions</h2>
+            {% if dimensions %}
+                <ul>
+                    {% for dimension in dimensions %}
+                        <li>{{ dimension.nom }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Aucune dimension disponible.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Formulaires</h2>
+            <ul>
+                {% for formulaire in formulaires %}
+                    <li>{{ formulaire.label }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

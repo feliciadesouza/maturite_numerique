@@ -42,16 +42,42 @@ class AuthenticationProfileTests(TestCase):
         response = self.client.get("/dashboard/")
         self.assertEqual(response.status_code, 302)
 
-    def test_user_with_role_can_access_dashboard(self):
+    def test_dsi_role_can_access_dashboard(self):
         user = User.objects.create_user(username="dashboard_user", password="testpass123")
         profil, _ = Utilisateur.objects.get_or_create(user=user)
-        profil.role = "admin_contenu"
+        profil.role = "dsi_decideur"
         profil.save()
 
         self.client.force_login(user)
         response = self.client.get("/dashboard/")
 
         self.assertEqual(response.status_code, 200)
+
+    def test_login_redirects_to_role_specific_homepage(self):
+        user = User.objects.create_user(username="role_redirect_user", password="testpass123")
+        profil, _ = Utilisateur.objects.get_or_create(user=user)
+        profil.role = "agent_enquete"
+        profil.save()
+
+        response = self.client.post(
+            "/login/",
+            {"username": "role_redirect_user", "password": "testpass123"},
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/formulaire-b/")
+
+    def test_agent_enquete_cannot_access_formulaire_a(self):
+        user = User.objects.create_user(username="restricted_user", password="testpass123")
+        profil, _ = Utilisateur.objects.get_or_create(user=user)
+        profil.role = "agent_enquete"
+        profil.save()
+
+        self.client.force_login(user)
+        response = self.client.get("/formulaire-a/")
+
+        self.assertEqual(response.status_code, 302)
 
 
 class FormSubmissionTests(TestCase):
@@ -121,6 +147,25 @@ class FormSubmissionTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Agent.objects.filter(poste="Agent test", administration=self.administration).exists())
         self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent test").exists())
+
+    def test_public_formulaire_b_is_accessible_without_login(self):
+        response = self.client.post(
+            "/agent-enquete/",
+            {
+                "administration": self.administration.pk,
+                "poste": "Agent public",
+                "service": "Digital",
+                "tranche_age": "<30",
+                "anciennete": "2 ans",
+                "niveau_etudes": "Licence",
+                "mode_saisie": "autonome",
+                f"q_{self.question.id}": "Oui",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Agent.objects.filter(poste="Agent public", administration=self.administration).exists())
+        self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent public").exists())
 
 
 class SeedDataTests(TestCase):

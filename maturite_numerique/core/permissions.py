@@ -14,6 +14,14 @@ ROLE_CHOICES = {
     "admin_contenu": "Administrateur de contenu",
 }
 
+ROLE_HOME_URLS = {
+    "agent_evaluateur": "formulaire_a",
+    "agent_enquete": "formulaire_b",
+    "enqueteur": "enqueteur_home",
+    "dsi_decideur": "dashboard",
+    "admin_contenu": "backoffice",
+}
+
 
 def user_has_role(user, *roles):
     """Vérifie si l’utilisateur connecté possède l’un des rôles attendus."""

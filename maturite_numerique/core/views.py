@@ -5,13 +5,31 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AdministrationForm, AgentForm, ProfileForm, build_question_form
-from .models import Administration, Agent, Question, Reponse, Utilisateur
-from .permissions import role_required
+from .models import Administration, Agent, Dimension, Question, Reponse, Utilisateur
+from .permissions import ROLE_HOME_URLS, role_required
 from .scoring import calculer_score_global, distribution_niveaux_administration
+
+
+def get_role_home_url(user):
+    """Retourne la page d’accueil correspondant au rôle métier d’un utilisateur."""
+    if not user or not user.is_authenticated:
+        return None
+
+    try:
+        profil = user.profil
+    except Utilisateur.DoesNotExist:
+        return None
+
+    return ROLE_HOME_URLS.get(profil.role)
 
 
 def home(request):
     """Page d’accueil simple du projet, avant la maquette finale."""
+    if request.user.is_authenticated:
+        role_home = get_role_home_url(request.user)
+        if role_home:
+            return redirect(role_home)
+
     administrations = Administration.objects.order_by("nom")
     return render(request, "core/home.html", {"administrations": administrations})
 
@@ -25,7 +43,10 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, "Connexion réussie.")
-                return redirect("dashboard")
+                role_home = get_role_home_url(user)
+                if role_home:
+                    return redirect(role_home)
+                return redirect("home")
     else:
         form = AuthenticationForm()
 
@@ -39,9 +60,9 @@ def logout_view(request):
 
 
 @login_required
-@role_required("agent_evaluateur", "agent_enquete", "enqueteur", "dsi_decideur", "admin_contenu")
+@role_required("dsi_decideur")
 def dashboard(request):
-    """Tableau de bord de base avec le score global pour chaque administration."""
+    """Tableau de bord réservé au DSI / décideur."""
     administrations = Administration.objects.order_by("nom")
     scores = []
     for administration in administrations:
@@ -51,7 +72,28 @@ def dashboard(request):
 
 
 @login_required
-@role_required("agent_evaluateur", "dsi_decideur", "admin_contenu")
+@role_required("admin_contenu")
+def backoffice(request):
+    """Back-office pour l’administrateur de contenu."""
+    dimensions = Dimension.objects.order_by("ordre", "nom")
+    formulaires = [
+        {"code": "A", "label": "Formulaire A - Administration"},
+        {"code": "B", "label": "Formulaire B - Agent"},
+    ]
+    return render(request, "core/backoffice.html", {"dimensions": dimensions, "formulaires": formulaires})
+
+
+@login_required
+@role_required("enqueteur")
+def enqueteur_home(request):
+    """Accueil enquêteur : liste des agents d’une administration à interviewer."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    agents = Agent.objects.filter(administration=profil.administration).order_by("poste") if profil.administration else []
+    return render(request, "core/enqueteur_home.html", {"agents": agents, "administration": profil.administration})
+
+
+@login_required
+@role_required("dsi_decideur")
 def administration_detail(request, administration_id):
     """Vue de détail d’une administration avec son score global."""
     administration = get_object_or_404(Administration, pk=administration_id)
@@ -88,9 +130,9 @@ def profile(request):
 
 
 @login_required
-@role_required("agent_evaluateur", "admin_contenu")
+@role_required("agent_evaluateur")
 def formulaire_a(request):
-    """Saisie du formulaire A, sans interface finale."""
+    """Saisie du formulaire A, réservée à l’agent évaluateur."""
     if request.method == "POST":
         form = AdministrationForm(request.POST)
         if form.is_valid():
@@ -104,9 +146,9 @@ def formulaire_a(request):
 
 
 @login_required
-@role_required("agent_enquete", "enqueteur", "admin_contenu")
+@role_required("agent_enquete", "enqueteur")
 def formulaire_b(request):
-    """Saisie du formulaire B, sans interface finale."""
+    """Saisie du formulaire B, réservée aux agents enquêtés et enquêteurs."""
     if request.method == "POST":
         agent_form = AgentForm(request.POST)
         question_form = build_question_form("B", data=request.POST)
@@ -123,7 +165,39 @@ def formulaire_b(request):
                         valeur=answer,
                     )
             messages.success(request, "Formulaire B enregistré avec succès.")
-            return redirect("administration_detail", administration_id=agent.administration_id)
+            if request.user.profil.role == "agent_enquete":
+                return redirect("formulaire_b")
+            return redirect("enqueteur_home")
+    else:
+        agent_form = AgentForm()
+        question_form = build_question_form("B")
+
+    return render(
+        request,
+        "core/formulaire_b.html",
+        {"agent_form": agent_form, "question_form": question_form},
+    )
+
+
+def formulaire_b_public(request):
+    """Formulaire B public pour l’agent enquêté, sans authentification."""
+    if request.method == "POST":
+        agent_form = AgentForm(request.POST)
+        question_form = build_question_form("B", data=request.POST)
+
+        if agent_form.is_valid() and question_form.is_valid():
+            agent = agent_form.save()
+            for question in Question.objects.filter(version_formulaire__formulaire__code="B", actif=True):
+                answer = question_form.cleaned_data.get(f"q_{question.id}")
+                if answer:
+                    Reponse.objects.create(
+                        question=question,
+                        agent=agent,
+                        administration=agent.administration,
+                        valeur=answer,
+                    )
+            messages.success(request, "Formulaire B enregistré avec succès.")
+            return redirect("home")
     else:
         agent_form = AgentForm()
         question_form = build_question_form("B")

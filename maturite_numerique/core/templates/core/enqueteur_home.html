@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Mes enquêtes - Maturité numérique{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Enquêtes en cours</h1>
+
+    {% if administration %}
+        <p><strong>Administration :</strong> {{ administration.nom }}</p>
+    {% endif %}
+
+    {% if agents %}
+        <ul>
+            {% for agent in agents %}
+                <li>
+                    {{ agent.poste }}
+                    {% if agent.service %}— {{ agent.service }}{% endif %}
+                    <a href="{% url 'formulaire_b' %}">Saisir</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucun agent à enquêter pour cette administration.</p>
+    {% endif %}
+</div>
+{% endblock %}

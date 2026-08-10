@@ -12,14 +12,26 @@
         <div class="container nav-bar">
             <div class="brand">Maturité numérique</div>
             <nav>
-                <a href="{% url 'home' %}">Accueil</a>
-                <a href="{% url 'dashboard' %}">Dashboard</a>
-                <a href="{% url 'formulaire_a' %}">Formulaire A</a>
-                <a href="{% url 'formulaire_b' %}">Formulaire B</a>
-                <a href="{% url 'profile' %}">Profil</a>
                 {% if user.is_authenticated %}
+                    {% if user.profil.role == 'agent_evaluateur' %}
+                        <a href="{% url 'formulaire_a' %}">Formulaire A</a>
+                        <a href="{% url 'profile' %}">Mon profil</a>
+                    {% elif user.profil.role == 'agent_enquete' %}
+                        <a href="{% url 'formulaire_b' %}">Formulaire B</a>
+                    {% elif user.profil.role == 'enqueteur' %}
+                        <a href="{% url 'enqueteur_home' %}">Mes enquêtes</a>
+                        <a href="{% url 'formulaire_b' %}">Formulaire B</a>
+                        <a href="{% url 'profile' %}">Mon profil</a>
+                    {% elif user.profil.role == 'dsi_decideur' %}
+                        <a href="{% url 'dashboard' %}">Dashboard</a>
+                        <a href="{% url 'profile' %}">Mon profil</a>
+                    {% elif user.profil.role == 'admin_contenu' %}
+                        <a href="{% url 'backoffice' %}">Back-office</a>
+                        <a href="{% url 'profile' %}">Mon profil</a>
+                    {% endif %}
                     <a href="{% url 'logout' %}">Déconnexion</a>
                 {% else %}
+                    <a href="{% url 'home' %}">Accueil</a>
                     <a href="{% url 'login' %}">Connexion</a>
                 {% endif %}
             </nav>
