@@ -22,29 +22,31 @@ métier conçus au Chapitre 3 du mémoire.
 ## Installation
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate        # Windows : venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate        # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -r ../requirements-dev.txt   # outils de qualité (dev)
 ```
 
-## Configuration de la base de données
+## Configuration (variables d'environnement)
 
-Par défaut, le projet utilise SQLite pour démarrer rapidement en local
-(aucune configuration nécessaire). Pour passer à PostgreSQL (recommandé
-pour la version finale, cf. Chapitre 1), modifiez `DATABASES` dans
-`maturite_numerique/settings.py` :
+La configuration sensible n'est pas dans le code : elle est lue depuis
+l'environnement (`python-decouple`). En local, copiez le modèle et adaptez-le :
 
-```python
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "maturite_numerique",
-        "USER": "votre_utilisateur",
-        "PASSWORD": "votre_mot_de_passe",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
-}
+```bash
+cp ../.env.example ../.env       # à la racine du dépôt ; .env n'est jamais versionné
+```
+
+Sans `.env`, des valeurs par défaut de développement s'appliquent
+(SQLite, `DEBUG=True`, hôtes locaux). Pour PostgreSQL (cible de production,
+cf. Chapitre 1), renseignez les variables `DB_*` dans `.env` — aucune
+modification de `settings.py` n'est nécessaire.
+
+## Garde-fous avant commit (pre-commit)
+
+```bash
+pre-commit install               # une seule fois
+pre-commit run --all-files       # vérifier tout le dépôt (flake8, bandit, hygiène)
 ```
 
 ## Démarrage

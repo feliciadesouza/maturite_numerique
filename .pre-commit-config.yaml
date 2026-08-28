@@ -1,0 +1,28 @@
+# Garde-fous exécutés avant chaque commit.
+# Activation (une fois) :  pre-commit install
+# Exécution manuelle sur tout le dépôt :  pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        args: [--config=maturite_numerique/setup.cfg]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        args: [--quiet]
+        files: ^maturite_numerique/(core|maturite_numerique)/.*\.py$
+        exclude: (tests\.py$|/migrations/)
