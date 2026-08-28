@@ -6,7 +6,6 @@ Ce module contient uniquement de la logique métier pure (aucune dépendance
 maintenant, indépendamment de la maquette.
 """
 from dataclasses import dataclass
-from decimal import Decimal
 
 from .models import Dimension, Reponse, Administration, Agent
 

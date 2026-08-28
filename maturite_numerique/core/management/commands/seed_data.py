@@ -26,7 +26,7 @@ FORMULAIRE_A = {
     "Infrastructure TIC": [
         ("1.1", "L'administration dispose-t-elle d'une connexion internet stable ?", "echelle_1_5"),
         ("1.2", "Quel est le taux d'équipement en ordinateurs par agent ?", "tranches"),
-        ("1.3", "L'administration dispose-t-elle de serveurs propres ou d'un accès à un cloud gouvernemental ?", "oui_non_partiel"),
+        ("1.3", "L'administration dispose-t-elle de serveurs propres ou d'un accès à un cloud gouvernemental ?", "oui_non_partiel"),  # noqa: E501
         ("1.4", "Existe-t-il un réseau local interconnectant les services ?", "oui_non_partiel"),
         ("1.5", "Un dispositif de sauvegarde des données est-il en place ?", "oui_non_partiel"),
         ("1.6", "Un service de maintenance informatique est-il disponible (interne ou externalisé) ?", "oui_non"),
@@ -40,10 +40,10 @@ FORMULAIRE_A = {
         ("2.6", "Une plateforme de dépôt de réclamations en ligne existe-t-elle ?", "oui_non"),
     ],
     "Cadre juridique": [
-        ("4.1", "L'administration applique-t-elle une politique de protection des données personnelles ?", "oui_non_partiel"),
+        ("4.1", "L'administration applique-t-elle une politique de protection des données personnelles ?", "oui_non_partiel"),  # noqa: E501
         ("4.2", "Un texte encadrant la signature électronique existe-t-il dans vos procédures ?", "oui_non"),
         ("4.3", "Une charte ou politique de cybersécurité est-elle formalisée ?", "oui_non"),
-        ("4.4", "L'administration est-elle en conformité avec la loi nationale sur les données personnelles ?", "oui_non"),
+        ("4.4", "L'administration est-elle en conformité avec la loi nationale sur les données personnelles ?", "oui_non"),  # noqa: E501
         ("4.5", "Les agents sont-ils sensibilisés aux risques de cybersécurité ?", "oui_non_partiel"),
     ],
     "Engagement institutionnel": [

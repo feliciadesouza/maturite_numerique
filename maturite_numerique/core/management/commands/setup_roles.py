@@ -7,7 +7,11 @@ ROLE_GROUPS = {
     "agent_enquete": ["view_question", "view_reponse"],
     "enqueteur": ["view_question", "add_reponse", "change_reponse", "view_reponse"],
     "dsi_decideur": ["view_administration", "view_agent", "view_reponse"],
-    "admin_contenu": ["add_question", "change_question", "delete_question", "view_question", "add_dimension", "change_dimension", "view_dimension", "view_formulaire", "view_versionformulaire"],
+    "admin_contenu": [
+        "add_question", "change_question", "delete_question", "view_question",
+        "add_dimension", "change_dimension", "view_dimension",
+        "view_formulaire", "view_versionformulaire",
+    ],
 }
 
 

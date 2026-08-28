@@ -88,8 +88,17 @@ def backoffice(request):
 def enqueteur_home(request):
     """Accueil enquêteur : liste des agents d’une administration à interviewer."""
     profil = get_object_or_404(Utilisateur, user=request.user)
-    agents = Agent.objects.filter(administration=profil.administration).order_by("poste") if profil.administration else []
-    return render(request, "core/enqueteur_home.html", {"agents": agents, "administration": profil.administration})
+    if profil.administration:
+        agents = Agent.objects.filter(
+            administration=profil.administration
+        ).order_by("poste")
+    else:
+        agents = []
+    return render(
+        request,
+        "core/enqueteur_home.html",
+        {"agents": agents, "administration": profil.administration},
+    )
 
 
 @login_required

@@ -49,8 +49,15 @@ class ProfileForm(forms.ModelForm):
 
 
 def build_question_form(form_code: str, data=None, files=None):
-    version = VersionFormulaire.objects.filter(formulaire__code=form_code, est_active=True).first()
-    questions = Question.objects.filter(version_formulaire=version, actif=True).select_related("type_champ") if version else []
+    version = VersionFormulaire.objects.filter(
+        formulaire__code=form_code, est_active=True
+    ).first()
+    if version:
+        questions = Question.objects.filter(
+            version_formulaire=version, actif=True
+        ).select_related("type_champ")
+    else:
+        questions = []
 
     class DynamicQuestionForm(forms.Form):
         pass
