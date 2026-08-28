@@ -50,6 +50,9 @@ jobs:
       - name: Lint Python sources
         run: flake8 .
 
+      - name: Security scan (bandit)
+        run: bandit --recursive --quiet core maturite_numerique --exclude '**/tests.py,**/migrations/**'
+
       - name: Run tests
         run: python manage.py test
 

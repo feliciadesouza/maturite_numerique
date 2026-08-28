@@ -1,2 +1,5 @@
-bandit>=1.7,<2.0
-flake8>=7.0,<8.0
+# Outils de développement et de qualité — non installés en production.
+# Versions épinglées pour que la CI et les postes locaux soient identiques.
+bandit==1.9.4
+flake8==7.3.0
+pre-commit==4.4.0
