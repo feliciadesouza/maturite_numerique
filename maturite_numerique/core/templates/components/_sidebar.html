@@ -1,0 +1,55 @@
+{% load static %}
+{% with role=user.profil.role url_name=request.resolver_match.url_name %}
+<aside class="app-sidebar" id="app-sidebar">
+  <a href="{% url 'home' %}" class="app-brand">
+    <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
+    <span><b>Maturité</b><span>Numérique</span></span>
+  </a>
+
+  <nav class="app-nav" aria-label="Navigation principale">
+    {% if role == 'agent_evaluateur' %}
+      <a href="{% url 'formulaire_a' %}" class="{% if url_name == 'formulaire_a' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="clipboard" %}<span>Formulaire A</span></a>
+      <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="user" %}<span>Mon profil</span></a>
+
+    {% elif role == 'enqueteur' %}
+      <a href="{% url 'enqueteur_home' %}" class="{% if url_name == 'enqueteur_home' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="clipboard" %}<span>Mes enquêtes</span></a>
+      <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="user" %}<span>Mon profil</span></a>
+
+    {% elif role == 'dsi_decideur' %}
+      <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="layout-dashboard" %}<span>Tableau de bord</span></a>
+      <a href="{% url 'dashboard' %}#administrations" class="{% if url_name == 'administration_detail' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="building" %}<span>Administrations</span></a>
+      <a href="{% url 'dashboard' %}#comparaison">
+        {% include "components/_icon.html" with name="bar-chart" %}<span>Comparaison</span></a>
+      <a href="{% url 'dashboard' %}#rapports">
+        {% include "components/_icon.html" with name="file-text" %}<span>Rapports</span></a>
+      <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="user" %}<span>Mon profil</span></a>
+
+    {% elif role == 'admin_contenu' %}
+      <a href="{% url 'backoffice' %}" class="{% if url_name == 'backoffice' %}is-active{% endif %}">
+        {% include "components/_icon.html" with name="layers" %}<span>Dimensions</span></a>
+      <a href="{% url 'backoffice' %}#questions">
+        {% include "components/_icon.html" with name="list" %}<span>Questions</span></a>
+      <a href="{% url 'backoffice' %}#versions">
+        {% include "components/_icon.html" with name="history" %}<span>Versions</span></a>
+
+    {% else %}
+      {# Superuser / profil non défini : accès de secours #}
+      <a href="{% url 'dashboard' %}">{% include "components/_icon.html" with name="layout-dashboard" %}<span>Tableau de bord</span></a>
+      <a href="{% url 'backoffice' %}">{% include "components/_icon.html" with name="layers" %}<span>Back-office</span></a>
+      <a href="/admin/">{% include "components/_icon.html" with name="list" %}<span>Admin Django</span></a>
+    {% endif %}
+  </nav>
+
+  <nav class="app-nav" style="margin-top:auto;">
+    <a href="{% url 'logout' %}" style="color:#f8b4b4;">
+      {% include "components/_icon.html" with name="log-out" %}<span>Déconnexion</span></a>
+  </nav>
+</aside>
+{% endwith %}

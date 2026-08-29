@@ -1,0 +1,15 @@
+{% comment %} En-tête + pied de page du site vitrine. {% endcomment %}
+{% load static %}
+<header class="public-header">
+  <a href="{% url 'home' %}" class="brand">
+    <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
+    <span><b>Maturité Numérique</b><span>Diagnostic des administrations</span></span>
+  </a>
+  <nav class="public-nav" aria-label="Navigation">
+    <a href="{% url 'home' %}#demarche">La démarche</a>
+    <a href="{% url 'home' %}#dimensions">Les 5 dimensions</a>
+    <a href="{% url 'home' %}#acces">Accès par rôle</a>
+    <a href="{% url 'home' %}#contact">Contact</a>
+  </nav>
+  <a href="{% url 'connexion' %}" class="btn btn--primary">Se connecter</a>
+</header>

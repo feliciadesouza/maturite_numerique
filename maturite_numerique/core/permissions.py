@@ -7,15 +7,14 @@ from .models import Utilisateur
 
 ROLE_CHOICES = {
     "agent_evaluateur": "Agent évaluateur",
-    "agent_enquete": "Agent enquêté",
     "enqueteur": "Enquêteur",
     "dsi_decideur": "DSI / Décideur",
     "admin_contenu": "Administrateur de contenu",
 }
 
+# Page d'atterrissage après connexion, selon le rôle métier.
 ROLE_HOME_URLS = {
     "agent_evaluateur": "formulaire_a",
-    "agent_enquete": "formulaire_b",
     "enqueteur": "enqueteur_home",
     "dsi_decideur": "dashboard",
     "admin_contenu": "backoffice",

@@ -1,0 +1,40 @@
+{% extends "base_public.html" %}
+
+{% block title %}Connexion — Maturité Numérique{% endblock %}
+
+{% block content %}
+<section class="public-section">
+  <div class="public-container public-container--narrow">
+    <div class="card" style="max-width:440px;margin:0 auto;">
+      <h1 style="font-size:var(--fs-h2);margin-bottom:4px;">Connexion</h1>
+      <p class="text-muted text-sm" style="margin-bottom:var(--sp-6);">
+        Utilisez le compte fourni par votre administration. Vous serez redirigé vers votre espace.
+      </p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert--error" style="margin-bottom:var(--sp-4);">
+            {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+            <span>Identifiant ou mot de passe incorrect.</span>
+          </div>
+        {% endif %}
+        <div class="field">
+          <label for="{{ form.username.id_for_label }}">Identifiant</label>
+          {{ form.username }}
+        </div>
+        <div class="field">
+          <label for="{{ form.password.id_for_label }}">Mot de passe</label>
+          {{ form.password }}
+        </div>
+        <button type="submit" class="btn btn--primary btn--block btn--lg">Se connecter</button>
+      </form>
+    </div>
+
+    <p class="text-sm text-muted" style="text-align:center;margin-top:var(--sp-6);">
+      Vous êtes un agent enquêté ?
+      <a href="{% url 'formulaire_b_public' %}">Répondez à l'enquête sans compte</a>.
+    </p>
+  </div>
+</section>
+{% endblock %}

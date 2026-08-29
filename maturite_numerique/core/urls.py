@@ -17,6 +17,7 @@ from .views import (
 
 urlpatterns = [
     path('', home, name='home'),
+    path('connexion/', login_view, name='connexion'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('dashboard/', dashboard, name='dashboard'),
