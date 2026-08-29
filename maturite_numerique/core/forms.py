@@ -57,8 +57,10 @@ def build_reponses_form(questions, *, reponses=None, data=None, partiel=False):
                 initial=valeur.split(";") if valeur else None,
             )
         elif code == "texte_libre":
+            # Les champs libres du questionnaire sont courts (nom, service, fonction).
             fields[name] = forms.CharField(
-                required=requis, widget=forms.Textarea(attrs={"rows": 3}), initial=valeur,
+                required=requis, max_length=255,
+                widget=forms.TextInput(attrs={"class": "input"}), initial=valeur,
             )
         else:
             fields[name] = forms.ChoiceField(

@@ -85,7 +85,7 @@
     } else if (code === "tranches") { h += pills(["Moins de 25 %", "25 à 50 %", "50 à 75 %", "Plus de 75 %"]);
     } else if (code === "liste" || code === "choix_multiple") {
       var opts = parseOptions(); h += pills(opts.length ? opts : ["Option 1", "Option 2"]);
-    } else if (code === "texte_libre") { h += '<textarea rows="2" disabled></textarea>'; }
+    } else if (code === "texte_libre") { h += '<input type="text" class="input" disabled>'; }
     if (f.aide.value) {
       h += '<div class="alert alert--info" style="margin-top:12px;">' +
            '<span>' + esc(f.aide.value) + "</span></div>";

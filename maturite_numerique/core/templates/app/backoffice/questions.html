@@ -26,9 +26,12 @@
       <div class="row" style="gap: var(--sp-2);">
         <span class="badge badge--version">{{ q.type_champ.libelle }}</span>
         {% if q.actif %}<span class="badge badge--fort">Actif</span>{% else %}<span class="badge badge--neutre">Inactif</span>{% endif %}
-        <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='haut' %}" style="display:inline;">{% csrf_token %}<button class="btn btn--ghost" title="Monter">↑</button></form>
-        <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='bas' %}" style="display:inline;">{% csrf_token %}<button class="btn btn--ghost" title="Descendre">↓</button></form>
-        <a href="{% url 'bo_question_editer' question_id=q.pk %}" class="btn btn--secondary">Éditer</a>
+        <span class="reorder">
+          <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='haut' %}">{% csrf_token %}<button type="submit" title="Monter" aria-label="Monter">{% include "components/_icon.html" with name="chevron-up" %}</button></form>
+          <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='bas' %}">{% csrf_token %}<button type="submit" title="Descendre" aria-label="Descendre">{% include "components/_icon.html" with name="chevron-down" %}</button></form>
+        </span>
+        <a href="{% url 'bo_question_editer' question_id=q.pk %}" class="btn btn--secondary">
+          {% include "components/_icon.html" with name="edit" cls="icon--sm" %} Éditer</a>
       </div>
     </div>
   </div>
