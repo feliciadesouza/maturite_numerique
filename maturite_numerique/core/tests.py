@@ -153,28 +153,14 @@ class FormSubmissionTests(TestCase):
         response = self.client.get("/formulaire-a/")
         self.assertRedirects(response, "/profile/", fetch_redirect_response=False)
 
-    def test_formulaire_b_submission_creates_agent_and_answers(self):
+    def test_formulaire_b_redirige_vers_la_liste_des_enquetes(self):
         user = User.objects.create_user(username="form_b_user", password="testpass123")
-        Utilisateur.objects.create(user=user, role="enqueteur")
-        self.client.force_login(user)
-
-        response = self.client.post(
-            "/formulaire-b/",
-            {
-                "administration": self.administration.pk,
-                "poste": "Agent test",
-                "service": "Digital",
-                "tranche_age": "<30",
-                "anciennete": "2 ans",
-                "niveau_etudes": "Licence",
-                "mode_saisie": "autonome",
-                f"q_{self.question.id}": "Oui",
-            },
+        Utilisateur.objects.create(
+            user=user, role="enqueteur", administration=self.administration
         )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Agent.objects.filter(poste="Agent test", administration=self.administration).exists())
-        self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent test").exists())
+        self.client.force_login(user)
+        response = self.client.get("/formulaire-b/")
+        self.assertRedirects(response, "/enquetes/", fetch_redirect_response=False)
 
     def test_enquete_publique_accessible_sans_compte(self):
         self.assertEqual(self.client.get("/enquete/").status_code, 200)
@@ -393,6 +379,74 @@ class PublicSiteTests(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/dashboard/")
+
+
+class EnqueteurTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+        self.administration = Administration.objects.create(nom="Mairie de Lomé", region="Maritime")
+        self.user = User.objects.create_user(username="enq", password="testpass123")
+        Utilisateur.objects.create(
+            user=self.user, role="enqueteur", administration=self.administration
+        )
+        self.client.force_login(self.user)
+
+    def test_liste_des_enquetes_repond(self):
+        self.assertEqual(self.client.get("/enquetes/").status_code, 200)
+
+    def test_nouvel_agent_cree_et_numerote(self):
+        response = self.client.post("/enquetes/nouvel-agent/", {
+            "poste": "Agent d'accueil", "service": "État civil",
+        })
+        self.assertEqual(response.status_code, 302)
+        agent = Agent.objects.get(poste="Agent d'accueil")
+        self.assertEqual(agent.numero, 1)
+        self.assertEqual(agent.mode_saisie, "assiste")
+        self.assertEqual(agent.enqueteur, self.user)
+
+    def test_parcours_assiste_question_par_question(self):
+        agent = Agent.objects.create(
+            administration=self.administration, mode_saisie="assiste",
+            enqueteur=self.user, numero=1,
+        )
+        from core.views import _questions_agent_ordonnees
+
+        total = len(_questions_agent_ordonnees(agent))
+        self.assertGreater(total, 0)
+
+        for index in range(total):
+            questions = _questions_agent_ordonnees(agent)
+            if index >= len(questions):
+                break
+            q = questions[index]
+            code = q.type_champ.code
+            if code == "oui_non":
+                valeur = "Oui"
+            elif code == "oui_non_partiel":
+                valeur = "Partiel"
+            elif code == "echelle_1_5":
+                valeur = "4"
+            elif code in ("liste", "choix_multiple"):
+                opt = q.options.first()
+                valeur = opt.valeur if opt else ""
+            else:
+                valeur = "Réponse"
+            resp = self.client.post(
+                f"/enquetes/agent/{agent.pk}/question/{index}/", {f"q_{q.id}": valeur}
+            )
+            self.assertEqual(resp.status_code, 302)
+
+        agent.refresh_from_db()
+        self.assertEqual(agent.statut, "terminee")
+        self.assertIsNotNone(agent.niveau_maturite)
+        self.assertRegex(agent.reference, r"^MN-\d{4}-\d{6}$")
+
+    def test_agent_d_une_autre_administration_est_inaccessible(self):
+        autre = Administration.objects.create(nom="Préfecture de Kloto")
+        agent = Agent.objects.create(administration=autre, mode_saisie="assiste")
+        self.assertEqual(
+            self.client.get(f"/enquetes/agent/{agent.pk}/question/0/").status_code, 404
+        )
 
 
 class MaturityHelpersTests(TestCase):

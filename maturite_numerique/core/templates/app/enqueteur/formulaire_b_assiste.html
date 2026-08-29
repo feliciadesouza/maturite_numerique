@@ -1,0 +1,57 @@
+{% extends "base_app.html" %}
+
+{% block title %}Formulaire B — mode assisté{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Formulaire B — Mode assisté</h1>
+  <p class="breadcrumb">L'enquêteur lit la question à voix haute et saisit la réponse</p>
+</div>
+
+<div class="assist-banner" style="margin-bottom: var(--sp-6);">
+  <span class="tag">{% include "components/_icon.html" with name="users" cls="icon--sm" %} Mode assisté</span>
+  <span>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }}
+    {% if agent.administration %}· {{ agent.administration.nom }}{% endif %}</span>
+  <span class="spacer"></span>
+  <span>Question {{ numero_question }} / {{ total }}</span>
+</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <p class="eyebrow">À lire à l'agent</p>
+  <p class="assist-question">{{ question.texte }}</p>
+
+  {% if question.type_champ.code == 'echelle_1_5' %}
+    <div class="qscale">
+      {% if question.borne_min_label %}<span class="qscale__borne">{{ question.borne_min_label }}</span>{% endif %}
+      <div class="qchoices">{{ bf }}</div>
+      {% if question.borne_max_label %}<span class="qscale__borne">{{ question.borne_max_label }}</span>{% endif %}
+    </div>
+  {% elif question.type_champ.code == 'texte_libre' %}
+    {{ bf }}
+  {% else %}
+    <div class="assist-choices">{{ bf }}</div>
+  {% endif %}
+
+  {% if bf.errors %}<div class="qitem__err">{{ bf.errors|striptags }}</div>{% endif %}
+
+  {% if question.code == 'B2.1' %}
+  <div class="alert alert--warning" style="margin-top: var(--sp-4);">
+    {% include "components/_icon.html" with name="info" cls="icon--sm" %}
+    <span>Si l'agent répond « Non », il est classé Niveau 0 et l'enquête passe directement aux freins.</span>
+  </div>
+  {% endif %}
+
+  <div class="assist-foot">
+    {% if index > 0 %}
+      <button type="submit" name="precedent" value="1" class="btn btn--secondary">
+        {% include "components/_icon.html" with name="chevron-left" cls="icon--sm" %} Question précédente</button>
+    {% else %}
+      <a href="{% url 'enqueteur_home' %}" class="btn btn--secondary">Quitter</a>
+    {% endif %}
+    <button type="submit" class="btn btn--primary">
+      {% if numero_question < total %}Question suivante{% else %}Terminer l'enquête{% endif %}
+      {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %}</button>
+  </div>
+</form>
+{% endblock %}
