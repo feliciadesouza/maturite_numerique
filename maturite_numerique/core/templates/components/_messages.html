@@ -1,0 +1,12 @@
+{% if messages %}
+  <div class="stack" style="margin-bottom: var(--sp-6);">
+    {% for message in messages %}
+      <div class="alert alert--{{ message.tags|default:'info' }}" role="status">
+        {% if message.tags == 'error' %}{% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+        {% elif message.tags == 'success' %}{% include "components/_icon.html" with name="check" cls="icon--sm" %}
+        {% else %}{% include "components/_icon.html" with name="info" cls="icon--sm" %}{% endif %}
+        <span>{{ message }}</span>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

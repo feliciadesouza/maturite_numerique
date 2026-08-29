@@ -50,7 +50,7 @@ def login_view(request):
     else:
         form = AuthenticationForm()
 
-    return render(request, "core/login.html", {"form": form})
+    return render(request, "core/connexion.html", {"form": form})
 
 
 def logout_view(request):
@@ -121,7 +121,7 @@ def administration_detail(request, administration_id):
 
 
 @login_required
-@role_required("agent_evaluateur", "agent_enquete", "enqueteur", "dsi_decideur", "admin_contenu")
+@role_required("agent_evaluateur", "enqueteur", "dsi_decideur", "admin_contenu")
 def profile(request):
     """Vue de profil utilisateur pour rattacher le compte Django au rôle métier."""
     profile_obj, _ = Utilisateur.objects.get_or_create(user=request.user)
@@ -155,9 +155,9 @@ def formulaire_a(request):
 
 
 @login_required
-@role_required("agent_enquete", "enqueteur")
+@role_required("enqueteur")
 def formulaire_b(request):
-    """Saisie du formulaire B, réservée aux agents enquêtés et enquêteurs."""
+    """Saisie du formulaire B en mode assisté, réservée aux enquêteurs."""
     if request.method == "POST":
         agent_form = AgentForm(request.POST)
         question_form = build_question_form("B", data=request.POST)
@@ -174,8 +174,6 @@ def formulaire_b(request):
                         valeur=answer,
                     )
             messages.success(request, "Formulaire B enregistré avec succès.")
-            if request.user.profil.role == "agent_enquete":
-                return redirect("formulaire_b")
             return redirect("enqueteur_home")
     else:
         agent_form = AgentForm()

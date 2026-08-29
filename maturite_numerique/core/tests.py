@@ -42,7 +42,7 @@ class AuthenticationProfileTests(TestCase):
         self.assertEqual(profil.role, "admin_contenu")
 
     def test_login_page_is_available(self):
-        response = self.client.get("/login/")
+        response = self.client.get("/connexion/")
         self.assertEqual(response.status_code, 200)
 
     def test_dashboard_requires_login(self):
@@ -63,22 +63,22 @@ class AuthenticationProfileTests(TestCase):
     def test_login_redirects_to_role_specific_homepage(self):
         user = User.objects.create_user(username="role_redirect_user", password="testpass123")
         profil, _ = Utilisateur.objects.get_or_create(user=user)
-        profil.role = "agent_enquete"
+        profil.role = "enqueteur"
         profil.save()
 
         response = self.client.post(
-            "/login/",
+            "/connexion/",
             {"username": "role_redirect_user", "password": "testpass123"},
             follow=False,
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/formulaire-b/")
+        self.assertEqual(response.url, "/enquetes/")
 
-    def test_agent_enquete_cannot_access_formulaire_a(self):
+    def test_enqueteur_cannot_access_formulaire_a(self):
         user = User.objects.create_user(username="restricted_user", password="testpass123")
         profil, _ = Utilisateur.objects.get_or_create(user=user)
-        profil.role = "agent_enquete"
+        profil.role = "enqueteur"
         profil.save()
 
         self.client.force_login(user)

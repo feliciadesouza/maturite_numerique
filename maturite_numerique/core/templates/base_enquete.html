@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Enquête agent — Maturité Numérique{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layouts.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="enquete">
+    <header class="enquete-header">
+      <a href="{% url 'home' %}" class="brand">
+        <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
+        <b>Maturité Numérique</b>
+      </a>
+      <div class="ctx">{% block ctx %}Enquête agent — accès public{% endblock %}</div>
+      <select class="lang" aria-label="Langue"><option>FR</option></select>
+    </header>
+
+    <main class="enquete-main">
+      <div class="enquete-card {% block card_class %}{% endblock %}">
+        {% include "components/_messages.html" %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

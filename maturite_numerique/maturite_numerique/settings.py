@@ -147,6 +147,6 @@ STATIC_URL = 'static/'
 # Destination de `collectstatic` (utilisée en conteneur / production).
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-LOGIN_URL = 'login'
+LOGIN_URL = 'connexion'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'

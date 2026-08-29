@@ -1,18 +1,44 @@
-{% extends 'core/base.html' %}
+{% extends "base_public.html" %}
 
-{% block title %}Accueil - Maturité numérique{% endblock %}
+{% block title %}Maturité Numérique — Diagnostic des administrations publiques{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Outil de suivi de la maturité numérique</h1>
-    <p>Cette page d’accueil sert de base de travail avant la maquette finale.</p>
-    <div class="grid">
-        {% for administration in administrations %}
-            <div class="card">
-                <a href="{% url 'administration_detail' administration.id %}">{{ administration.nom }}</a>
-            </div>
-        {% endfor %}
+<section class="public-section">
+  <div class="public-container">
+    <span class="eyebrow">GovTech · République togolaise</span>
+    <h1 style="max-width:18ch;margin:var(--sp-3) 0 var(--sp-4);">
+      Mesurez et pilotez la maturité numérique des administrations publiques
+    </h1>
+    <p class="text-muted" style="max-width:56ch;font-size:var(--fs-title);">
+      Un diagnostic structuré sur 5 dimensions, alimenté par les responsables et par une enquête
+      auprès des agents, pour transformer l'état des lieux en plan d'action concret.
+    </p>
+    <div class="wrap-flex" style="margin-top:var(--sp-6);gap:var(--sp-3);">
+      <a href="{% url 'connexion' %}" class="btn btn--primary btn--lg">Se connecter</a>
+      <a href="{% url 'formulaire_b_public' %}" class="btn btn--secondary btn--lg">Répondre à l'enquête</a>
     </div>
-    <p><a class="btn" href="{% url 'dashboard' %}">Voir le tableau de bord</a></p>
-</div>
+  </div>
+</section>
+
+<section class="public-section" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="public-container">
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));text-align:center;">
+      <div><div class="h2" style="color:var(--primary);">5</div><div class="text-sm text-muted">dimensions évaluées</div></div>
+      <div><div class="h2" style="color:var(--primary);">2</div><div class="text-sm text-muted">formulaires complémentaires</div></div>
+      <div><div class="h2" style="color:var(--primary);">6</div><div class="text-sm text-muted">niveaux de compétences (N0–N5)</div></div>
+      <div><div class="h2" style="color:var(--primary);">1</div><div class="text-sm text-muted">rapport actionnable</div></div>
+    </div>
+  </div>
+</section>
+
+{% if administrations %}
+<section class="public-section" id="administrations">
+  <div class="public-container">
+    <h2>Administrations suivies</h2>
+    <ul class="text-muted">
+      {% for administration in administrations %}<li>{{ administration.nom }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
 {% endblock %}

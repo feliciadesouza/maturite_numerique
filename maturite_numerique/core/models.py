@@ -204,9 +204,10 @@ class Evaluation(models.Model):
 
 class Utilisateur(models.Model):
     """Profil applicatif lié à un compte Django, avec le rôle métier."""
+    # L'agent enquêté n'a pas de compte : il répond au Formulaire B par un
+    # lien public. Il n'y a donc que quatre rôles authentifiés.
     ROLE_CHOICES = [
         ("agent_evaluateur", "Agent évaluateur"),
-        ("agent_enquete", "Agent enquêté"),
         ("enqueteur", "Enquêteur"),
         ("dsi_decideur", "DSI / Décideur"),
         ("admin_contenu", "Administrateur de contenu"),

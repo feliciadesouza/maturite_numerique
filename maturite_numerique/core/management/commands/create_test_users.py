@@ -9,7 +9,6 @@ User = get_user_model()
 
 TEST_USERS = [
     ("agent_eval", "AgentEval123!", "agent_evaluateur"),
-    ("agent_enquete", "AgentEnquete123!", "agent_enquete"),
     ("enqueteur", "Enqueteur123!", "enqueteur"),
     ("dsi", "Dsi123!", "dsi_decideur"),
     ("admin_contenu", "Admin123!", "admin_contenu"),

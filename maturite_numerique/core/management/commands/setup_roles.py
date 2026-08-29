@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 
 ROLE_GROUPS = {
     "agent_evaluateur": ["view_administration", "view_agent", "view_reponse"],
-    "agent_enquete": ["view_question", "view_reponse"],
     "enqueteur": ["view_question", "add_reponse", "change_reponse", "view_reponse"],
     "dsi_decideur": ["view_administration", "view_agent", "view_reponse"],
     "admin_contenu": [

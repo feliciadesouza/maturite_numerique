@@ -1,0 +1,139 @@
+/* =========================================================================
+   Maturité Numérique — Les 3 gabarits (vitrine, application, enquête)
+   ========================================================================= */
+
+/* ============ Gabarit APPLICATION : sidebar navy + topbar ============ */
+.app {
+  display: grid;
+  grid-template-columns: 264px 1fr;
+  min-height: 100vh;
+}
+.app-sidebar {
+  background: var(--navy);
+  color: #fff;
+  padding: var(--sp-6) var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-8);
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.app-brand { display: flex; align-items: center; gap: var(--sp-3); color: #fff; text-decoration: none; }
+.app-brand:hover { text-decoration: none; }
+.app-brand .mark {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--blue-500);
+  display: grid; place-items: center; color: #fff; flex: none;
+}
+.app-brand b { font-size: var(--fs-title); font-weight: 700; line-height: 1.15; display: block; }
+.app-brand span { font-size: var(--fs-cap); color: rgba(255,255,255,0.6); }
+
+.app-nav { display: flex; flex-direction: column; gap: 4px; }
+.app-nav a {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 11px 14px; border-radius: var(--r-control);
+  color: rgba(255,255,255,0.78); font-size: var(--fs-sm); font-weight: 600;
+  text-decoration: none;
+}
+.app-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.app-nav a.is-active { background: var(--blue-500); color: #fff; }
+
+.app-main { display: flex; flex-direction: column; min-width: 0; }
+.app-topbar {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: 0 var(--sp-8); height: 72px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5;
+}
+.app-topbar .menu-toggle {
+  background: none; border: none; padding: 6px; border-radius: var(--r-control);
+  color: var(--text-subtle); cursor: pointer; display: none;
+}
+.app-topbar .app-title { flex: 1; text-align: center; font-weight: 700; }
+.app-user { display: flex; align-items: center; gap: var(--sp-3); }
+.app-user .avatar {
+  width: 36px; height: 36px; border-radius: var(--r-pill); background: var(--blue-500);
+  color: #fff; display: grid; place-items: center; font-size: var(--fs-sm); font-weight: 700; flex: none;
+}
+.app-user .who { line-height: 1.2; }
+.app-user .who b { font-size: var(--fs-sm); display: block; }
+.app-user .who span { font-size: var(--fs-cap); color: var(--text-muted); }
+
+.app-content { padding: var(--sp-8); flex: 1; max-width: 1180px; width: 100%; }
+.page-head { margin-bottom: var(--sp-6); }
+.page-head h1 { margin-bottom: 4px; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .app-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: 264px; z-index: 30;
+    transform: translateX(-100%); transition: transform 0.2s;
+  }
+  .app.nav-open .app-sidebar { transform: translateX(0); }
+  .app-topbar .menu-toggle { display: inline-flex; }
+  .app-content { padding: var(--sp-4); }
+}
+
+/* ============ Gabarit VITRINE : header horizontal + footer navy ============ */
+.public { min-height: 100vh; display: flex; flex-direction: column; }
+.public-header {
+  display: flex; align-items: center; gap: var(--sp-6);
+  padding: var(--sp-4) var(--sp-8); background: var(--surface);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
+}
+.public-header .brand { display: flex; align-items: center; gap: var(--sp-3); color: var(--text); }
+.public-header .brand:hover { text-decoration: none; }
+.public-header .brand .mark {
+  width: 36px; height: 36px; border-radius: 9px; background: var(--blue-500);
+  display: grid; place-items: center; color: #fff; flex: none;
+}
+.public-header .brand b { font-weight: 700; display: block; line-height: 1.15; }
+.public-header .brand span { font-size: var(--fs-cap); color: var(--text-muted); }
+.public-nav { display: flex; gap: var(--sp-6); flex: 1; }
+.public-nav a { color: var(--text-subtle); font-size: var(--fs-sm); font-weight: 600; }
+.public-nav a:hover { color: var(--text); text-decoration: none; }
+
+.public-main { flex: 1; }
+.public-section { padding: var(--sp-16) var(--sp-8); }
+.public-container { max-width: 1080px; margin: 0 auto; }
+.public-container--narrow { max-width: 720px; }
+
+.public-footer {
+  background: var(--navy); color: rgba(255,255,255,0.7);
+  padding: var(--sp-12) var(--sp-8) var(--sp-8);
+}
+.public-footer .inner { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--sp-6); }
+.public-footer a { color: rgba(255,255,255,0.8); font-size: var(--fs-sm); }
+.public-footer nav { display: flex; flex-wrap: wrap; gap: var(--sp-6); }
+.public-footer .legal { font-size: var(--fs-cap); color: rgba(255,255,255,0.5);
+  border-top: 1px solid rgba(255,255,255,0.12); padding-top: var(--sp-4);
+  display: flex; flex-wrap: wrap; gap: var(--sp-4); justify-content: space-between; }
+
+@media (max-width: 720px) {
+  .public-header { flex-wrap: wrap; }
+  .public-nav { order: 3; width: 100%; overflow-x: auto; }
+  .public-section { padding: var(--sp-12) var(--sp-4); }
+}
+
+/* ============ Gabarit ENQUÊTE : header minimal + carte centrée ============ */
+.enquete { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+.enquete-header {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-8); background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.enquete-header .brand { display: flex; align-items: center; gap: var(--sp-3); color: var(--text); }
+.enquete-header .brand .mark {
+  width: 32px; height: 32px; border-radius: 8px; background: var(--blue-500);
+  display: grid; place-items: center; color: #fff; flex: none;
+}
+.enquete-header .brand b { font-weight: 700; }
+.enquete-header .ctx { flex: 1; text-align: center; font-size: var(--fs-sm); color: var(--text-muted); }
+.enquete-header .lang {
+  border: 1px solid var(--border-strong); border-radius: var(--r-control);
+  padding: 6px 10px; font-size: var(--fs-sm); background: var(--surface);
+}
+.enquete-main { flex: 1; display: flex; justify-content: center; padding: var(--sp-12) var(--sp-4); }
+.enquete-card { width: 100%; max-width: 620px; }
+.enquete-card--wide { max-width: 880px; }
+
+@media (max-width: 620px) {
+  .enquete-header { padding: var(--sp-3) var(--sp-4); }
+  .enquete-main { padding: var(--sp-6) var(--sp-3); }
+}
