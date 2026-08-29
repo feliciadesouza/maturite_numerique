@@ -116,23 +116,42 @@ class FormSubmissionTests(TestCase):
             pays="Togo",
         )
 
-    def test_formulaire_a_submission_creates_an_administration(self):
-        user = User.objects.create_user(username="form_a_user", password="testpass123")
-        Utilisateur.objects.create(user=user, role="agent_evaluateur")
-        self.client.force_login(user)
+    def test_formulaire_a_ouvre_une_evaluation_et_enregistre_les_reponses(self):
+        from core.models import Evaluation, Formulaire, VersionFormulaire
 
-        response = self.client.post(
-            "/formulaire-a/",
-            {
-                "nom": "Administration créée par test",
-                "secteur": "Public",
-                "region": "Lomé",
-                "pays": "Togo",
-            },
+        dim = Dimension.objects.create(nom="Infrastructure TIC", code="infra", ordre=1)
+        tc, _ = TypeChamp.objects.get_or_create(code="oui_non", defaults={"libelle": "Oui/Non"})
+        form_a = Formulaire.objects.create(code="A", nom="Formulaire A")
+        version = VersionFormulaire.objects.create(formulaire=form_a, numero_version=1, est_active=True)
+        question = Question.objects.create(
+            dimension=dim, version_formulaire=version, code="1.1",
+            texte="Connexion internet stable ?", type_champ=tc, ordre=1,
         )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Administration.objects.filter(nom="Administration créée par test").exists())
+        user = User.objects.create_user(username="form_a_user", password="testpass123")
+        Utilisateur.objects.create(
+            user=user, role="agent_evaluateur", administration=self.administration
+        )
+        self.client.force_login(user)
+
+        entree = self.client.get("/formulaire-a/")
+        self.assertEqual(entree.status_code, 302)
+        self.assertEqual(entree.url, "/formulaire-a/etape/1/")
+        self.assertEqual(self.client.get("/formulaire-a/etape/1/").status_code, 200)
+
+        suite = self.client.post("/formulaire-a/etape/1/", {f"q_{question.id}": "Oui"})
+        self.assertEqual(suite.status_code, 302)
+
+        evaluation = Evaluation.objects.get(administration=self.administration)
+        self.assertEqual(evaluation.statut, "en_cours")
+        self.assertTrue(Reponse.objects.filter(evaluation=evaluation, question=question, valeur="Oui").exists())
+
+    def test_formulaire_a_exige_une_administration_sur_le_profil(self):
+        user = User.objects.create_user(username="sans_admin", password="testpass123")
+        Utilisateur.objects.create(user=user, role="agent_evaluateur")
+        self.client.force_login(user)
+        response = self.client.get("/formulaire-a/")
+        self.assertRedirects(response, "/profile/", fetch_redirect_response=False)
 
     def test_formulaire_b_submission_creates_agent_and_answers(self):
         user = User.objects.create_user(username="form_b_user", password="testpass123")

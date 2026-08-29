@@ -1,0 +1,12 @@
+{% comment %} Params : etapes (liste de Dimension), numero (1-based) {% endcomment %}
+<div class="stepper" role="list">
+  {% for dim in etapes %}
+    {% if not forloop.first %}<span class="stepper__line" aria-hidden="true"></span>{% endif %}
+    <div class="stepper__step {% if forloop.counter < numero %}is-done{% elif forloop.counter == numero %}is-current{% endif %}" role="listitem">
+      <span class="stepper__dot">
+        {% if forloop.counter < numero %}{% include "components/_icon.html" with name="check" cls="icon--sm" %}{% else %}{{ forloop.counter }}{% endif %}
+      </span>
+      <span class="stepper__label">{{ dim.nom }}</span>
+    </div>
+  {% endfor %}
+</div>

@@ -5,16 +5,27 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.mail import send_mail
 from django.db.models import Avg
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import (
-    AdministrationForm,
     AgentForm,
     ContactForm,
     ProfileForm,
     build_question_form,
+    build_reponses_form,
+    enregistrer_reponses,
 )
-from .models import Administration, Agent, Dimension, Evaluation, Question, Reponse, Utilisateur
+from .models import (
+    Administration,
+    Agent,
+    Dimension,
+    Evaluation,
+    Question,
+    Reponse,
+    Utilisateur,
+    VersionFormulaire,
+)
 from .permissions import ROLE_HOME_URLS, role_required
 from .scoring import calculer_score_global, distribution_niveaux_administration
 
@@ -233,20 +244,137 @@ def profile(request):
     return render(request, "core/profile.html", {"form": form})
 
 
+def _evaluation_en_cours(administration, user):
+    """Récupère (ou ouvre) l'évaluation en cours d'une administration."""
+    version_a = VersionFormulaire.objects.filter(
+        formulaire__code="A", est_active=True
+    ).first()
+    evaluation = (
+        Evaluation.objects.filter(
+            administration=administration, statut__in=["brouillon", "en_cours"]
+        )
+        .order_by("-date_ouverture")
+        .first()
+    )
+    if evaluation is None:
+        evaluation = Evaluation.objects.create(
+            administration=administration,
+            version_formulaire_a=version_a,
+            cree_par=user,
+            statut="en_cours",
+        )
+    elif evaluation.version_formulaire_a_id is None and version_a:
+        evaluation.version_formulaire_a = version_a
+        evaluation.save(update_fields=["version_formulaire_a"])
+    return evaluation, version_a
+
+
+def _etapes_formulaire_a(version_a):
+    """Les dimensions couvertes par le Formulaire A, dans l'ordre — une par étape."""
+    if not version_a:
+        return []
+    return list(
+        Dimension.objects.filter(
+            actif=True,
+            questions__version_formulaire=version_a,
+            questions__actif=True,
+        )
+        .distinct()
+        .order_by("ordre")
+    )
+
+
 @login_required
 @role_required("agent_evaluateur")
 def formulaire_a(request):
-    """Saisie du formulaire A, réservée à l’agent évaluateur."""
-    if request.method == "POST":
-        form = AdministrationForm(request.POST)
-        if form.is_valid():
-            administration = form.save()
-            messages.success(request, "Formulaire A enregistré avec succès.")
-            return redirect("administration_detail", administration_id=administration.pk)
-    else:
-        form = AdministrationForm()
+    """Point d'entrée : ouvre l'évaluation et redirige vers la première étape."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        messages.warning(
+            request,
+            "Renseignez votre administration dans votre profil pour démarrer le Formulaire A.",
+        )
+        return redirect("profile")
 
-    return render(request, "core/formulaire_a.html", {"form": form})
+    _, version_a = _evaluation_en_cours(profil.administration, request.user)
+    if not _etapes_formulaire_a(version_a):
+        messages.error(request, "Le Formulaire A ne comporte pas encore de questions.")
+        return redirect("home")
+    return redirect("formulaire_a_etape", numero=1)
+
+
+@login_required
+@role_required("agent_evaluateur")
+def formulaire_a_etape(request, numero):
+    """Une étape du Formulaire A (les questions d'une dimension)."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        return redirect("formulaire_a")
+
+    evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    etapes = _etapes_formulaire_a(version_a)
+    if numero < 1 or numero > len(etapes):
+        return redirect("formulaire_a_etape", numero=1)
+
+    dimension = etapes[numero - 1]
+    questions = list(
+        Question.objects.filter(
+            version_formulaire=version_a, dimension=dimension, actif=True
+        )
+        .select_related("type_champ")
+        .prefetch_related("options")
+        .order_by("ordre")
+    )
+    reponses_existantes = {
+        r.question_id: r.valeur
+        for r in Reponse.objects.filter(evaluation=evaluation, question__in=questions)
+    }
+
+    if request.method == "POST":
+        autosave = request.POST.get("autosave") == "1"
+        form = build_reponses_form(questions, data=request.POST, partiel=autosave)
+        if form.is_valid():
+            enregistrer_reponses(
+                form, questions, evaluation=evaluation,
+                administration=profil.administration, utilisateur=request.user,
+            )
+            if autosave:
+                return HttpResponse(status=204)
+            if "precedent" in request.POST and numero > 1:
+                return redirect("formulaire_a_etape", numero=numero - 1)
+            if numero < len(etapes):
+                return redirect("formulaire_a_etape", numero=numero + 1)
+            return redirect("formulaire_a_fin")
+        if autosave:
+            return HttpResponse(status=204)
+    else:
+        form = build_reponses_form(questions, reponses=reponses_existantes)
+
+    champs = [{"q": question, "bf": form[f"q_{question.id}"]} for question in questions]
+    return render(request, "app/formulaire_a/etape.html", {
+        "evaluation": evaluation,
+        "dimension": dimension,
+        "champs": champs,
+        "form": form,
+        "numero": numero,
+        "etapes": etapes,
+        "total": len(etapes),
+        "progression": round(numero / len(etapes) * 100),
+    })
+
+
+@login_required
+@role_required("agent_evaluateur")
+def formulaire_a_fin(request):
+    """Écran de fin du Formulaire A."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        return redirect("formulaire_a")
+    evaluation, _ = _evaluation_en_cours(profil.administration, request.user)
+    nb_reponses = Reponse.objects.filter(evaluation=evaluation).count()
+    return render(request, "app/formulaire_a/fin.html", {
+        "evaluation": evaluation, "nb_reponses": nb_reponses,
+    })
 
 
 @login_required

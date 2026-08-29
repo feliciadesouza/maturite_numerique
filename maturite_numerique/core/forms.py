@@ -6,9 +6,87 @@ from .models import (
     MessageContact,
     OptionReponse,
     Question,
+    Reponse,
     Utilisateur,
     VersionFormulaire,
 )
+
+
+# --- Rendu dynamique des questions (Formulaires A et B) ---
+
+CHOIX_PAR_TYPE = {
+    "oui_non": [("Oui", "Oui"), ("Non", "Non")],
+    "oui_non_partiel": [("Oui", "Oui"), ("Non", "Non"), ("Partiel", "Partiel")],
+    "tranches": [
+        ("<25%", "Moins de 25 %"), ("25-50%", "25 % à 50 %"),
+        ("50-75%", "50 % à 75 %"), (">75%", "Plus de 75 %"),
+    ],
+    "echelle_1_5": [(str(i), str(i)) for i in range(1, 6)],
+}
+
+
+def choix_question(question):
+    """Liste (valeur, libellé) des options d'une question, ou None si champ libre."""
+    code = question.type_champ.code
+    if code in CHOIX_PAR_TYPE:
+        return CHOIX_PAR_TYPE[code]
+    if code in ("liste", "choix_multiple"):
+        return [(o.valeur, o.libelle) for o in question.options.all().order_by("ordre")]
+    return None
+
+
+def build_reponses_form(questions, *, reponses=None, data=None, partiel=False):
+    """
+    Formulaire dynamique pour un ensemble de questions.
+    `reponses` : dict {question_id: valeur} pour pré-remplir.
+    `partiel` : si vrai, aucun champ n'est obligatoire (sauvegarde auto).
+    """
+    reponses = reponses or {}
+    fields = {}
+    for question in questions:
+        name = f"q_{question.id}"
+        code = question.type_champ.code
+        valeur = reponses.get(question.id)
+        requis = bool(question.obligatoire) and not partiel
+
+        if code == "choix_multiple":
+            fields[name] = forms.MultipleChoiceField(
+                choices=choix_question(question) or [],
+                required=requis, widget=forms.CheckboxSelectMultiple,
+                initial=valeur.split(";") if valeur else None,
+            )
+        elif code == "texte_libre":
+            fields[name] = forms.CharField(
+                required=requis, widget=forms.Textarea(attrs={"rows": 3}), initial=valeur,
+            )
+        else:
+            fields[name] = forms.ChoiceField(
+                choices=choix_question(question) or [("", "")],
+                required=requis, widget=forms.RadioSelect, initial=valeur,
+            )
+
+    return type("ReponsesForm", (forms.Form,), fields)(data=data)
+
+
+def enregistrer_reponses(form, questions, *, evaluation=None, agent=None,
+                         administration=None, utilisateur=None):
+    """Enregistre (ou met à jour / supprime) les réponses d'un formulaire dynamique."""
+    for question in questions:
+        brut = form.cleaned_data.get(f"q_{question.id}")
+        valeur = ";".join(brut) if isinstance(brut, list) else (brut or "")
+        if valeur == "":
+            Reponse.objects.filter(
+                question=question, evaluation=evaluation, agent=agent
+            ).delete()
+            continue
+        Reponse.objects.update_or_create(
+            question=question, evaluation=evaluation, agent=agent,
+            defaults={
+                "valeur": valeur,
+                "administration": administration,
+                "utilisateur": utilisateur,
+            },
+        )
 
 
 class ContactForm(forms.ModelForm):

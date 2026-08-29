@@ -1,0 +1,93 @@
+{% extends "base_app.html" %}
+
+{% block title %}Formulaire A — {{ dimension.nom }}{% endblock %}
+{% block topbar_title %}Diagnostic de maturité numérique — Togo{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Formulaire A — Fiche Administration</h1>
+  <p class="breadcrumb">{{ evaluation.administration.nom }}
+    {% if evaluation.responsable_nom %}· Responsable : {{ evaluation.responsable_nom }}{% endif %}</p>
+</div>
+
+<div class="card" style="margin-bottom: var(--sp-6);">
+  {% include "components/_stepper.html" with etapes=etapes numero=numero %}
+</div>
+
+<div class="step-meta">
+  <span>Étape {{ numero }} / {{ total }} — {{ dimension.nom }}</span>
+  <span>{{ progression }} %</span>
+</div>
+<div class="progress" style="margin-bottom: var(--sp-6);"><span style="width: {{ progression }}%;"></span></div>
+
+<form method="post" class="card" id="form-a" data-autosave-url="{% url 'formulaire_a_etape' numero=numero %}">
+  {% csrf_token %}
+  <div class="qform">
+    {% for c in champs %}
+    <div class="qitem {% if c.bf.errors %}has-error{% endif %}">
+      <div class="qitem__head">
+        <span class="qitem__code">{{ c.q.code }}.</span>
+        <span class="qitem__texte">{{ c.q.texte }}</span>
+        {% if c.q.aide %}
+          <span class="qitem__aide" title="{{ c.q.aide }}">{% include "components/_icon.html" with name="info" cls="icon--sm" %}</span>
+        {% endif %}
+      </div>
+
+      {% if c.q.type_champ.code == 'echelle_1_5' %}
+        <div class="qscale">
+          {% if c.q.borne_min_label %}<span class="qscale__borne">{{ c.q.borne_min_label }}</span>{% endif %}
+          <div class="qchoices">{{ c.bf }}</div>
+          {% if c.q.borne_max_label %}<span class="qscale__borne">{{ c.q.borne_max_label }}</span>{% endif %}
+        </div>
+      {% elif c.q.type_champ.code == 'texte_libre' %}
+        {{ c.bf }}
+      {% else %}
+        <div class="qchoices">{{ c.bf }}</div>
+      {% endif %}
+
+      {% if c.bf.errors %}<div class="qitem__err">{{ c.bf.errors|striptags }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="form-foot">
+    {% if numero > 1 %}
+      <button type="submit" name="precedent" value="1" class="btn btn--secondary">
+        {% include "components/_icon.html" with name="chevron-left" cls="icon--sm" %} Précédent</button>
+    {% else %}<span></span>{% endif %}
+
+    <span class="autosave" id="autosave-status">
+      {% include "components/_icon.html" with name="check" cls="icon--sm" %} Réponses enregistrées automatiquement</span>
+
+    <button type="submit" class="btn btn--primary">
+      {% if numero < total %}Étape suivante{% else %}Terminer le Formulaire A{% endif %}
+      {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %}</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById("form-a");
+  var status = document.getElementById("autosave-status");
+  if (!form) return;
+  var timer = null;
+  function save() {
+    var data = new FormData(form);
+    data.append("autosave", "1");
+    fetch(form.dataset.autosaveUrl, {
+      method: "POST", body: data, headers: { "X-Requested-With": "fetch" },
+    }).then(function () {
+      if (status) status.textContent = "Réponses enregistrées automatiquement";
+    }).catch(function () {
+      if (status) status.textContent = "Hors ligne — réponses conservées sur cet appareil";
+    });
+  }
+  form.addEventListener("change", function () {
+    clearTimeout(timer);
+    timer = setTimeout(save, 600);
+  });
+})();
+</script>
+{% endblock %}
