@@ -1,19 +1,29 @@
 {% comment %} Bandeau navy d'en-tête. Params : eyebrow, titre, sous_titre {% endcomment %}
 <section class="page-banner">
-  <svg class="page-banner__decor" viewBox="0 0 1440 320" preserveAspectRatio="xMidYMid slice"
+  <svg class="page-banner__decor" viewBox="0 0 1440 340" preserveAspectRatio="xMidYMid slice"
        aria-hidden="true" focusable="false">
     <defs>
       <pattern id="pb-dots" width="26" height="26" patternUnits="userSpaceOnUse">
         <circle cx="2" cy="2" r="2" fill="rgba(255,255,255,0.14)"/>
       </pattern>
     </defs>
-    <rect x="64" y="30" width="224" height="160" fill="url(#pb-dots)"/>
-    <polygon points="1300,36 1414,120 1370,252 1230,252 1186,120"
-             fill="none" stroke="rgba(255,255,255,0.13)" stroke-width="1.5"/>
-    <polygon points="1300,94 1374,148 1345,234 1255,234 1226,148"
-             fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
-    <circle cx="338" cy="120" r="6" fill="#3E90F0"/>
-    <circle cx="1150" cy="222" r="6" fill="#F2B33D"/>
+    <rect x="58" y="22" width="234" height="176" fill="url(#pb-dots)"/>
+    <circle cx="70" cy="340" r="160" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+    <g stroke="rgba(255,255,255,0.14)" stroke-width="1.5" fill="none">
+      <polygon points="1300,26 1424,132 1382,286 1206,252 1152,110"/>
+      <polygon points="1300,96 1368,154 1345,238 1249,220 1219,142"/>
+      <line x1="1300" y1="150" x2="1300" y2="26"/>
+      <line x1="1300" y1="150" x2="1424" y2="132"/>
+      <line x1="1300" y1="150" x2="1382" y2="286"/>
+      <line x1="1300" y1="150" x2="1206" y2="252"/>
+      <line x1="1300" y1="150" x2="1152" y2="110"/>
+    </g>
+    <g fill="rgba(255,255,255,0.45)">
+      <circle cx="1300" cy="26" r="4"/><circle cx="1424" cy="132" r="4"/>
+      <circle cx="1382" cy="286" r="4"/><circle cx="1206" cy="252" r="4"/><circle cx="1152" cy="110" r="4"/>
+    </g>
+    <circle cx="352" cy="118" r="6" fill="#3E90F0"/>
+    <circle cx="1150" cy="238" r="6" fill="#F2B33D"/>
   </svg>
   <div class="inner">
     <span class="eyebrow">{{ eyebrow }}</span>

@@ -15,7 +15,7 @@
           <div><h3>Formulaire A · Responsable</h3>
             <span class="text-sm" style="color:var(--primary);font-weight:600;">Rempli par le chef de service ou la DSI</span></div>
         </div>
-        <ul class="checklist">
+        <ul class="checklist checklist--primary">
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>4 étapes, environ 22 questions structurées.</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Couvre Infrastructure, Services en ligne, Cadre juridique et Engagement.</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Sauvegarde automatique · le responsable peut s'interrompre et reprendre.</span></li>
@@ -63,13 +63,16 @@
 <section class="public-section">
   <div class="public-container">
     <h2 style="text-align:center;margin-bottom:var(--sp-8);">De l'évaluation au plan d'action</h2>
-    <div class="card-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="steps-flow">
       <div class="card mini-card"><div class="step-num">1</div><h3>Préparation</h3>
         <p>Comptes, échantillon d'agents, planning.</p><span class="tag-chip">~1 semaine</span></div>
+      <span class="step-arrow" aria-hidden="true">{% include "components/_icon.html" with name="arrow-right" %}</span>
       <div class="card mini-card"><div class="step-num">2</div><h3>Collecte</h3>
         <p>Formulaire A + enquête agents (2 modes).</p><span class="tag-chip">1 à 2 semaines</span></div>
+      <span class="step-arrow" aria-hidden="true">{% include "components/_icon.html" with name="arrow-right" %}</span>
       <div class="card mini-card"><div class="step-num">3</div><h3>Analyse</h3>
         <p>Scores, radar, distribution · automatique.</p><span class="tag-chip">Instantané</span></div>
+      <span class="step-arrow" aria-hidden="true">{% include "components/_icon.html" with name="arrow-right" %}</span>
       <div class="card mini-card"><div class="step-num">4</div><h3>Restitution</h3>
         <p>Rapport, recommandations, comparaison.</p><span class="tag-chip">Comité de décision</span></div>
     </div>
