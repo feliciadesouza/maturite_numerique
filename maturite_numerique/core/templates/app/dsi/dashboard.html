@@ -77,8 +77,8 @@
   </div>
   <div class="tile tile--red">
     <span class="eyebrow">{% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %} Dimension la plus à risque</span>
-    <div class="big">{{ dimension_risque.dimension.nom|default:"Aucune" }} · {{ dimension_risque.score|default:"n/d" }} / 5</div>
-    <p>Prioriser les actions sur cette dimension</p>
+    <div class="big">{{ dimension_risque.dimension.nom|default:"Aucune" }}</div>
+    <p>{{ dimension_risque.score|default:"n/d" }} / 5 · prioriser les actions sur cette dimension</p>
   </div>
 </div>
 {% endblock %}
