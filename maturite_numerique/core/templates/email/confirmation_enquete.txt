@@ -1,0 +1,13 @@
+Bonjour{% if agent.nom %} {{ agent.nom }}{% endif %},
+
+Vos réponses au questionnaire « Maturité Numérique » ont bien été enregistrées.
+Merci pour le temps que vous y avez consacré.
+
+Référence de participation : {{ agent.reference }}
+Administration : {{ agent.administration.nom }}
+
+Aucune action supplémentaire n'est requise. Vos réponses servent uniquement au
+diagnostic de maturité numérique de votre administration et sont restituées de
+façon agrégée.
+
+— L'équipe Maturité Numérique

@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+﻿from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase
@@ -48,7 +48,7 @@ class AuthenticationProfileTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_dashboard_requires_login(self):
-        response = self.client.get("/dashboard/")
+        response = self.client.get("/tableau-de-bord/")
         self.assertEqual(response.status_code, 302)
 
     def test_dsi_role_can_access_dashboard(self):
@@ -58,7 +58,7 @@ class AuthenticationProfileTests(TestCase):
         profil.save()
 
         self.client.force_login(user)
-        response = self.client.get("/dashboard/")
+        response = self.client.get("/tableau-de-bord/")
 
         self.assertEqual(response.status_code, 200)
 
@@ -86,7 +86,7 @@ class AuthenticationProfileTests(TestCase):
         self.client.force_login(user)
         response = self.client.get("/formulaire-a/")
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
 
 class FormSubmissionTests(TestCase):
@@ -378,7 +378,7 @@ class PublicSiteTests(TestCase):
         self.client.force_login(user)
         response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/dashboard/")
+        self.assertEqual(response.url, "/tableau-de-bord/")
 
 
 class DsiEspaceTests(TestCase):
@@ -390,7 +390,7 @@ class DsiEspaceTests(TestCase):
         self.client.force_login(user)
 
     def test_pages_dsi_repondent(self):
-        for path in ["/dashboard/", "/administrations/", "/comparaison/", "/rapports/"]:
+        for path in ["/tableau-de-bord/", "/administrations/", "/comparaison/", "/rapports/"]:
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
@@ -419,7 +419,7 @@ class DsiEspaceTests(TestCase):
         user = User.objects.create_user(username="ac_u", password="testpass123")
         Utilisateur.objects.create(user=user, role="admin_contenu")
         self.client.force_login(user)
-        self.assertEqual(self.client.get("/dashboard/").status_code, 302)
+        self.assertEqual(self.client.get("/tableau-de-bord/").status_code, 403)
 
     def test_comparaison_avec_plusieurs_administrations(self):
         kloto = Administration.objects.create(nom="Préfecture de Kloto")
@@ -589,7 +589,21 @@ class BackofficeTests(TestCase):
         user = User.objects.create_user(username="dsi_bo", password="testpass123")
         Utilisateur.objects.create(user=user, role="dsi_decideur")
         self.client.force_login(user)
-        self.assertEqual(self.client.get("/back-office/").status_code, 302)
+        self.assertEqual(self.client.get("/back-office/").status_code, 403)
+
+
+class PagesErreurTests(TestCase):
+    def test_page_404(self):
+        response = self.client.get("/cette-page-nexiste-pas/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Page introuvable", status_code=404)
+
+    def test_page_403_pour_mauvais_role(self):
+        user = User.objects.create_user(username="mauvais_role", password="testpass123")
+        Utilisateur.objects.create(user=user, role="enqueteur")
+        self.client.force_login(user)
+        response = self.client.get("/back-office/")
+        self.assertContains(response, "Accès refusé", status_code=403)
 
 
 class MaturityHelpersTests(TestCase):
