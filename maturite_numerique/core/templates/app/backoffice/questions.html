@@ -1,0 +1,39 @@
+{% extends "base_app.html" %}
+
+{% block title %}Questions — {{ dimension.nom }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Dimension : {{ dimension.nom }}</h1>
+  <p class="breadcrumb"><a href="{% url 'backoffice' %}">Dimensions</a> — {{ dimension.nom }}
+    {% if version %}· {{ version.formulaire.get_code_display }} v{{ version.numero_version }}{% endif %}</p>
+</div>
+
+<div class="row row--between" style="margin-bottom: var(--sp-4);">
+  <h3>Questions ({{ questions|length }})</h3>
+  <a href="{% url 'bo_question_nouvelle' dimension_id=dimension.pk %}" class="btn btn--primary">
+    {% include "components/_icon.html" with name="plus" cls="icon--sm" %} Ajouter une question</a>
+</div>
+
+<div class="stack" style="gap: var(--sp-2);">
+  {% for q in questions %}
+  <div class="card" style="padding: var(--sp-4);">
+    <div class="row row--between" style="gap: var(--sp-3); flex-wrap: wrap;">
+      <div class="row" style="gap: var(--sp-3);">
+        <span class="badge badge--neutre">{{ q.code }}</span>
+        <span>{{ q.texte }}</span>
+      </div>
+      <div class="row" style="gap: var(--sp-2);">
+        <span class="badge badge--version">{{ q.type_champ.libelle }}</span>
+        {% if q.actif %}<span class="badge badge--fort">Actif</span>{% else %}<span class="badge badge--neutre">Inactif</span>{% endif %}
+        <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='haut' %}" style="display:inline;">{% csrf_token %}<button class="btn btn--ghost" title="Monter">↑</button></form>
+        <form method="post" action="{% url 'bo_question_ordre' question_id=q.pk sens='bas' %}" style="display:inline;">{% csrf_token %}<button class="btn btn--ghost" title="Descendre">↓</button></form>
+        <a href="{% url 'bo_question_editer' question_id=q.pk %}" class="btn btn--secondary">Éditer</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p class="text-muted">Aucune question pour cette dimension dans la version active.</p>
+  {% endfor %}
+</div>
+{% endblock %}

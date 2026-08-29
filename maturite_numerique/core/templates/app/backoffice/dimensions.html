@@ -1,0 +1,57 @@
+{% extends "base_app.html" %}
+
+{% block title %}Gestion des formulaires — Dimensions{% endblock %}
+{% block topbar_title %}Back-office du questionnaire{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Gestion des formulaires</h1>
+  <p class="breadcrumb">Back-office — Dimensions</p>
+</div>
+
+<div class="row row--between" style="flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4);">
+  <div class="wrap-flex">
+    {% if version_a %}<span class="badge badge--version">Formulaire A · v{{ version_a.numero_version }}</span>{% endif %}
+    {% if version_b %}<span class="badge badge--version">Formulaire B · v{{ version_b.numero_version }}</span>{% endif %}
+  </div>
+  <a href="{% url 'bo_dimension_nouvelle' %}" class="btn btn--primary">
+    {% include "components/_icon.html" with name="plus" cls="icon--sm" %} Ajouter une dimension</a>
+</div>
+
+<div class="twrap card--flush">
+  <table class="bo-table">
+    <thead><tr><th>Dimension</th><th>Poids</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for d in dimensions %}
+      <tr>
+        <td>
+          <div class="row" style="gap: var(--sp-3);">
+            <span class="dimbar__dot" style="background: {{ d.obj.couleur }}; width: 12px; height: 12px;"></span>
+            <span class="who">
+              <b>{{ d.obj.nom }}</b>
+              <span>{{ d.nb_questions }} question{{ d.nb_questions|pluralize }}{% if d.obj.description %} · {{ d.obj.description|truncatewords:4 }}{% endif %}</span>
+            </span>
+          </div>
+        </td>
+        <td class="tabular">{{ d.obj.poids|floatformat:0 }} %</td>
+        <td>
+          {% if d.obj.actif %}<span class="badge badge--fort">Actif</span>
+          {% else %}<span class="badge badge--neutre">Inactif</span>{% endif %}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='haut' %}" style="display:inline;">
+            {% csrf_token %}<button class="btn btn--ghost o-haut" title="Monter">↑</button></form>
+          <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='bas' %}" style="display:inline;">
+            {% csrf_token %}<button class="btn btn--ghost" title="Descendre">↓</button></form>
+          <a href="{% url 'bo_dimension_editer' dimension_id=d.obj.pk %}" class="btn btn--secondary">
+            {% include "components/_icon.html" with name="list" cls="icon--sm" %} Éditer</a>
+          <a href="{% url 'bo_questions' dimension_id=d.obj.pk %}" class="btn btn--ghost">Questions</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted" style="text-align:center; padding: var(--sp-8);">Aucune dimension.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -508,6 +508,88 @@ class EnqueteurTests(TestCase):
         )
 
 
+class BackofficeTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+        user = User.objects.create_user(username="ac", password="testpass123")
+        Utilisateur.objects.create(user=user, role="admin_contenu")
+        self.client.force_login(user)
+        self.version_a = VersionFormulaire.objects.get(
+            formulaire__code="A", est_active=True
+        )
+        self.dimension = Dimension.objects.get(code="infra")
+
+    def test_pages_backoffice_repondent(self):
+        for path in ["/back-office/", "/back-office/questions/", "/back-office/versions/",
+                     f"/back-office/dimensions/{self.dimension.pk}/questions/"]:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+
+    def test_ajout_dimension(self):
+        response = self.client.post("/back-office/dimensions/nouvelle/", {
+            "nom": "Gouvernance des données", "code": "gouvernance",
+            "description": "", "poids": "0.10", "couleur": "#123456",
+            "icone": "shield", "actif": "on",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Dimension.objects.filter(code="gouvernance").exists())
+
+    def test_edition_question_sans_reponse_reste_dans_la_meme_version(self):
+        question = Question.objects.filter(
+            version_formulaire=self.version_a, dimension=self.dimension
+        ).first()
+        nb_versions = VersionFormulaire.objects.filter(formulaire__code="A").count()
+        response = self.client.post(
+            f"/back-office/questions/{question.pk}/editer/",
+            {
+                "code": question.code, "texte": "Nouvel intitulé", "section": "",
+                "type_champ": question.type_champ_id, "borne_min_label": "",
+                "borne_max_label": "", "aide": "", "obligatoire": "on", "actif": "on",
+                "options_texte": "",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        question.refresh_from_db()
+        self.assertEqual(question.texte, "Nouvel intitulé")
+        self.assertEqual(
+            VersionFormulaire.objects.filter(formulaire__code="A").count(), nb_versions
+        )
+
+    def test_edition_question_avec_reponses_cree_une_nouvelle_version(self):
+        question = Question.objects.filter(
+            version_formulaire=self.version_a, dimension=self.dimension
+        ).first()
+        administration = Administration.objects.create(nom="Mairie de Lomé")
+        Reponse.objects.create(question=question, administration=administration, valeur="3")
+        nb_versions = VersionFormulaire.objects.filter(formulaire__code="A").count()
+
+        response = self.client.post(
+            f"/back-office/questions/{question.pk}/editer/",
+            {
+                "code": question.code, "texte": "Intitulé révisé", "section": "",
+                "type_champ": question.type_champ_id, "borne_min_label": "",
+                "borne_max_label": "", "aide": "", "obligatoire": "on", "actif": "on",
+                "options_texte": "",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            VersionFormulaire.objects.filter(formulaire__code="A").count(), nb_versions + 1
+        )
+        question.refresh_from_db()
+        self.assertNotEqual(question.texte, "Intitulé révisé")  # l'ancienne version est intacte
+        nouvelle = VersionFormulaire.objects.filter(
+            formulaire__code="A", est_active=True
+        ).first()
+        self.assertEqual(nouvelle.questions.get(code=question.code).texte, "Intitulé révisé")
+
+    def test_dsi_n_a_pas_acces_au_backoffice(self):
+        user = User.objects.create_user(username="dsi_bo", password="testpass123")
+        Utilisateur.objects.create(user=user, role="dsi_decideur")
+        self.client.force_login(user)
+        self.assertEqual(self.client.get("/back-office/").status_code, 302)
+
+
 class MaturityHelpersTests(TestCase):
     def test_niveau_libelle_par_palier(self):
         self.assertEqual(niveau_libelle(1.0), "Initial")

@@ -1,6 +1,16 @@
 from django import forms
 
-from .models import Administration, Agent, MessageContact, Reponse, Utilisateur
+from .models import (
+    Administration,
+    Agent,
+    Dimension,
+    MessageContact,
+    OptionReponse,
+    Question,
+    Reponse,
+    TypeChamp,
+    Utilisateur,
+)
 
 
 # --- Rendu dynamique des questions (Formulaires A et B) ---
@@ -137,3 +147,99 @@ class NouvelAgentForm(forms.ModelForm):
             "poste": forms.TextInput(attrs={"placeholder": "Ex. : Agent d'accueil"}),
             "service": forms.TextInput(attrs={"placeholder": "Ex. : État civil"}),
         }
+
+
+# --- Back-office : administrateur de contenu ---
+
+class DimensionForm(forms.ModelForm):
+    class Meta:
+        model = Dimension
+        fields = ["nom", "code", "description", "poids", "couleur", "icone", "actif"]
+        labels = {
+            "nom": "Nom de la dimension",
+            "code": "Code (identifiant stable)",
+            "description": "Description",
+            "poids": "Poids dans le score global",
+            "couleur": "Couleur (hex)",
+            "icone": "Icône (nom Lucide)",
+            "actif": "Dimension active",
+        }
+        help_texts = {
+            "poids": "Ex. 0.20 pour 20 %.",
+            "couleur": "Ex. #3E90F0.",
+        }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 2}),
+        }
+
+
+TYPES_AVEC_OPTIONS = ("liste", "choix_multiple")
+
+
+class QuestionBackofficeForm(forms.ModelForm):
+    """Édition d'une question. Les options sont saisies une par ligne : valeur | libellé."""
+    options_texte = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "oui | Oui\nnon | Non"}),
+        label="Options de réponse",
+        help_text="Une par ligne, format « valeur | libellé ». Utilisé pour Liste et Choix multiple.",
+    )
+
+    class Meta:
+        model = Question
+        fields = [
+            "code", "texte", "type_champ", "section",
+            "borne_min_label", "borne_max_label", "aide", "obligatoire", "actif",
+        ]
+        labels = {
+            "code": "Code (ex. 2.1, B3.4)",
+            "texte": "Intitulé de la question",
+            "type_champ": "Type de champ",
+            "section": "Section (Formulaire B)",
+            "borne_min_label": "Borne basse de l'échelle",
+            "borne_max_label": "Borne haute de l'échelle",
+            "aide": "Aide contextuelle (facultatif)",
+            "obligatoire": "Réponse obligatoire",
+            "actif": "Question active",
+        }
+        widgets = {
+            "texte": forms.Textarea(attrs={"rows": 2}),
+            "borne_min_label": forms.TextInput(attrs={"placeholder": "Aucune"}),
+            "borne_max_label": forms.TextInput(attrs={"placeholder": "Excellente"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["type_champ"].queryset = TypeChamp.objects.order_by("libelle")
+        if self.instance and self.instance.pk:
+            lignes = [
+                f"{o.valeur} | {o.libelle}"
+                for o in self.instance.options.order_by("ordre")
+            ]
+            self.fields["options_texte"].initial = "\n".join(lignes)
+
+    def options_parsees(self):
+        """Liste [(valeur, libellé)] issue du champ texte."""
+        resultat = []
+        for ligne in (self.cleaned_data.get("options_texte") or "").splitlines():
+            ligne = ligne.strip()
+            if not ligne:
+                continue
+            if "|" in ligne:
+                valeur, libelle = (p.strip() for p in ligne.split("|", 1))
+            else:
+                valeur = libelle = ligne
+            resultat.append((valeur, libelle))
+        return resultat
+
+
+def appliquer_options(question, paires):
+    """Remplace les options d'une question par la liste (valeur, libellé) fournie."""
+    if question.type_champ.code not in TYPES_AVEC_OPTIONS:
+        question.options.all().delete()
+        return
+    question.options.all().delete()
+    for ordre, (valeur, libelle) in enumerate(paires):
+        OptionReponse.objects.create(
+            question=question, valeur=valeur, libelle=libelle, ordre=ordre
+        )

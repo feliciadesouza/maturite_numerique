@@ -1,0 +1,37 @@
+{% extends "base_app.html" %}
+
+{% block title %}Versions du questionnaire{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Versions du questionnaire</h1>
+  <p class="breadcrumb">Back-office — Versions</p>
+</div>
+
+<p class="text-muted" style="margin-bottom: var(--sp-6); max-width: 60ch;">
+  Chaque modification d'une question déjà répondue crée une nouvelle version.
+  Les versions figées restent liées à leurs réponses historiques pour le suivi dans le temps.</p>
+
+{% for f in formulaires %}
+<h3 style="margin-top: var(--sp-6);">{{ f.obj.nom }}</h3>
+<div class="twrap card--flush" style="margin-top: var(--sp-2);">
+  <table>
+    <thead><tr><th>Version</th><th>Créée le</th><th>Questions</th><th>État</th></tr></thead>
+    <tbody>
+      {% for v in f.versions %}
+      <tr>
+        <td><b>v{{ v.obj.numero_version }}</b></td>
+        <td class="text-muted text-sm">{{ v.obj.date_creation|date:"j F Y" }}</td>
+        <td class="tabular">{{ v.nb_questions }}</td>
+        <td>
+          {% if v.obj.est_active %}<span class="badge badge--version is-current">Active</span>
+          {% elif v.figee %}<span class="badge badge--neutre">Figée (réponses liées)</span>
+          {% else %}<span class="badge badge--neutre">Archivée</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+{% endblock %}

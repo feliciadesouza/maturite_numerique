@@ -13,8 +13,11 @@ from django.utils import timezone
 
 from .forms import (
     ContactForm,
+    DimensionForm,
     NouvelAgentForm,
     ProfileForm,
+    QuestionBackofficeForm,
+    appliquer_options,
     build_reponses_form,
     enregistrer_reponses,
 )
@@ -23,8 +26,10 @@ from .models import (
     Agent,
     Dimension,
     Evaluation,
+    Formulaire,
     Question,
     Reponse,
+    TypeChamp,
     Utilisateur,
     VersionFormulaire,
 )
@@ -34,6 +39,7 @@ from .scoring import (
     reponses_par_code,
     resultat_administration,
 )
+from .versioning import dupliquer_version, version_a_des_reponses
 
 
 # Étiquettes de contenu (vitrine) associées à chaque dimension du référentiel.
@@ -250,16 +256,198 @@ def administrations_liste(request):
     })
 
 
+def _version_active(code):
+    return VersionFormulaire.objects.filter(
+        formulaire__code=code, est_active=True
+    ).first()
+
+
 @login_required
 @role_required("admin_contenu")
 def backoffice(request):
-    """Back-office pour l’administrateur de contenu."""
-    dimensions = Dimension.objects.order_by("ordre", "nom")
-    formulaires = [
-        {"code": "A", "label": "Formulaire A - Administration"},
-        {"code": "B", "label": "Formulaire B - Agent"},
-    ]
-    return render(request, "core/backoffice.html", {"dimensions": dimensions, "formulaires": formulaires})
+    """Back-office — liste des dimensions du questionnaire."""
+    version_a = _version_active("A")
+    version_b = _version_active("B")
+    dimensions = []
+    for dimension in Dimension.objects.order_by("ordre", "nom"):
+        nb = Question.objects.filter(
+            dimension=dimension, actif=True,
+            version_formulaire__in=[v for v in (version_a, version_b) if v],
+        ).count()
+        dimensions.append({"obj": dimension, "nb_questions": nb})
+    return render(request, "app/backoffice/dimensions.html", {
+        "dimensions": dimensions,
+        "version_a": version_a,
+        "version_b": version_b,
+    })
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_dimension_form(request, dimension_id=None):
+    """Création ou édition d'une dimension."""
+    dimension = get_object_or_404(Dimension, pk=dimension_id) if dimension_id else None
+    if request.method == "POST":
+        form = DimensionForm(request.POST, instance=dimension)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            if dimension is None:
+                obj.ordre = (Dimension.objects.aggregate(m=Max("ordre"))["m"] or 0) + 1
+            obj.save()
+            messages.success(request, "Dimension enregistrée.")
+            return redirect("backoffice")
+    else:
+        form = DimensionForm(instance=dimension)
+    return render(request, "app/backoffice/dimension_form.html", {
+        "form": form, "dimension": dimension,
+    })
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_dimension_ordre(request, dimension_id, sens):
+    """Monte ou descend une dimension dans l'ordre d'affichage."""
+    dimension = get_object_or_404(Dimension, pk=dimension_id)
+    voisines = list(Dimension.objects.order_by("ordre", "nom"))
+    i = voisines.index(dimension)
+    j = i - 1 if sens == "haut" else i + 1
+    if 0 <= j < len(voisines):
+        autre = voisines[j]
+        dimension.ordre, autre.ordre = autre.ordre, dimension.ordre
+        dimension.save(update_fields=["ordre"])
+        autre.save(update_fields=["ordre"])
+    return redirect("backoffice")
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_questions_index(request):
+    """Point d'entrée « Questions » : choix de la dimension."""
+    version_a = _version_active("A")
+    version_b = _version_active("B")
+    lignes = []
+    for dimension in Dimension.objects.order_by("ordre", "nom"):
+        nb = Question.objects.filter(
+            dimension=dimension,
+            version_formulaire__in=[v for v in (version_a, version_b) if v],
+        ).count()
+        lignes.append({"obj": dimension, "nb": nb})
+    return render(request, "app/backoffice/questions_index.html", {"lignes": lignes})
+
+
+def _version_pour_dimension(dimension):
+    """Version active du formulaire qui porte les questions de cette dimension."""
+    code = "B" if dimension.code == "competences" else "A"
+    return _version_active(code)
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_questions(request, dimension_id):
+    """Questions d'une dimension pour la version active."""
+    dimension = get_object_or_404(Dimension, pk=dimension_id)
+    version = _version_pour_dimension(dimension)
+    questions = (
+        Question.objects.filter(dimension=dimension, version_formulaire=version)
+        .select_related("type_champ")
+        .order_by("ordre")
+        if version else []
+    )
+    return render(request, "app/backoffice/questions.html", {
+        "dimension": dimension, "version": version, "questions": questions,
+    })
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_question_ordre(request, question_id, sens):
+    question = get_object_or_404(Question, pk=question_id)
+    voisines = list(
+        Question.objects.filter(
+            dimension=question.dimension, version_formulaire=question.version_formulaire
+        ).order_by("ordre")
+    )
+    i = voisines.index(question)
+    j = i - 1 if sens == "haut" else i + 1
+    if 0 <= j < len(voisines):
+        autre = voisines[j]
+        question.ordre, autre.ordre = autre.ordre, question.ordre
+        question.save(update_fields=["ordre"])
+        autre.save(update_fields=["ordre"])
+    return redirect("bo_questions", dimension_id=question.dimension_id)
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_question_form(request, question_id=None, dimension_id=None):
+    """
+    Création ou édition d'une question. Si la version active a déjà des
+    réponses, une modification crée automatiquement la version suivante.
+    """
+    if question_id:
+        question = get_object_or_404(Question, pk=question_id)
+        dimension = question.dimension
+    else:
+        question = None
+        dimension = get_object_or_404(Dimension, pk=dimension_id)
+    version = _version_pour_dimension(dimension)
+    reponses_existantes = version and version_a_des_reponses(version)
+
+    if request.method == "POST":
+        form = QuestionBackofficeForm(request.POST, instance=question)
+        if form.is_valid():
+            if question and reponses_existantes:
+                nouvelle_version = dupliquer_version(version)
+                cible = nouvelle_version.questions.get(code=question.code)
+                form = QuestionBackofficeForm(request.POST, instance=cible)
+                form.is_valid()
+                obj = form.save(commit=False)
+                obj.version_formulaire = nouvelle_version
+                obj.dimension = dimension
+                obj.save()
+                appliquer_options(obj, form.options_parsees())
+                messages.success(
+                    request,
+                    f"Question modifiée — version v{nouvelle_version.numero_version} créée "
+                    "(les données précédentes sont conservées).",
+                )
+            else:
+                obj = form.save(commit=False)
+                obj.version_formulaire = version
+                obj.dimension = dimension
+                obj.save()
+                appliquer_options(obj, form.options_parsees())
+                messages.success(request, "Question enregistrée.")
+            return redirect("bo_questions", dimension_id=dimension.pk)
+    else:
+        form = QuestionBackofficeForm(instance=question)
+
+    return render(request, "app/backoffice/question_form.html", {
+        "form": form,
+        "question": question,
+        "dimension": dimension,
+        "version": version,
+        "reponses_existantes": reponses_existantes,
+        "prochaine_version": (version.numero_version + 1) if version else 2,
+        "types_map": {str(t.pk): t.code for t in TypeChamp.objects.all()},
+    })
+
+
+@login_required
+@role_required("admin_contenu")
+def bo_versions(request):
+    """Historique des versions de chaque formulaire."""
+    formulaires = []
+    for formulaire in Formulaire.objects.order_by("code"):
+        versions = []
+        for version in formulaire.versions.order_by("-numero_version"):
+            versions.append({
+                "obj": version,
+                "nb_questions": version.questions.count(),
+                "figee": version_a_des_reponses(version),
+            })
+        formulaires.append({"obj": formulaire, "versions": versions})
+    return render(request, "app/backoffice/versions.html", {"formulaires": formulaires})
 
 
 def _agent_de_l_enqueteur(request, agent_id):
