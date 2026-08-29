@@ -1,15 +1,21 @@
-{% comment %} En-tête + pied de page du site vitrine. {% endcomment %}
+{% comment %} En-tête du site vitrine (nav repliable en menu sur mobile). {% endcomment %}
 {% load static %}
 <header class="public-header">
   <a href="{% url 'home' %}" class="brand">
     <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
     <span><b>Maturité Numérique</b><span>Diagnostic des administrations</span></span>
   </a>
-  <nav class="public-nav" aria-label="Navigation">
-    <a href="{% url 'demarche' %}">La démarche</a>
-    <a href="{% url 'dimensions_publiques' %}">Les 5 dimensions</a>
-    <a href="{% url 'acces_par_role' %}">Accès par rôle</a>
-    <a href="{% url 'contact' %}">Contact</a>
-  </nav>
-  <a href="{% url 'connexion' %}" class="btn btn--primary">Se connecter</a>
+  <input type="checkbox" id="pub-nav" class="pub-nav-toggle visually-hidden">
+  <label for="pub-nav" class="pub-nav-btn" aria-label="Ouvrir le menu">
+    {% include "components/_icon.html" with name="menu" %}
+  </label>
+  <div class="public-nav-wrap">
+    <nav class="public-nav" aria-label="Navigation">
+      <a href="{% url 'demarche' %}">La démarche</a>
+      <a href="{% url 'dimensions_publiques' %}">Les 5 dimensions</a>
+      <a href="{% url 'acces_par_role' %}">Accès par rôle</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </nav>
+    <a href="{% url 'connexion' %}" class="btn btn--primary">Se connecter</a>
+  </div>
 </header>
