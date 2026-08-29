@@ -133,15 +133,20 @@
 .legal-doc p { color: var(--text-subtle); }
 
 /* Contact */
-.contact-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-6); align-items: start; }
+.contact-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--sp-6); align-items: start; }
+.contact-grid > .card { padding: var(--sp-8); }
 .contact-info { background: var(--surface-alt); border-radius: var(--r-card); padding: var(--sp-6); }
-.contact-info .line { display: flex; gap: var(--sp-3); margin-top: var(--sp-4); }
+.contact-info .line { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-5); }
 .contact-info .line:first-of-type { margin-top: var(--sp-4); }
-.contact-info .icon { color: var(--primary); flex: none; }
-.contact-info b { display: block; font-size: var(--fs-sm); }
+.contact-info .line > .icon {
+  width: 38px; height: 38px; padding: 9px; flex: none;
+  color: var(--primary); background: #fff; border-radius: 10px; box-shadow: var(--shadow);
+}
+.contact-info b { display: block; font-size: var(--fs-sm); margin-bottom: 2px; }
 .contact-info span { font-size: var(--fs-sm); color: var(--text-muted); }
-.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-4); }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-5); }
 .form-2col .field.full { grid-column: 1 / -1; }
+.contact-grid textarea { min-height: 150px; }
 
 @media (max-width: 860px) {
   .hero, .contact-grid { grid-template-columns: 1fr; }

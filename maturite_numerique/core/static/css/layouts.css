@@ -93,6 +93,7 @@
 .public-section { padding: var(--sp-16) var(--sp-8); }
 .public-container { max-width: 1080px; margin: 0 auto; }
 .public-container--narrow { max-width: 720px; }
+.public-container--wide { max-width: 1200px; }
 
 .public-footer {
   background: var(--navy); color: rgba(255,255,255,0.7);
