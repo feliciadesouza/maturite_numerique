@@ -1,0 +1,25 @@
+{% extends "base_app.html" %}
+
+{% block title %}Nouvel agent à enquêter{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Nouvel agent</h1>
+  <p class="breadcrumb"><a href="{% url 'enqueteur_home' %}">Mes enquêtes</a> — Ajouter un agent</p>
+</div>
+
+<form method="post" class="card" style="max-width: 560px;">
+  {% csrf_token %}
+  {% for field in form %}
+  <div class="field">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<ul class="errorlist">{{ field.errors|striptags }}</ul>{% endif %}
+  </div>
+  {% endfor %}
+  <div class="row" style="gap: var(--sp-3); margin-top: var(--sp-4);">
+    <a href="{% url 'enqueteur_home' %}" class="btn btn--secondary">Annuler</a>
+    <button type="submit" class="btn btn--primary">Ajouter et démarrer l'enquête</button>
+  </div>
+</form>
+{% endblock %}

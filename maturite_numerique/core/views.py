@@ -10,10 +10,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import (
-    AgentForm,
     ContactForm,
+    NouvelAgentForm,
     ProfileForm,
-    build_question_form,
     build_reponses_form,
     enregistrer_reponses,
 )
@@ -195,22 +194,180 @@ def backoffice(request):
     return render(request, "core/backoffice.html", {"dimensions": dimensions, "formulaires": formulaires})
 
 
+def _agent_de_l_enqueteur(request, agent_id):
+    """Agent de l'administration assignée à l'enquêteur connecté, ou 404."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    return get_object_or_404(
+        Agent, pk=agent_id, administration=profil.administration
+    ), profil
+
+
+def _questions_agent_ordonnees(agent):
+    """Liste à plat des questions visibles pour un agent (sections + conditions)."""
+    version_b = _version_b()
+    reponses = reponses_par_code(agent)
+    questions = []
+    for section in _sections_agent(agent):
+        questions.extend(_questions_section(version_b, section, reponses))
+    return questions
+
+
 @login_required
 @role_required("enqueteur")
 def enqueteur_home(request):
-    """Accueil enquêteur : liste des agents d’une administration à interviewer."""
+    """Liste des agents à enquêter pour l'administration assignée."""
     profil = get_object_or_404(Utilisateur, user=request.user)
-    if profil.administration:
-        agents = Agent.objects.filter(
-            administration=profil.administration
-        ).order_by("poste")
-    else:
-        agents = []
-    return render(
-        request,
-        "core/enqueteur_home.html",
-        {"agents": agents, "administration": profil.administration},
+    administration = profil.administration
+    tous = (
+        Agent.objects.filter(administration=administration).order_by("numero", "poste")
+        if administration else Agent.objects.none()
     )
+
+    compteurs = {
+        "tous": tous.count(),
+        "a_faire": tous.filter(statut="a_faire").count(),
+        "en_cours": tous.filter(statut="en_cours").count(),
+        "terminee": tous.filter(statut="terminee").count(),
+    }
+    termines = compteurs["terminee"]
+
+    statut = request.GET.get("statut", "tous")
+    recherche = request.GET.get("q", "").strip()
+    agents = tous
+    if statut in ("a_faire", "en_cours", "terminee"):
+        agents = agents.filter(statut=statut)
+    if recherche:
+        agents = agents.filter(poste__icontains=recherche) | agents.filter(
+            service__icontains=recherche
+        )
+
+    en_cours = tous.filter(statut="en_cours").first()
+    total_questions = len(_questions_agent_ordonnees(en_cours)) if en_cours else 0
+
+    filtres = [
+        ("tous", f"Tous · {compteurs['tous']}"),
+        ("a_faire", f"À faire · {compteurs['a_faire']}"),
+        ("en_cours", f"En cours · {compteurs['en_cours']}"),
+        ("terminee", f"Terminées · {compteurs['terminee']}"),
+    ]
+
+    return render(request, "app/enqueteur/liste_agents.html", {
+        "administration": administration,
+        "agents": agents,
+        "compteurs": compteurs,
+        "termines": termines,
+        "statut_actif": statut,
+        "recherche": recherche,
+        "en_cours": en_cours,
+        "en_cours_total": total_questions,
+        "filters": filtres,
+    })
+
+
+@login_required
+@role_required("enqueteur")
+def enqueteur_nouvel_agent(request):
+    """Ajout d'un agent à la liste d'enquête."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        messages.warning(request, "Aucune administration ne vous est assignée.")
+        return redirect("enqueteur_home")
+
+    if request.method == "POST":
+        form = NouvelAgentForm(request.POST)
+        if form.is_valid():
+            agent = form.save(commit=False)
+            agent.administration = profil.administration
+            agent.mode_saisie = "assiste"
+            agent.enqueteur = request.user
+            evaluation, _ = _evaluation_en_cours(profil.administration, request.user)
+            agent.evaluation = evaluation
+            dernier = (
+                Agent.objects.filter(evaluation=evaluation, numero__isnull=False)
+                .aggregate(m=Max("numero"))["m"] or 0
+            )
+            agent.numero = dernier + 1
+            agent.save()
+            messages.success(request, f"Agent {agent.numero:03d} ajouté à la liste.")
+            return redirect("formulaire_b_assiste", agent_id=agent.pk, index=0)
+    else:
+        form = NouvelAgentForm()
+    return render(request, "app/enqueteur/agent_form.html", {"form": form})
+
+
+@login_required
+@role_required("enqueteur")
+def formulaire_b_assiste(request, agent_id, index):
+    """Formulaire B en mode assisté : une question à la fois."""
+    agent, _ = _agent_de_l_enqueteur(request, agent_id)
+    if agent.enqueteur_id is None:
+        agent.enqueteur = request.user
+        agent.save(update_fields=["enqueteur"])
+
+    questions = _questions_agent_ordonnees(agent)
+    total = len(questions)
+    if total == 0:
+        messages.error(request, "Le Formulaire B ne comporte pas encore de questions.")
+        return redirect("enqueteur_home")
+    if index < 0 or index >= total:
+        return redirect("formulaire_b_assiste", agent_id=agent.pk, index=0)
+
+    question = questions[index]
+    reponse = Reponse.objects.filter(agent=agent, question=question).first()
+    form = build_reponses_form(
+        [question],
+        reponses={question.id: reponse.valeur} if reponse else None,
+        data=request.POST or None,
+        partiel="precedent" in request.POST,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        enregistrer_reponses(
+            form, [question], agent=agent, administration=agent.administration
+        )
+        if agent.statut == "a_faire":
+            agent.statut = "en_cours"
+        agent.progression = index
+        agent.save(update_fields=["statut", "progression"])
+
+        # La liste peut changer (filtre Niveau 0) : on la recalcule.
+        questions = _questions_agent_ordonnees(agent)
+        total = len(questions)
+        if "precedent" in request.POST and index > 0:
+            return redirect("formulaire_b_assiste", agent_id=agent.pk, index=index - 1)
+        if index + 1 < total:
+            return redirect("formulaire_b_assiste", agent_id=agent.pk, index=index + 1)
+        try:
+            _finaliser_enquete(agent)
+        except Exception:
+            messages.error(request, "La finalisation a échoué. Les réponses sont conservées.")
+            return redirect("formulaire_b_assiste", agent_id=agent.pk, index=index)
+        numero = agent.numero or agent.pk
+        messages.success(request, f"Enquête de l'agent {numero:03d} terminée.")
+        return redirect("enqueteur_home")
+
+    return render(request, "app/enqueteur/formulaire_b_assiste.html", {
+        "agent": agent,
+        "question": question,
+        "bf": form[f"q_{question.id}"],
+        "index": index,
+        "numero_question": index + 1,
+        "total": total,
+    })
+
+
+@login_required
+@role_required("enqueteur")
+def enqueteur_agent_voir(request, agent_id):
+    """Récapitulatif en lecture seule d'une enquête agent."""
+    agent, _ = _agent_de_l_enqueteur(request, agent_id)
+    lignes = [
+        {"question": r.question, "valeur": r.valeur}
+        for r in Reponse.objects.filter(agent=agent).select_related("question").order_by(
+            "question__section", "question__ordre"
+        )
+    ]
+    return render(request, "app/enqueteur/agent_voir.html", {"agent": agent, "lignes": lignes})
 
 
 @login_required
@@ -386,33 +543,8 @@ def formulaire_a_fin(request):
 @login_required
 @role_required("enqueteur")
 def formulaire_b(request):
-    """Saisie du formulaire B en mode assisté, réservée aux enquêteurs."""
-    if request.method == "POST":
-        agent_form = AgentForm(request.POST)
-        question_form = build_question_form("B", data=request.POST)
-
-        if agent_form.is_valid() and question_form.is_valid():
-            agent = agent_form.save()
-            for question in Question.objects.filter(version_formulaire__formulaire__code="B", actif=True):
-                answer = question_form.cleaned_data.get(f"q_{question.id}")
-                if answer:
-                    Reponse.objects.create(
-                        question=question,
-                        agent=agent,
-                        administration=agent.administration,
-                        valeur=answer,
-                    )
-            messages.success(request, "Formulaire B enregistré avec succès.")
-            return redirect("enqueteur_home")
-    else:
-        agent_form = AgentForm()
-        question_form = build_question_form("B")
-
-    return render(
-        request,
-        "core/formulaire_b.html",
-        {"agent_form": agent_form, "question_form": question_form},
-    )
+    """Ancienne route : renvoie vers la liste des enquêtes."""
+    return redirect("enqueteur_home")
 
 
 # ----------------------------- Formulaire B public -----------------------------

@@ -1,0 +1,95 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mes enquêtes{% endblock %}
+{% block topbar_title %}Enquête de terrain — {{ administration.nom|default:"—" }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Mes enquêtes</h1>
+  <p class="breadcrumb">
+    {% if administration %}Administration assignée : {{ administration.nom }} · {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
+    {% else %}Aucune administration ne vous est assignée.{% endif %}</p>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-6);">
+  <div class="card">
+    <div class="row row--between">
+      <h3>Progression de l'enquête</h3>
+      <span class="tabular"><strong style="font-size: var(--fs-h3);">{{ termines }}</strong>
+        <span class="text-muted">/ {{ compteurs.tous }}</span></span>
+    </div>
+    <div class="progress progress--success" style="margin: var(--sp-3) 0;">
+      <span style="width: {% if compteurs.tous %}{% widthratio termines compteurs.tous 100 %}{% else %}0{% endif %}%;"></span>
+    </div>
+    <div class="progress-legend">
+      <span><span class="dot dot--todo"></span><b>{{ compteurs.a_faire }}</b> à faire</span>
+      <span><span class="dot dot--wip"></span><b>{{ compteurs.en_cours }}</b> en cours</span>
+      <span><span class="dot dot--done"></span><b>{{ compteurs.terminee }}</b> terminées</span>
+    </div>
+  </div>
+
+  {% if en_cours %}
+  <div class="resume-card">
+    <span class="eyebrow">Enquête en cours</span>
+    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} — {{ en_cours.poste|default:"Agent" }}</h3>
+    <p>{{ en_cours.service|default:"Service non précisé" }} · Question {{ en_cours.progression|add:1 }} / {{ en_cours_total }}</p>
+    <a href="{% url 'formulaire_b_assiste' agent_id=en_cours.pk index=en_cours.progression %}" class="btn btn--secondary">
+      {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %} Reprendre l'enquête</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row row--between" style="flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4);">
+  <div class="filter-tabs">
+    {% for key, label in filters %}
+      <a class="filter-tab {% if statut_actif == key %}is-active{% endif %}"
+         href="?statut={{ key }}{% if recherche %}&q={{ recherche }}{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <div class="row" style="gap: var(--sp-3);">
+    <form method="get" class="row" style="gap: 8px;">
+      <input type="search" name="q" value="{{ recherche }}" placeholder="Rechercher un agent…" class="input" style="width: 220px;">
+    </form>
+    <a href="{% url 'enqueteur_nouvel_agent' %}" class="btn btn--primary">
+      {% include "components/_icon.html" with name="plus" cls="icon--sm" %} Nouvel agent</a>
+  </div>
+</div>
+
+<div class="twrap card--flush">
+  <table class="agent-table">
+    <thead><tr><th>Agent</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for agent in agents %}
+      <tr>
+        <td>
+          <div class="row" style="gap: var(--sp-3);">
+            <span class="agent-avatar">{% include "components/_icon.html" with name="user" cls="icon--sm" %}</span>
+            <span class="who">
+              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} — {{ agent.poste|default:"Agent" }}</b>
+              <span>{{ agent.service|default:"—" }}</span>
+            </span>
+          </div>
+        </td>
+        <td>
+          {% if agent.statut == "terminee" %}<span class="badge badge--fort">Terminée</span>
+          {% elif agent.statut == "en_cours" %}<span class="badge" style="background:var(--primary-soft);color:var(--primary);">En cours</span>
+          {% else %}<span class="badge badge--neutre">À faire</span>{% endif %}
+        </td>
+        <td style="text-align: right;">
+          {% if agent.statut == "terminee" %}
+            <a href="{% url 'enqueteur_agent_voir' agent_id=agent.pk %}" class="btn btn--ghost">Voir</a>
+          {% elif agent.statut == "en_cours" %}
+            <a href="{% url 'formulaire_b_assiste' agent_id=agent.pk index=agent.progression %}" class="btn btn--secondary">Reprendre</a>
+          {% else %}
+            <a href="{% url 'formulaire_b_assiste' agent_id=agent.pk index=0 %}" class="btn btn--primary">Démarrer</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="text-muted" style="padding: var(--sp-8); text-align: center;">
+        Aucun agent {% if recherche %}ne correspond à « {{ recherche }} »{% else %}dans cette liste{% endif %}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
