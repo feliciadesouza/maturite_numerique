@@ -1,6 +1,33 @@
 from django import forms
 
-from .models import Administration, Agent, OptionReponse, Question, Utilisateur, VersionFormulaire
+from .models import (
+    Administration,
+    Agent,
+    MessageContact,
+    OptionReponse,
+    Question,
+    Utilisateur,
+    VersionFormulaire,
+)
+
+
+class ContactForm(forms.ModelForm):
+    class Meta:
+        model = MessageContact
+        fields = ["nom", "administration", "email", "sujet", "message"]
+        labels = {
+            "nom": "Nom complet",
+            "administration": "Administration / structure",
+            "email": "E-mail professionnel",
+            "sujet": "Sujet",
+            "message": "Message",
+        }
+        widgets = {
+            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Kossi Amegan"}),
+            "administration": forms.TextInput(attrs={"placeholder": "Ex. : Mairie de Lomé"}),
+            "email": forms.EmailInput(attrs={"placeholder": "prenom.nom@administration.tg"}),
+            "message": forms.Textarea(attrs={"placeholder": "Décrivez votre besoin en quelques lignes…", "rows": 5}),
+        }
 
 
 class AdministrationForm(forms.ModelForm):

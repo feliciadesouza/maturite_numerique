@@ -1,0 +1,47 @@
+{% extends "base_public.html" %}
+
+{% block title %}Politique de confidentialité — Maturité Numérique{% endblock %}
+
+{% block content %}
+{% include "components/_page_banner.html" with eyebrow="Confidentialité" titre="Politique de confidentialité" sous_titre="Comment les données des administrations et des agents sont collectées, protégées et utilisées." %}
+
+<section class="public-section">
+  <div class="public-container legal-doc">
+    <p class="updated">Dernière mise à jour : août 2026</p>
+
+    <section><h2>1. Responsable du traitement</h2>
+      <p>L'outil est opéré pour le compte de l'administration togolaise dans le cadre du programme de
+        transformation numérique. Le responsable de traitement est désigné dans la convention de chaque
+        campagne d'évaluation.</p></section>
+
+    <section><h2>2. Données collectées</h2>
+      <p>Réponses aux formulaires A et B, informations de compte des utilisateurs habilités (nom, e-mail
+        professionnel, rôle) et journaux techniques strictement nécessaires au fonctionnement du service.</p></section>
+
+    <section><h2>3. Finalités et base légale</h2>
+      <p>Les données servent exclusivement au diagnostic de maturité numérique et à son suivi dans le temps,
+        conformément à la loi n°2019-014 relative à la protection des données à caractère personnel.</p></section>
+
+    <section><h2>4. Anonymat de l'enquête agents</h2>
+      <p>Le Formulaire B est anonyme : aucune donnée nominative n'est demandée aux agents enquêtés et les
+        résultats ne sont restitués que sous forme agrégée (distribution N0–N5).</p></section>
+
+    <section><h2>5. Durée de conservation</h2>
+      <p>Les réponses sont conservées le temps du programme puis archivées ou supprimées selon la convention.
+        Les versions du questionnaire sont conservées à des fins de traçabilité des comparaisons.</p></section>
+
+    <section><h2>6. Vos droits</h2>
+      <p>Conformément à la loi n°2019-014, vous disposez de droits d'accès, de rectification et d'opposition,
+        à exercer auprès du responsable de traitement ou de l'Instance de protection des données (IPDCP).</p></section>
+
+    <section><h2>7. Sécurité et hébergement</h2>
+      <p>Données hébergées de façon souveraine, chiffrées en transit, avec journalisation des accès et
+        séparation stricte des rôles (l'administrateur de contenu n'accède pas aux résultats).</p></section>
+
+    <div class="alert alert--warning" style="margin-top:var(--sp-8);">
+      {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+      <span>Contenu de maquette : à faire valider par un conseil juridique qualifié en droit togolais avant publication.</span>
+    </div>
+  </div>
+</section>
+{% endblock %}

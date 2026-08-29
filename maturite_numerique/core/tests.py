@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -8,6 +9,7 @@ from core.models import (
     Dimension,
     Evaluation,
     Formulaire,
+    MessageContact,
     OptionReponse,
     Question,
     RegleRecommandation,
@@ -267,6 +269,37 @@ class ScoringEngineTests(TestCase):
         self.assertEqual(distribution[0], 1)
         self.assertEqual(distribution[1], 1)
         self.assertEqual(distribution[2], 0)
+
+
+class PublicSiteTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+
+    def test_pages_publiques_repondent(self):
+        for path in ["/", "/demarche/", "/dimensions/", "/acces-par-role/",
+                     "/contact/", "/confidentialite/", "/conditions-utilisation/"]:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+
+    def test_contact_enregistre_et_envoie_un_message(self):
+        response = self.client.post("/contact/", {
+            "nom": "Kossi Amegan",
+            "administration": "Mairie de Lomé",
+            "email": "kossi@mairie.tg",
+            "sujet": "rejoindre",
+            "message": "Nous souhaitons rejoindre la démarche.",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(MessageContact.objects.filter(email="kossi@mairie.tg").exists())
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_accueil_redirige_un_compte_connecte(self):
+        user = User.objects.create_user(username="dsi_home", password="testpass123")
+        Utilisateur.objects.create(user=user, role="dsi_decideur")
+        self.client.force_login(user)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/dashboard/")
 
 
 class MaturityHelpersTests(TestCase):

@@ -1,0 +1,8 @@
+{% comment %} Bandeau navy d'en-tête. Params : eyebrow, titre, sous_titre {% endcomment %}
+<section class="page-banner">
+  <div class="inner">
+    <span class="eyebrow">{{ eyebrow }}</span>
+    <h1>{{ titre }}</h1>
+    {% if sous_titre %}<p>{{ sous_titre }}</p>{% endif %}
+  </div>
+</section>

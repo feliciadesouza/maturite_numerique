@@ -1,0 +1,164 @@
+{% extends "base_public.html" %}
+
+{% block title %}Maturité Numérique — Diagnostic des administrations publiques{% endblock %}
+
+{% block content %}
+<section class="public-section">
+  <div class="public-container">
+    <div class="hero">
+      <div>
+        <span class="hero__eyebrow">{% include "components/_icon.html" with name="layers" cls="icon--sm" %} GovTech · République togolaise</span>
+        <h1>Mesurez et pilotez la maturité numérique des administrations publiques</h1>
+        <p>Un diagnostic structuré sur 5 dimensions, alimenté par les responsables et par une enquête
+          auprès des agents, pour transformer l'état des lieux en plan d'action concret.</p>
+        <div class="hero__actions">
+          <a href="{% url 'connexion' %}" class="btn btn--primary btn--lg">
+            Se connecter {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
+          <a href="{% url 'demarche' %}" class="btn btn--secondary btn--lg">
+            {% include "components/_icon.html" with name="play" cls="icon--sm" %} Découvrir la démarche</a>
+        </div>
+        <p class="hero__note">
+          {% include "components/_icon.html" with name="lock" cls="icon--sm" %}
+          Données hébergées de façon souveraine · Conforme à la loi n°2019-014</p>
+      </div>
+
+      <div class="hero__visual">
+        <div class="hero__stats">
+          <div class="hero__stat">
+            {% include "components/_icon.html" with name="building" %}
+            <span><b>{{ nb_administrations }}</b><br>Administrations</span>
+          </div>
+          <div class="hero__stat">
+            {% include "components/_icon.html" with name="bar-chart" %}
+            <span><b>{{ score_moyen|default:"—" }}</b><br>Score moyen</span>
+          </div>
+        </div>
+        <div class="hero__radar">
+          <div class="hero__radar-caption">Profil de maturité</div>
+          <svg class="radar-mini" viewBox="0 0 160 130" aria-hidden="true">
+            <polygon points="80,10 150,55 122,120 38,120 10,55" fill="none" stroke="rgba(255,255,255,.3)"/>
+            <polygon points="80,38 118,60 104,100 55,104 40,62" fill="rgba(255,255,255,.25)" stroke="#fff" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="hero__aside-note">
+          {% include "components/_icon.html" with name="check" cls="icon--sm" %}
+          Recommandations générées automatiquement après l'évaluation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" style="background:var(--surface);border-block:1px solid var(--border);padding-block:var(--sp-8);">
+  <div class="public-container">
+    <div class="stat-band">
+      <div><b>5</b><span>dimensions évaluées</span></div>
+      <div><b>2</b><span>formulaires complémentaires</span></div>
+      <div><b>6</b><span>niveaux de compétences (N0–N5)</span></div>
+      <div><b>1</b><span>rapport actionnable</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" id="dimensions">
+  <div class="public-container">
+    <div class="grid" style="grid-template-columns:0.9fr 1.1fr;gap:var(--sp-12);align-items:start;">
+      <div>
+        <span class="eyebrow" style="color:var(--primary);">Les 5 dimensions</span>
+        <h2 style="margin:var(--sp-2) 0 var(--sp-3);">Un diagnostic complet de la maturité numérique</h2>
+        <p class="text-muted">Chaque administration est évaluée sur cinq dimensions complémentaires,
+          pondérées dans un score global sur 5. Une lecture unique, comparable d'une administration à l'autre.</p>
+        <div class="text-sm text-muted" style="margin-top:var(--sp-4);">Pondération du score global</div>
+        <div class="weight-bar">
+          {% for d in dimensions %}<span style="flex:{{ d.obj.poids }};background:{{ d.obj.couleur }};"></span>{% endfor %}
+        </div>
+        <p class="text-sm text-muted">Pondération par défaut — ajustable en back-office.</p>
+        <a href="{% url 'dimensions_publiques' %}" class="text-sm" style="font-weight:600;">
+          Voir le détail des dimensions {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
+      </div>
+      <div class="dim-list">
+        {% for d in dimensions %}
+        <div class="dim-row">
+          <span class="dim-ico dim-ico--{{ d.obj.code }} is-soft">
+            {% include "components/_icon.html" with name=d.obj.icone %}</span>
+          <div>
+            <h3>{{ d.obj.nom }}</h3>
+            <p>{{ d.obj.description }}</p>
+          </div>
+          <span class="badge badge--neutre" style="margin-left:auto;">{{ d.obj.poids|floatformat:0 }} %</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" id="demarche" style="background:var(--surface-alt);">
+  <div class="public-container">
+    <div class="section-head">
+      <span class="eyebrow">La démarche</span>
+      <h2>Trois étapes, un plan d'action</h2>
+    </div>
+    <div class="card-grid card-grid--3">
+      <div class="card mini-card"><div class="step-num">1</div><h3>Évaluer</h3>
+        <p>Le responsable remplit le Formulaire A ; un échantillon d'agents répond au Formulaire B,
+          seul via un lien public ou accompagné d'un enquêteur.</p></div>
+      <div class="card mini-card"><div class="step-num">2</div><h3>Analyser</h3>
+        <p>Scores par dimension, radar, distribution des compétences : l'outil calcule et visualise
+          automatiquement les résultats.</p></div>
+      <div class="card mini-card"><div class="step-num">3</div><h3>Décider</h3>
+        <p>Comparez les administrations, suivez l'évolution entre deux campagnes et exportez un rapport
+          avec recommandations priorisées.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" id="acces">
+  <div class="public-container">
+    <div class="section-head">
+      <span class="eyebrow">Accès par rôle</span>
+      <h2>Chacun ne voit que ce qui le concerne</h2>
+      <p>La navigation s'adapte au rôle connecté — l'agent enquêté accède même sans compte, via un simple lien.</p>
+    </div>
+    <div class="card-grid card-grid--5">
+      <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="clipboard" %}</span>
+        <b>Agent évaluateur</b><p>Remplit le Formulaire A pour son administration.</p></div>
+      <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="users" %}</span>
+        <b>Enquêteur</b><p>Conduit l'enquête agents en mode assisté.</p></div>
+      <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="lock" %}</span>
+        <b>Agent enquêté</b><p>Répond via un lien public.</p>
+        <a href="{% url 'formulaire_b_public' %}">Répondre à l'enquête</a></div>
+      <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="bar-chart" %}</span>
+        <b>DSI / Décideur</b><p>Analyse les résultats et pilote le plan d'action.</p></div>
+      <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="layers" %}</span>
+        <b>Administrateur</b><p>Gère dimensions, questions et versions du questionnaire.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" id="contact" style="padding-top:0;">
+  <div class="public-container">
+    <div class="cta-band cta-band--green">
+      <div>
+        <h2>Vous êtes agent d'une administration ?</h2>
+        <p>Participez à l'enquête en 5 minutes, sans compte ni mot de passe — via le lien transmis
+          par votre administration ou votre enquêteur.</p>
+      </div>
+      <a href="{% url 'formulaire_b_public' %}" class="btn btn--secondary btn--lg">
+        Répondre à l'enquête {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="public-section" style="padding-top:0;">
+  <div class="public-container">
+    <div class="cta-dark">
+      <h2>Prêt à évaluer votre administration ?</h2>
+      <p>Connectez-vous avec le compte fourni par votre structure, ou contactez l'équipe projet pour rejoindre la démarche.</p>
+      <div class="hero__actions" style="justify-content:center;">
+        <a href="{% url 'connexion' %}" class="btn btn--secondary btn--lg">Se connecter</a>
+        <a href="{% url 'contact' %}" class="btn btn--secondary btn--lg">Contacter l'équipe projet</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
