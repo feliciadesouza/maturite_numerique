@@ -16,7 +16,7 @@
           <div style="flex:1;">
             <div class="row row--between">
               <h3>{{ d.obj.nom }}</h3>
-              <span class="badge badge--neutre">Poids : {{ d.obj.poids|floatformat:0 }} %</span>
+              <span class="badge badge--neutre">Poids : {% widthratio d.obj.poids 1 100 %} %</span>
             </div>
             <p class="text-muted" style="margin-top:4px;">{{ d.obj.description }}.</p>
             <div class="tag-chips">

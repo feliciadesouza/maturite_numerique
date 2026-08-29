@@ -7,7 +7,7 @@
 <div class="page-head">
   <h1>{% if question %}Éditer la question{% else %}Ajouter une question{% endif %}</h1>
   <p class="breadcrumb">
-    <a href="{% url 'backoffice' %}">Back-office</a> —
+    <a href="{% url 'backoffice' %}">Back-office</a> ·
     <a href="{% url 'bo_questions' dimension_id=dimension.pk %}">{{ dimension.nom }}</a>
     {% if question %} · Question {{ question.code }}{% endif %}
   </p>
@@ -82,7 +82,7 @@
            '</div></div><span class="qscale__borne">' + (esc(f.bmax.value) || "max") + "</span></div>";
     } else if (code === "oui_non") { h += pills(["Oui", "Non"]);
     } else if (code === "oui_non_partiel") { h += pills(["Oui", "Non", "Partiel"]);
-    } else if (code === "tranches") { h += pills(["< 25 %", "25–50 %", "50–75 %", "> 75 %"]);
+    } else if (code === "tranches") { h += pills(["Moins de 25 %", "25 à 50 %", "50 à 75 %", "Plus de 75 %"]);
     } else if (code === "liste" || code === "choix_multiple") {
       var opts = parseOptions(); h += pills(opts.length ? opts : ["Option 1", "Option 2"]);
     } else if (code === "texte_libre") { h += '<textarea rows="2" disabled></textarea>'; }

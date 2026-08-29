@@ -10,4 +10,4 @@ Aucune action supplémentaire n'est requise. Vos réponses servent uniquement au
 diagnostic de maturité numérique de votre administration et sont restituées de
 façon agrégée.
 
-— L'équipe Maturité Numérique
+L'équipe Maturité Numérique

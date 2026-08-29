@@ -128,7 +128,7 @@ def contact(request):
             message = form.save()
             destinataire = getattr(settings, "CONTACT_EMAIL", "contact@maturite-numerique.tg")
             send_mail(
-                subject=f"[Contact] {message.get_sujet_display()} — {message.nom}",
+                subject=f"[Contact] {message.get_sujet_display()} · {message.nom}",
                 message=render_to_string("email/contact.txt", {"message": message}),
                 from_email=None,
                 recipient_list=[destinataire],
@@ -405,7 +405,7 @@ def bo_question_form(request, question_id=None, dimension_id=None):
                 appliquer_options(obj, form.options_parsees())
                 messages.success(
                     request,
-                    f"Question modifiée — version v{nouvelle_version.numero_version} créée "
+                    f"Question modifiée · version v{nouvelle_version.numero_version} créée "
                     "(les données précédentes sont conservées).",
                 )
             else:
@@ -661,7 +661,7 @@ def svg_radar(labels, series, taille=240):
     `series` : [{nom, valeurs (0-5), couleur}].
     """
     cx = cy = taille / 2
-    rayon = taille / 2 - 34
+    rayon = taille / 2 - 44
     n = len(labels) or 1
     angles = [(-math.pi / 2) + i * (2 * math.pi / n) for i in range(n)]
 
@@ -672,12 +672,17 @@ def svg_radar(labels, series, taille=240):
     for k in range(1, 6):
         pts = [point(rayon * k / 5, a) for a in angles]
         anneaux.append(" ".join(f"{x},{y}" for x, y in pts))
+
+    def court(lbl):
+        # Le rendu SVG n'ajuste pas le texte : on abrege les libelles longs.
+        return lbl if len(lbl) <= 14 else lbl.split(" ")[0]
+
     axes = []
     for lbl, a in zip(labels, angles):
         x, y = point(rayon, a)
         lx, ly = point(rayon + 16, a)
         anchor = "middle" if abs(lx - cx) < 8 else ("start" if lx > cx else "end")
-        axes.append({"x": x, "y": y, "label": lbl, "lx": round(lx, 1), "ly": round(ly, 1), "anchor": anchor})
+        axes.append({"x": x, "y": y, "label": court(lbl), "lx": round(lx, 1), "ly": round(ly, 1), "anchor": anchor})
     polygones = []
     for s in series:
         pts = [point(rayon * min(max(v, 0), 5) / 5, a) for v, a in zip(s["valeurs"], angles)]
