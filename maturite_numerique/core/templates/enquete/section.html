@@ -1,0 +1,110 @@
+{% extends "base_enquete.html" %}
+
+{% block title %}Enquête agent — {{ libelle_section }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: var(--sp-4);">
+  <h1 style="font-size: var(--fs-h2);">Formulaire B — Enquête agent</h1>
+  <p class="text-muted text-sm">Mode autonome · Auto-évaluation</p>
+</div>
+
+<div class="sec-pills">
+  <span class="sec-pill is-done">1. Administration</span>
+  {% for s in sections_info %}
+    <span class="sec-pill {% if forloop.counter0 < index %}is-done{% elif forloop.counter0 == index %}is-current{% endif %}">
+      {{ forloop.counter|add:1 }}. {{ s.label }}{% if s.key == 'usage' %} (selon réponses){% endif %}
+    </span>
+  {% endfor %}
+</div>
+
+<div class="progress" style="margin-bottom: var(--sp-4);"><span style="width: {{ progression }}%;"></span></div>
+
+<div class="alert alert--info" style="margin-bottom: var(--sp-4);">
+  {% include "components/_icon.html" with name="info" cls="icon--sm" %}
+  <span>Certaines sections s'afficheront ou non selon vos réponses. Répondez simplement, il n'y a pas de mauvaise réponse.</span>
+</div>
+
+<form method="post" class="card" id="form-b" data-autosave-url="{% url 'enquete_section' token=agent.token section=section %}">
+  {% csrf_token %}
+  <p class="eyebrow" style="margin-bottom: var(--sp-4);">Section — {{ libelle_section }}</p>
+
+  <div class="qform">
+    {% for c in champs %}
+    <div class="qitem {% if c.bf.errors %}has-error{% endif %}">
+      <div class="qitem__head">
+        <span class="qitem__texte">{{ c.q.texte }}</span>
+        {% if c.q.aide %}<span class="qitem__aide" title="{{ c.q.aide }}">{% include "components/_icon.html" with name="info" cls="icon--sm" %}</span>{% endif %}
+      </div>
+
+      {% if c.q.type_champ.code == 'echelle_1_5' %}
+        <div class="qscale">
+          {% if c.q.borne_min_label %}<span class="qscale__borne">{{ c.q.borne_min_label }}</span>{% endif %}
+          <div class="qchoices">{{ c.bf }}</div>
+          {% if c.q.borne_max_label %}<span class="qscale__borne">{{ c.q.borne_max_label }}</span>{% endif %}
+        </div>
+      {% elif c.q.type_champ.code == 'texte_libre' %}
+        {{ c.bf }}
+      {% else %}
+        <div class="qchoices">{{ c.bf }}</div>
+      {% endif %}
+
+      {% if c.q.code == 'B2.1' %}
+      <div class="cond-note">
+        {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %}
+        <span>Réponse « Non » → vous serez classé Niveau 0 et passerez directement à la section Freins.</span>
+      </div>
+      {% endif %}
+
+      {% if c.bf.errors %}<div class="qitem__err">{{ c.bf.errors|striptags }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if est_derniere %}
+  <div class="field" style="margin-top: var(--sp-6);">
+    <label for="email_accuse">Recevoir un accusé par e-mail (facultatif)</label>
+    <input type="email" name="email_accuse" id="email_accuse" value="{{ agent.email_accuse }}"
+           placeholder="prenom.nom@exemple.tg">
+    <span class="hint">Non relié à vos réponses — sert uniquement à l'accusé de participation.</span>
+  </div>
+  {% endif %}
+
+  <div class="form-foot">
+    {% if index > 0 %}
+      <button type="submit" name="precedent" value="1" class="btn btn--secondary">
+        {% include "components/_icon.html" with name="chevron-left" cls="icon--sm" %} Précédent</button>
+    {% else %}<span></span>{% endif %}
+    <button type="submit" class="btn btn--primary">
+      {% if est_derniere %}Envoyer mes réponses{% else %}Continuer{% endif %}
+      {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %}</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById("form-b");
+  if (!form) return;
+  var key = "enquete-" + form.dataset.autosaveUrl;
+  try {
+    var saved = JSON.parse(localStorage.getItem(key) || "{}");
+    Object.keys(saved).forEach(function (n) {
+      var el = form.elements[n];
+      if (el && !el.value) el.value = saved[n];
+    });
+  } catch (e) {}
+  var timer = null;
+  function persist() {
+    var store = {};
+    new FormData(form).forEach(function (v, k) { if (k !== "csrfmiddlewaretoken") store[k] = v; });
+    try { localStorage.setItem(key, JSON.stringify(store)); } catch (e) {}
+    var data = new FormData(form);
+    data.append("autosave", "1");
+    fetch(form.dataset.autosaveUrl, { method: "POST", body: data }).catch(function () {});
+  }
+  form.addEventListener("change", function () { clearTimeout(timer); timer = setTimeout(persist, 600); });
+  form.addEventListener("submit", function () { try { localStorage.removeItem(key); } catch (e) {} });
+})();
+</script>
+{% endblock %}

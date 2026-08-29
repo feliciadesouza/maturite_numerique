@@ -1,0 +1,36 @@
+{% extends "base_enquete.html" %}
+
+{% block title %}Merci — réponses enregistrées{% endblock %}
+
+{% block content %}
+<div class="card enquete-result">
+  <div class="enquete-result__mark enquete-result__mark--ok">
+    {% include "components/_icon.html" with name="check" cls="icon--lg" %}</div>
+  <h1 style="font-size: var(--fs-h2);">Merci ! Vos réponses ont été enregistrées.</h1>
+  <p>Votre contribution aide à mesurer la maturité numérique de votre administration.
+    Aucune action supplémentaire n'est requise.</p>
+
+  <div class="ref-pill">
+    {% include "components/_icon.html" with name="check" cls="icon--sm" %}
+    Référence : {{ agent.reference }}</div>
+
+  {% if agent.email_accuse %}
+  <div class="mail-preview">
+    <div class="row" style="gap:8px;margin-bottom:var(--sp-3);">
+      {% include "components/_icon.html" with name="mail" cls="icon--sm" %}
+      <b>Un e-mail de confirmation vous a été envoyé</b>
+    </div>
+    <div class="mail-preview__from">
+      <span class="avatar">MN</span>
+      <div>
+        <b>Maturité Numérique</b>
+        <div class="text-sm">Confirmation de votre participation</div>
+        <div class="text-sm text-muted">Vos réponses ont bien été enregistrées. Merci pour votre temps.</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <a href="{% url 'home' %}" class="btn btn--primary btn--lg" style="margin-top: var(--sp-6);">Terminer</a>
+</div>
+{% endblock %}

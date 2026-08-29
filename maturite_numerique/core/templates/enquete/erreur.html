@@ -1,0 +1,28 @@
+{% extends "base_enquete.html" %}
+
+{% block title %}La soumission a échoué{% endblock %}
+
+{% block content %}
+<div class="card enquete-result">
+  <div class="enquete-result__mark enquete-result__mark--err">
+    {% include "components/_icon.html" with name="alert-triangle" cls="icon--lg" %}</div>
+  <h1 style="font-size: var(--fs-h2);">La soumission a échoué</h1>
+  <p>Une erreur réseau est survenue lors de l'envoi. Vos réponses n'ont pas été perdues —
+    elles sont conservées sur cet appareil.</p>
+
+  <div class="alert alert--warning" style="margin: var(--sp-6) 0; text-align: left;">
+    {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+    <span>Vérifiez votre connexion internet, puis réessayez l'envoi.</span>
+  </div>
+
+  <div class="row" style="justify-content: center; gap: var(--sp-3);">
+    <form method="post" action="{% url 'enquete_envoi' token=agent.token %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--primary">
+        {% include "components/_icon.html" with name="history" cls="icon--sm" %} Réessayer l'envoi</button>
+    </form>
+    <a href="{% url 'enquete_section' token=agent.token section='profil' %}" class="btn btn--secondary">Reprendre plus tard</a>
+  </div>
+  <p class="enquete-foot-note">Si le problème persiste, signalez-le à votre enquêteur.</p>
+</div>
+{% endblock %}

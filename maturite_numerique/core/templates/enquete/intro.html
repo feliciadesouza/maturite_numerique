@@ -1,0 +1,36 @@
+{% extends "base_enquete.html" %}
+
+{% block title %}Évaluation des compétences numériques{% endblock %}
+{% block card_class %}enquete-card--wide{% endblock %}
+
+{% block content %}
+<div class="enquete-intro">
+  <div class="enquete-intro__mark">{% include "components/_icon.html" with name="graduation-cap" %}</div>
+  <span class="pill pill--fort">Enquête anonyme · sans compte</span>
+  <h1>Évaluation des compétences numériques</h1>
+  <p class="lead">Vous participez à une enquête pour mesurer le niveau numérique des agents de votre
+    administration. Répondez simplement : il n'y a pas de bonne ou de mauvaise réponse.</p>
+
+  <div class="enquete-cards">
+    <div class="card">
+      <div class="ico ico--time">{% include "components/_icon.html" with name="clock" %}</div>
+      <h3>Environ 5 minutes</h3>
+      <p>Un court questionnaire adapté à votre niveau, avec quelques sections seulement.</p>
+    </div>
+    <div class="card">
+      <div class="ico ico--lock">{% include "components/_icon.html" with name="lock" %}</div>
+      <h3>Anonyme &amp; confidentiel</h3>
+      <p>Aucune donnée nominative n'est publiée. Vos réponses restent confidentielles.</p>
+    </div>
+    <div class="card">
+      <div class="ico ico--help">{% include "components/_icon.html" with name="users" %}</div>
+      <h3>Une aide possible</h3>
+      <p>Un enquêteur peut lire les questions à voix haute et saisir vos réponses.</p>
+    </div>
+  </div>
+
+  <a href="{% url 'enquete_demarrer' %}" class="btn btn--primary btn--lg">
+    Commencer l'évaluation {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
+  <p class="enquete-foot-note">Aucun compte requis · La première étape vous demandera votre administration.</p>
+</div>
+{% endblock %}

@@ -4,9 +4,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.mail import send_mail
-from django.db.models import Avg
+from django.db.models import Avg, Max
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import (
     AgentForm,
@@ -27,7 +28,12 @@ from .models import (
     VersionFormulaire,
 )
 from .permissions import ROLE_HOME_URLS, role_required
-from .scoring import calculer_score_global, distribution_niveaux_administration
+from .scoring import (
+    calculer_score_global,
+    classifier_niveau_agent,
+    distribution_niveaux_administration,
+    reponses_par_code,
+)
 
 
 # Étiquettes de contenu (vitrine) associées à chaque dimension du référentiel.
@@ -409,34 +415,211 @@ def formulaire_b(request):
     )
 
 
-def formulaire_b_public(request):
-    """Formulaire B public pour l’agent enquêté, sans authentification."""
-    if request.method == "POST":
-        agent_form = AgentForm(request.POST)
-        question_form = build_question_form("B", data=request.POST)
+# ----------------------------- Formulaire B public -----------------------------
 
-        if agent_form.is_valid() and question_form.is_valid():
-            agent = agent_form.save()
-            for question in Question.objects.filter(version_formulaire__formulaire__code="B", actif=True):
-                answer = question_form.cleaned_data.get(f"q_{question.id}")
-                if answer:
-                    Reponse.objects.create(
-                        question=question,
-                        agent=agent,
-                        administration=agent.administration,
-                        valeur=answer,
-                    )
-            messages.success(request, "Formulaire B enregistré avec succès.")
-            return redirect("home")
-    else:
-        agent_form = AgentForm()
-        question_form = build_question_form("B")
+SECTIONS_FORMULAIRE_B = ["profil", "bases", "usage", "freins"]
+LIBELLES_SECTIONS_B = {
+    "profil": "Profil", "bases": "Bases", "usage": "Usage", "freins": "Freins",
+}
+# Report des réponses B1.x vers les champs structurés de l'agent.
+MAPPING_PROFIL_B = {
+    "B1.1": "poste", "B1.2": "service", "B1.3": "tranche_age",
+    "B1.4": "anciennete", "B1.5": "niveau_etudes", "B1.6": "mode_saisie",
+}
 
-    return render(
-        request,
-        "core/formulaire_b.html",
-        {"agent_form": agent_form, "question_form": question_form},
+
+def _version_b():
+    return VersionFormulaire.objects.filter(
+        formulaire__code="B", est_active=True
+    ).first()
+
+
+def _sections_agent(agent):
+    """Sections à parcourir : « usage » est sautée si l'agent n'a jamais utilisé d'ordinateur."""
+    reponses = reponses_par_code(agent)
+    if reponses.get("B2.1", "").strip().lower() == "non":
+        return ["profil", "bases", "freins"]
+    return list(SECTIONS_FORMULAIRE_B)
+
+
+def _questions_section(version_b, section, reponses):
+    """Questions actives d'une section, filtrées par leur condition d'affichage."""
+    visibles = []
+    questions = (
+        Question.objects.filter(version_formulaire=version_b, section=section, actif=True)
+        .select_related("type_champ", "question_condition")
+        .prefetch_related("options")
+        .order_by("ordre")
     )
+    for question in questions:
+        condition = question.question_condition
+        if condition and question.valeur_condition:
+            if reponses.get(condition.code, "") != question.valeur_condition:
+                continue
+        visibles.append(question)
+    return visibles
+
+
+def _finaliser_enquete(agent):
+    """Clôt le brouillon d'un agent : niveau, numéro, référence, e-mail d'accusé."""
+    reponses = reponses_par_code(agent)
+    agent.niveau_maturite = classifier_niveau_agent(reponses)
+    if agent.evaluation_id and agent.numero is None:
+        dernier = (
+            Agent.objects.filter(evaluation=agent.evaluation, numero__isnull=False)
+            .exclude(pk=agent.pk)
+            .aggregate(m=Max("numero"))["m"]
+            or 0
+        )
+        agent.numero = dernier + 1
+    agent.statut = "terminee"
+    agent.save()
+    if not agent.reference:
+        agent.reference = f"MN-{timezone.now().year}-{agent.pk:06d}"
+        agent.save(update_fields=["reference"])
+    if agent.email_accuse:
+        send_mail(
+            subject="Confirmation de votre participation",
+            message=(
+                "Vos réponses ont bien été enregistrées. Merci pour votre temps.\n"
+                f"Référence : {agent.reference}"
+            ),
+            from_email=None,
+            recipient_list=[agent.email_accuse],
+            fail_silently=True,
+        )
+
+
+def enquete_intro(request):
+    """Page d'accueil publique de l'enquête agent."""
+    return render(request, "enquete/intro.html")
+
+
+def enquete_demarrer(request):
+    """Étape 1 : choix de l'administration, puis création du brouillon d'agent."""
+    administrations = Administration.objects.order_by("nom")
+    if request.method == "POST":
+        administration = Administration.objects.filter(
+            pk=request.POST.get("administration")
+        ).first()
+        if administration is None:
+            messages.error(request, "Sélectionnez une administration pour continuer.")
+        else:
+            evaluation, _ = _evaluation_en_cours(administration, None)
+            agent = Agent.objects.create(
+                administration=administration,
+                evaluation=evaluation,
+                mode_saisie="autonome",
+                statut="en_cours",
+            )
+            return redirect("enquete_section", token=agent.token, section="profil")
+    return render(request, "enquete/administration.html", {"administrations": administrations})
+
+
+def enquete_section(request, token, section):
+    """Une section conditionnelle du parcours (profil, bases, usage, freins)."""
+    agent = get_object_or_404(Agent, token=token)
+    if agent.statut == "terminee":
+        return redirect("enquete_confirmation", token=agent.token)
+
+    version_b = _version_b()
+    sections = _sections_agent(agent)
+    if section not in sections:
+        return redirect("enquete_section", token=agent.token, section=sections[0])
+
+    reponses_codes = reponses_par_code(agent)
+    questions = _questions_section(version_b, section, reponses_codes)
+    reponses_existantes = {
+        r.question_id: r.valeur
+        for r in Reponse.objects.filter(agent=agent, question__in=questions)
+    }
+    index = sections.index(section)
+    est_derniere = index == len(sections) - 1
+
+    if request.method == "POST":
+        autosave = request.POST.get("autosave") == "1"
+        recule = "precedent" in request.POST
+        form = build_reponses_form(
+            questions, data=request.POST, partiel=autosave or recule
+        )
+        if form.is_valid():
+            enregistrer_reponses(
+                form, questions, agent=agent, administration=agent.administration
+            )
+            if section == "profil":
+                _reporter_profil(agent)
+            if request.POST.get("email_accuse"):
+                agent.email_accuse = request.POST["email_accuse"].strip()
+                agent.save(update_fields=["email_accuse"])
+            if autosave:
+                return HttpResponse(status=204)
+            sections = _sections_agent(agent)
+            index = sections.index(section) if section in sections else 0
+            if recule and index > 0:
+                return redirect("enquete_section", token=agent.token, section=sections[index - 1])
+            if index < len(sections) - 1:
+                return redirect("enquete_section", token=agent.token, section=sections[index + 1])
+            try:
+                _finaliser_enquete(agent)
+            except Exception:
+                # Erreur réseau/serveur : les réponses restent enregistrées.
+                return render(request, "enquete/erreur.html", {"agent": agent})
+            return redirect("enquete_confirmation", token=agent.token)
+        if autosave:
+            return HttpResponse(status=204)
+    else:
+        form = build_reponses_form(questions, reponses=reponses_existantes)
+
+    champs = [{"q": q, "bf": form[f"q_{q.id}"]} for q in questions]
+    sections_info = [
+        {"key": s, "label": LIBELLES_SECTIONS_B.get(s, s.title())} for s in sections
+    ]
+    return render(request, "enquete/section.html", {
+        "agent": agent,
+        "section": section,
+        "libelle_section": LIBELLES_SECTIONS_B.get(section, section.title()),
+        "champs": champs,
+        "form": form,
+        "sections_info": sections_info,
+        "index": index,
+        "est_derniere": est_derniere,
+        "progression": round((index + 2) / (len(sections) + 1) * 100),
+    })
+
+
+def _reporter_profil(agent):
+    """Recopie les réponses B1.x dans les champs structurés de l'agent."""
+    reponses = reponses_par_code(agent)
+    modifie = []
+    for code, champ in MAPPING_PROFIL_B.items():
+        valeur = reponses.get(code)
+        if valeur:
+            setattr(agent, champ, valeur[:150])
+            modifie.append(champ)
+    if modifie:
+        agent.save(update_fields=modifie)
+
+
+def enquete_envoi(request, token):
+    """Ré-essai de soumission après une erreur réseau."""
+    agent = get_object_or_404(Agent, token=token)
+    if agent.statut == "terminee":
+        return redirect("enquete_confirmation", token=agent.token)
+    if request.method == "POST":
+        try:
+            _finaliser_enquete(agent)
+        except Exception:
+            return render(request, "enquete/erreur.html", {"agent": agent})
+        return redirect("enquete_confirmation", token=agent.token)
+    return redirect("enquete_section", token=agent.token, section=_sections_agent(agent)[-1])
+
+
+def enquete_confirmation(request, token):
+    """Accusé de participation."""
+    agent = get_object_or_404(Agent, token=token)
+    if agent.statut != "terminee":
+        return redirect("enquete_section", token=agent.token, section="profil")
+    return render(request, "enquete/confirmation.html", {"agent": agent})
 
 
 @login_required

@@ -122,6 +122,14 @@ def classifier_niveau_agent(reponses_agent: dict) -> int:
     return niveau
 
 
+def reponses_par_code(agent) -> dict:
+    """Réponses d'un agent sous forme {code_question: valeur}."""
+    return {
+        r.question.code: r.valeur
+        for r in agent.reponses.select_related("question")
+    }
+
+
 def distribution_niveaux_administration(administration: Administration) -> dict:
     """
     Distribution des agents d'une administration sur les 6 niveaux (0 à 5).
