@@ -96,7 +96,9 @@
 .role-card .title { font-size: var(--fs-h3); }
 /* Variante en ligne, alignée sous le titre (page Accès par rôle) */
 .checklist--inline { flex-direction: row; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); padding-left: 60px; }
-@media (max-width: 600px) { .checklist--inline { padding-left: 0; } }
+@media (max-width: 640px) {
+  .checklist--inline { flex-direction: column; gap: var(--sp-2); padding-left: 0; }
+}
 
 /* Frise des étapes (démarche) : cartes reliées par des flèches */
 .steps-flow { display: flex; align-items: stretch; gap: var(--sp-2); }
@@ -174,6 +176,7 @@
 @media (max-width: 640px) {
   .public-footer nav { flex-direction: column; gap: var(--sp-3); }
   .cta-band { padding: var(--sp-6); }
+  .cta-band__ico { display: none; }
   /* Carte dimension : le badge "Poids" passe sous le titre */
   .dim-row .row--between { flex-wrap: wrap; row-gap: 2px; }
   .dim-row .row--between > h3 { flex: 1 1 100%; }
