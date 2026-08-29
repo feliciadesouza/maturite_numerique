@@ -1,7 +1,7 @@
 {% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}Résultats — {{ administration.nom }}{% endblock %}
+{% block title %}Résultats · {{ administration.nom }}{% endblock %}
 {% block head %}
   <script src="{% static 'vendor/chart.umd.min.js' %}" defer></script>
   <script src="{% static 'js/radar.js' %}" defer></script>
@@ -9,14 +9,14 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Résultats — {{ administration.nom }}</h1>
-  <p class="breadcrumb"><a href="{% url 'administrations' %}">Administrations</a> — {{ administration.nom }}</p>
+  <h1>Résultats · {{ administration.nom }}</h1>
+  <p class="breadcrumb"><a href="{% url 'administrations' %}">Administrations</a> · {{ administration.nom }}</p>
 </div>
 
 <div class="row row--between" style="flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-6);">
   <div class="row" style="gap: var(--sp-3);">
     <span class="pill pill--{{ resultat.badge }}">Niveau {{ resultat.niveau }} · {{ resultat.score_global }} / 5</span>
-    {% if resultat.est_apercu %}<span class="badge badge--neutre">Aperçu — évaluation en cours</span>{% endif %}
+    {% if resultat.est_apercu %}<span class="badge badge--neutre">Aperçu · évaluation en cours</span>{% endif %}
   </div>
   <div class="row" style="gap: var(--sp-2);">
     <a href="{% url 'rapport_administration' administration_id=administration.id %}?format=pdf" class="btn btn--primary">
@@ -55,7 +55,7 @@
   </div>
   <div class="card">
     <h3>Distribution des compétences</h3>
-    <p class="text-muted text-sm">Répartition des {{ total_agents }} agent{{ total_agents|pluralize }} — Formulaire B</p>
+    <p class="text-muted text-sm">Répartition des {{ total_agents }} agent{{ total_agents|pluralize }} · Formulaire B</p>
     {% include "components/_distribution.html" with distribution=resultat.distribution total_agents=total_agents dist_max=dist_max %}
   </div>
 </div>

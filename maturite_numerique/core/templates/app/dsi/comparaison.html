@@ -10,7 +10,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Comparaison des administrations</h1>
-  <p class="breadcrumb">Accueil — Comparaison</p>
+  <p class="breadcrumb">Accueil · Comparaison</p>
 </div>
 
 {% if versions_melangees %}
@@ -63,7 +63,7 @@
         <tr>
           <td>{{ row.dimension.nom }}</td>
           {% for cell in row.cellules %}
-            <td class="score {% if cell %}score--{{ cell.badge }}{% endif %}">{% if cell %}{{ cell.score }}{% else %}—{% endif %}</td>
+            <td class="score {% if cell %}score--{{ cell.badge }}{% endif %}">{% if cell %}{{ cell.score }}{% else %}n/d{% endif %}</td>
           {% endfor %}
         </tr>
         {% endfor %}

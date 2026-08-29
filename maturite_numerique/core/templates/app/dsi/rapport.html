@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rapport de maturité numérique — {{ administration.nom }}</title>
+  <title>Rapport de maturité numérique · {{ administration.nom }}</title>
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <style>
@@ -82,7 +82,7 @@
     </section>
 
     <div class="rapport__foot">
-      <span>Document confidentiel — usage interne</span>
+      <span>Document confidentiel · usage interne</span>
       <span>Généré le {{ genere_le|date:"j F Y à H:i" }}</span>
     </div>
   </div>

@@ -1,6 +1,6 @@
 {% extends "base_public.html" %}
 
-{% block title %}Maturité Numérique — Diagnostic des administrations publiques{% endblock %}
+{% block title %}Maturité Numérique · Diagnostic des administrations publiques{% endblock %}
 
 {% block content %}
 <section class="public-section">
@@ -71,7 +71,7 @@
         <div class="weight-bar">
           {% for d in dimensions %}<span style="flex:{{ d.obj.poids }};background:{{ d.obj.couleur }};"></span>{% endfor %}
         </div>
-        <p class="text-sm text-muted">Pondération par défaut — ajustable en back-office.</p>
+        <p class="text-sm text-muted">Pondération par défaut · ajustable en back-office.</p>
         <a href="{% url 'dimensions_publiques' %}" class="text-sm" style="font-weight:600;">
           Voir le détail des dimensions {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
       </div>
@@ -117,7 +117,7 @@
     <div class="section-head">
       <span class="eyebrow">Accès par rôle</span>
       <h2>Chacun ne voit que ce qui le concerne</h2>
-      <p>La navigation s'adapte au rôle connecté — l'agent enquêté accède même sans compte, via un simple lien.</p>
+      <p>La navigation s'adapte au rôle connecté · l'agent enquêté accède même sans compte, via un simple lien.</p>
     </div>
     <div class="card-grid card-grid--5">
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="clipboard" %}</span>
@@ -140,7 +140,7 @@
     <div class="cta-band cta-band--green">
       <div>
         <h2>Vous êtes agent d'une administration ?</h2>
-        <p>Participez à l'enquête en 5 minutes, sans compte ni mot de passe — via le lien transmis
+        <p>Participez à l'enquête en 5 minutes, sans compte ni mot de passe · via le lien transmis
           par votre administration ou votre enquêteur.</p>
       </div>
       <a href="{% url 'formulaire_b_public' %}" class="btn btn--secondary btn--lg">

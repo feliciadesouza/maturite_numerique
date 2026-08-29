@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Rapports</h1>
-  <p class="breadcrumb">Accueil — Rapports</p>
+  <p class="breadcrumb">Accueil · Rapports</p>
 </div>
 
 <div class="twrap card--flush">
@@ -17,7 +17,7 @@
         <td><b>{{ ligne.administration.nom }}</b></td>
         <td class="tabular">{{ ligne.resultat.score_global }} / 5
           {% if ligne.resultat.est_apercu %}<span class="text-muted text-sm">(aperçu)</span>{% endif %}</td>
-        <td class="text-muted text-sm">{{ ligne.date|date:"j F Y"|default:"—" }}</td>
+        <td class="text-muted text-sm">{{ ligne.date|date:"j F Y"|default:"non clôturée" }}</td>
         <td style="text-align: right;">
           <a href="{% url 'rapport_administration' administration_id=ligne.administration.id %}?format=pdf" class="btn btn--secondary">
             {% include "components/_icon.html" with name="download" cls="icon--sm" %} PDF</a>

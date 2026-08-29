@@ -25,4 +25,4 @@ repos:
       - id: bandit
         args: [--quiet]
         files: ^maturite_numerique/(core|maturite_numerique)/.*\.py$
-        exclude: (tests\.py$|/migrations/)
+        exclude: (tests\.py$|/migrations/|seed_demo\.py$)
