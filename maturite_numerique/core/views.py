@@ -854,18 +854,31 @@ def _evaluation_en_cours(administration, user):
 
 
 def _etapes_formulaire_a(version_a):
-    """Les dimensions couvertes par le Formulaire A, dans l'ordre — une par étape."""
+    """Étapes du Formulaire A : « Identification » puis une étape par dimension."""
     if not version_a:
         return []
-    return list(
+    etapes = []
+    if Question.objects.filter(
+        version_formulaire=version_a, section="identification", actif=True
+    ).exists():
+        etapes.append({"nom": "Identification", "identification": True, "dimension": None})
+    for dimension in (
         Dimension.objects.filter(
-            actif=True,
-            questions__version_formulaire=version_a,
-            questions__actif=True,
+            actif=True, questions__version_formulaire=version_a, questions__actif=True
         )
         .distinct()
         .order_by("ordre")
-    )
+    ):
+        a_des_questions = (
+            Question.objects.filter(
+                version_formulaire=version_a, dimension=dimension, actif=True
+            )
+            .exclude(section="identification")
+            .exists()
+        )
+        if a_des_questions:
+            etapes.append({"nom": dimension.nom, "identification": False, "dimension": dimension})
+    return etapes
 
 
 @login_required
@@ -900,15 +913,18 @@ def formulaire_a_etape(request, numero):
     if numero < 1 or numero > len(etapes):
         return redirect("formulaire_a_etape", numero=1)
 
-    dimension = etapes[numero - 1]
-    questions = list(
-        Question.objects.filter(
-            version_formulaire=version_a, dimension=dimension, actif=True
+    etape = etapes[numero - 1]
+    base_qs = Question.objects.filter(
+        version_formulaire=version_a, actif=True
+    ).select_related("type_champ").prefetch_related("options").order_by("ordre")
+    if etape["identification"]:
+        questions = list(base_qs.filter(section="identification"))
+        titre_etape = "Identification"
+    else:
+        questions = list(
+            base_qs.filter(dimension=etape["dimension"]).exclude(section="identification")
         )
-        .select_related("type_champ")
-        .prefetch_related("options")
-        .order_by("ordre")
-    )
+        titre_etape = etape["dimension"].nom
     reponses_existantes = {
         r.question_id: r.valeur
         for r in Reponse.objects.filter(evaluation=evaluation, question__in=questions)
@@ -937,7 +953,7 @@ def formulaire_a_etape(request, numero):
     champs = [{"q": question, "bf": form[f"q_{question.id}"]} for question in questions]
     return render(request, "app/formulaire_a/etape.html", {
         "evaluation": evaluation,
-        "dimension": dimension,
+        "titre_etape": titre_etape,
         "champs": champs,
         "form": form,
         "numero": numero,
@@ -970,13 +986,14 @@ def formulaire_b(request):
 
 # ----------------------------- Formulaire B public -----------------------------
 
-SECTIONS_FORMULAIRE_B = ["profil", "bases", "usage", "freins"]
+SECTIONS_FORMULAIRE_B = ["profil", "bases", "bases_suite", "usage", "freins"]
 LIBELLES_SECTIONS_B = {
-    "profil": "Profil", "bases": "Bases", "usage": "Usage", "freins": "Freins",
+    "profil": "Profil", "bases": "Bases", "bases_suite": "Bases (suite)",
+    "usage": "Usage", "freins": "Freins",
 }
-# Report des réponses B1.x vers les champs structurés de l'agent.
+# Report des réponses du profil vers les champs structurés de l'agent.
 MAPPING_PROFIL_B = {
-    "B1.1": "poste", "B1.2": "service", "B1.3": "tranche_age",
+    "B1.0": "nom", "B1.1": "poste", "B1.2": "service", "B1.3": "tranche_age",
     "B1.4": "anciennete", "B1.5": "niveau_etudes", "B1.6": "mode_saisie",
 }
 
@@ -988,11 +1005,24 @@ def _version_b():
 
 
 def _sections_agent(agent):
-    """Sections à parcourir : « usage » est sautée si l'agent n'a jamais utilisé d'ordinateur."""
-    reponses = reponses_par_code(agent)
-    if reponses.get("B2.1", "").strip().lower() == "non":
-        return ["profil", "bases", "freins"]
-    return list(SECTIONS_FORMULAIRE_B)
+    """
+    Parcours conditionnel du Formulaire B :
+    - « bases (suite) » n'apparaît que si l'agent a déjà utilisé un ordinateur (B2.1 = Oui) ;
+    - « usage » n'apparaît que s'il sait allumer un ordinateur ET utiliser souris/clavier
+      (B3.1 = Oui et B3.2 = Oui).
+    """
+    rep = reponses_par_code(agent)
+
+    def oui(code):
+        return (rep.get(code) or "").strip().lower() == "oui"
+
+    sections = ["profil", "bases"]
+    if oui("B2.1"):
+        sections.append("bases_suite")
+        if oui("B3.1") and oui("B3.2"):
+            sections.append("usage")
+    sections.append("freins")
+    return sections
 
 
 def _questions_section(version_b, section, reponses):

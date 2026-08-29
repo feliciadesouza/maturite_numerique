@@ -246,6 +246,7 @@ class Agent(models.Model):
     numero = models.PositiveIntegerField(
         null=True, blank=True, help_text="Numéro séquentiel de l'agent dans l'évaluation (ex. 037)."
     )
+    nom = models.CharField(max_length=150, blank=True, help_text="Nom et prénom de l'agent (B1.0).")
     poste = models.CharField(max_length=150)
     service = models.CharField(max_length=150, blank=True)
     tranche_age = models.CharField(max_length=10, choices=TRANCHE_AGE_CHOICES, blank=True)

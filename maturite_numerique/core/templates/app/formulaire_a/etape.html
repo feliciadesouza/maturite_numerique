@@ -1,6 +1,6 @@
 {% extends "base_app.html" %}
 
-{% block title %}Formulaire A — {{ dimension.nom }}{% endblock %}
+{% block title %}Formulaire A — {{ titre_etape }}{% endblock %}
 {% block topbar_title %}Diagnostic de maturité numérique — Togo{% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
 </div>
 
 <div class="step-meta">
-  <span>Étape {{ numero }} / {{ total }} — {{ dimension.nom }}</span>
+  <span>Étape {{ numero }} / {{ total }} — {{ titre_etape }}</span>
   <span>{{ progression }} %</span>
 </div>
 <div class="progress" style="margin-bottom: var(--sp-6);"><span style="width: {{ progression }}%;"></span></div>
