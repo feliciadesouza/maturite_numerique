@@ -1,6 +1,8 @@
 from functools import wraps
 
-from django.contrib.auth.decorators import user_passes_test
+from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 
 from .models import Utilisateur
 
@@ -22,7 +24,7 @@ ROLE_HOME_URLS = {
 
 
 def user_has_role(user, *roles):
-    """Vérifie si l’utilisateur connecté possède l’un des rôles attendus."""
+    """Vérifie si l'utilisateur connecté possède l'un des rôles attendus."""
     if not user or not user.is_authenticated:
         return False
 
@@ -39,12 +41,22 @@ def user_has_role(user, *roles):
 
 
 def role_required(*roles):
-    """Décorateur simple pour restreindre une vue à certains rôles métier."""
+    """
+    Restreint une vue à certains rôles métier.
+    - Visiteur non connecté  -> redirection vers la page de connexion.
+    - Connecté au mauvais rôle -> 403 (chaque rôle a son propre menu, l'accès
+      par URL à une autre section est un cas anormal).
+    """
 
     def decorator(view_func):
         @wraps(view_func)
-        @user_passes_test(lambda user: user_has_role(user, *roles))
         def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect_to_login(
+                    request.get_full_path(), settings.LOGIN_URL, "next"
+                )
+            if not user_has_role(request.user, *roles):
+                raise PermissionDenied
             return view_func(request, *args, **kwargs)
 
         return _wrapped_view

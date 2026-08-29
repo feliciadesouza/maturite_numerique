@@ -53,48 +53,52 @@ pre-commit run --all-files       # vérifier tout le dépôt (flake8, bandit, hy
 
 ```bash
 python3 manage.py migrate
-python3 manage.py seed_data          # charge les dimensions et toutes les questions
-python3 manage.py createsuperuser    # créez votre compte Administrateur de contenu
+python3 manage.py seed_data            # questionnaire de départ (dimensions + questions)
+python3 manage.py seed_recommandations # règles de recommandation
+python3 manage.py setup_roles          # groupes Django par rôle
+python3 manage.py create_test_users    # comptes de démonstration (agent_eval, enqueteur, dsi, admin_contenu)
+python3 manage.py createsuperuser      # compte superviseur
 python3 manage.py runserver
 ```
 
-Rendez-vous ensuite sur **http://127.0.0.1:8000/admin/** et connectez-vous
-avec le compte créé : vous pouvez déjà consulter, modifier et réordonner
-les 5 dimensions et les ~44 questions des Formulaires A et B.
+Comptes de démonstration : `agent_eval` / `AgentEval123!`, `enqueteur` /
+`Enqueteur123!`, `dsi` / `Dsi123!`, `admin_contenu` / `Admin123!`.
+La page de connexion (`/connexion/`) redirige chaque rôle vers son espace.
+L'enquête agent est accessible sans compte sur `/enquete/`.
 
-## Tester le moteur de scoring
+## Interfaces
+
+| Rôle | Espace |
+|---|---|
+| Agent évaluateur | Formulaire A multi-étapes |
+| Enquêteur | Liste des agents + Formulaire B assisté |
+| DSI / Décideur | Tableau de bord, résultats, comparaison, rapports (PDF) |
+| Administrateur de contenu | Back-office : dimensions, questions, versions |
+| Agent enquêté | Formulaire B public, sans compte |
+
+## Tests et qualité
 
 ```bash
-python3 manage.py shell
+python manage.py test
+flake8 .
+bandit --recursive core maturite_numerique --exclude '**/tests.py,**/migrations/**'
 ```
-```python
-from core.models import Administration
-from core.scoring import calculer_score_global
-admin = Administration.objects.first()
-resultat = calculer_score_global(admin)
-print(resultat.score_global, resultat.dimension_la_plus_faible)
-```
-
-## Ce qui reste à faire (dépend de la maquette du designer)
-
-- Les templates HTML des formulaires A et B (multi-étapes, logique
-  conditionnelle du Niveau 0)
-- Le tableau de bord avec le radar chart (Chart.js)
-- La page de comparaison multi-administrations
-- Le export du rapport synthétique (PDF)
 
 ## Structure du projet
 
 ```
 maturite_numerique/
 ├── core/
-│   ├── models.py              # Modèle de données (diagramme de classes)
-│   ├── admin.py                # Back-office (Administrateur de contenu)
-│   ├── scoring.py              # Moteur de scoring (logique métier pure)
+│   ├── models.py        # modèle de données
+│   ├── views.py         # vues (site public, formulaires, DSI, back-office)
+│   ├── forms.py         # formulaires + rendu dynamique des questions
+│   ├── scoring.py       # moteur de scoring (fonctions pures)
+│   ├── versioning.py    # versionnage du questionnaire
+│   ├── permissions.py   # contrôle d'accès par rôle
+│   ├── templates/       # 3 gabarits (public / app / enquête) + composants
+│   ├── static/          # design system (tokens.css), Chart.js, police Inter
 │   └── management/commands/
-│       └── seed_data.py        # Chargement des dimensions et questions
-├── maturite_numerique/
-│   └── settings.py
-├── requirements.txt
-└── manage.py
+└── maturite_numerique/settings.py
 ```
+
+Notes de développement pour le mémoire : `../docs/chapitre-4-developpement.md`.

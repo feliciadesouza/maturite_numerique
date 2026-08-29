@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titre %}Erreur{% endblock %} — Maturité Numérique</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <style>
+    body { display: grid; place-items: center; min-height: 100vh; padding: var(--sp-8); }
+    .err { max-width: 460px; text-align: center; }
+    .err .code { font-size: 3.5rem; font-weight: 700; color: var(--primary); line-height: 1; }
+    .err h1 { font-size: var(--fs-h3); margin: var(--sp-3) 0 var(--sp-2); }
+    .err p { color: var(--text-muted); margin-bottom: var(--sp-6); }
+  </style>
+</head>
+<body>
+  <div class="err">
+    <div class="code">{% block code %}500{% endblock %}</div>
+    <h1>{% block titre_h %}Une erreur est survenue{% endblock %}</h1>
+    <p>{% block message %}Le service a rencontré un problème. Réessayez dans quelques instants.{% endblock %}</p>
+    <a href="/" class="btn btn--primary">Retour à l'accueil</a>
+  </div>
+</body>
+</html>

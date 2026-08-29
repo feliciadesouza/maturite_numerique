@@ -10,3 +10,6 @@
 *.pdf binary
 *.sqlite3 binary
 *.drawio binary
+*.woff binary
+*.woff2 binary
+*.docx binary

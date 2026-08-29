@@ -1,0 +1,11 @@
+Nouveau message de contact — {{ message.get_sujet_display }}
+
+De : {{ message.nom }} <{{ message.email }}>
+Administration : {{ message.administration|default:"—" }}
+Reçu le : {{ message.date_creation|date:"j F Y à H:i" }}
+
+--------------------------------------------------------------------
+{{ message.message }}
+--------------------------------------------------------------------
+
+Répondre directement à {{ message.email }}.

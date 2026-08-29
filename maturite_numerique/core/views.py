@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.db.models import Avg, Max
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .forms import (
@@ -128,11 +129,7 @@ def contact(request):
             destinataire = getattr(settings, "CONTACT_EMAIL", "contact@maturite-numerique.tg")
             send_mail(
                 subject=f"[Contact] {message.get_sujet_display()} — {message.nom}",
-                message=(
-                    f"De : {message.nom} ({message.email})\n"
-                    f"Administration : {message.administration or '-'}\n\n"
-                    f"{message.message}"
-                ),
+                message=render_to_string("email/contact.txt", {"message": message}),
                 from_email=None,
                 recipient_list=[destinataire],
                 fail_silently=True,
@@ -1063,10 +1060,7 @@ def _finaliser_enquete(agent):
     if agent.email_accuse:
         send_mail(
             subject="Confirmation de votre participation",
-            message=(
-                "Vos réponses ont bien été enregistrées. Merci pour votre temps.\n"
-                f"Référence : {agent.reference}"
-            ),
+            message=render_to_string("email/confirmation_enquete.txt", {"agent": agent}),
             from_email=None,
             recipient_list=[agent.email_accuse],
             fail_silently=True,
