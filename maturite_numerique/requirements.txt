@@ -4,3 +4,7 @@ Django==5.2.17
 psycopg2-binary==2.9.12
 python-decouple==3.8
 gunicorn==23.0.0
+# Export PDF des rapports. Nécessite Pango/Cairo côté système (présents sur
+# l'image Docker et la CI Linux) ; l'appli bascule sur l'impression navigateur
+# si la bibliothèque n'est pas chargeable (poste Windows sans GTK).
+weasyprint==63.1

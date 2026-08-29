@@ -1,3 +1,5 @@
+import math
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -465,46 +467,159 @@ def administration_resultats(request, administration_id):
     })
 
 
+PALETTE_COMPARAISON = ["#3e90f0", "#4fbf88", "#8b6fe0", "#f2b33d", "#e85d74", "#16202e"]
+
+
+def svg_radar(labels, series, taille=240):
+    """
+    Géométrie d'un radar en SVG (rendu sans JavaScript, pour le rapport PDF).
+    `series` : [{nom, valeurs (0-5), couleur}].
+    """
+    cx = cy = taille / 2
+    rayon = taille / 2 - 34
+    n = len(labels) or 1
+    angles = [(-math.pi / 2) + i * (2 * math.pi / n) for i in range(n)]
+
+    def point(rr, ang):
+        return (round(cx + rr * math.cos(ang), 1), round(cy + rr * math.sin(ang), 1))
+
+    anneaux = []
+    for k in range(1, 6):
+        pts = [point(rayon * k / 5, a) for a in angles]
+        anneaux.append(" ".join(f"{x},{y}" for x, y in pts))
+    axes = []
+    for lbl, a in zip(labels, angles):
+        x, y = point(rayon, a)
+        lx, ly = point(rayon + 16, a)
+        anchor = "middle" if abs(lx - cx) < 8 else ("start" if lx > cx else "end")
+        axes.append({"x": x, "y": y, "label": lbl, "lx": round(lx, 1), "ly": round(ly, 1), "anchor": anchor})
+    polygones = []
+    for s in series:
+        pts = [point(rayon * min(max(v, 0), 5) / 5, a) for v, a in zip(s["valeurs"], angles)]
+        polygones.append({
+            "points": " ".join(f"{x},{y}" for x, y in pts),
+            "couleur": s["couleur"], "nom": s["nom"],
+        })
+    return {"taille": taille, "cx": cx, "cy": cy, "anneaux": anneaux, "axes": axes, "polygones": polygones}
+
+
 @login_required
 @role_required("dsi_decideur")
 def comparaison(request):
-    """Comparaison multi-administrations (contenu ajouté en phase suivante)."""
-    return render(request, "app/dsi/a_venir.html", {
-        "titre": "Comparaison des administrations",
-        "message": "Le radar superposé et le tableau comparatif arrivent prochainement.",
+    """Comparaison de plusieurs administrations : radar superposé + tableau."""
+    ids = request.GET.getlist("admin")
+    if ids:
+        selection = list(Administration.objects.filter(pk__in=ids))
+        selection.sort(key=lambda a: ids.index(str(a.pk)))
+    else:
+        selection = list(Administration.objects.order_by("id")[:3])
+
+    dimensions = list(Dimension.objects.filter(actif=True).order_by("ordre"))
+    colonnes, versions = [], set()
+    for i, administration in enumerate(selection):
+        res = resultat_administration(administration)
+        version = (
+            res.evaluation.version_formulaire_a.numero_version
+            if res.evaluation and res.evaluation.version_formulaire_a_id else None
+        )
+        versions.add(version)
+        colonnes.append({
+            "administration": administration, "resultat": res,
+            "couleur": PALETTE_COMPARAISON[i % len(PALETTE_COMPARAISON)], "version": version,
+        })
+
+    table = []
+    for dimension in dimensions:
+        cellules = []
+        for col in colonnes:
+            cellules.append(next(
+                (s for s in col["resultat"].scores_dimensions if s["dimension"].pk == dimension.pk),
+                None,
+            ))
+        table.append({"dimension": dimension, "cellules": cellules})
+
+    radar_data = {
+        "labels": [d.nom for d in dimensions],
+        "series": [{
+            "nom": col["administration"].nom,
+            "valeurs": [s["score"] for s in col["resultat"].scores_dimensions],
+            "couleur": col["couleur"],
+        } for col in colonnes],
+        "dark": False,
+    }
+    versions_connues = {v for v in versions if v is not None}
+    versions_melangees = len(versions_connues) > 1
+
+    ids_selection = [a.pk for a in selection]
+    return render(request, "app/dsi/comparaison.html", {
+        "colonnes": colonnes,
+        "table": table,
+        "radar_data": radar_data,
+        "versions_melangees": versions_melangees,
+        "ids_selection": ids_selection,
+        "autres_administrations": Administration.objects.exclude(pk__in=ids_selection).order_by("nom"),
     })
 
 
 @login_required
 @role_required("dsi_decideur")
 def rapports(request):
-    """Liste des rapports (contenu ajouté en phase suivante)."""
-    administrations = Administration.objects.order_by("nom")
-    return render(request, "app/dsi/rapports.html", {"administrations": administrations})
+    """Liste des rapports disponibles par administration."""
+    lignes = []
+    for administration in Administration.objects.order_by("nom"):
+        res = resultat_administration(administration)
+        lignes.append({
+            "administration": administration,
+            "resultat": res,
+            "date": res.evaluation.date_cloture if res.evaluation else None,
+        })
+    return render(request, "app/dsi/rapports.html", {"lignes": lignes})
 
 
 @login_required
 @role_required("dsi_decideur")
 def rapport_administration(request, administration_id):
-    """Rapport synthétique imprimable (base de l'export PDF, phase suivante)."""
+    """Rapport synthétique : page imprimable, ou PDF (WeasyPrint) si demandé."""
     administration = get_object_or_404(Administration, pk=administration_id)
     resultat = resultat_administration(administration)
-    return render(request, "app/dsi/rapport.html", {
+    contexte = {
         "administration": administration,
         "resultat": resultat,
-        "radar_data": {
-            "labels": [s["dimension"].nom for s in resultat.scores_dimensions],
-            "series": [{
+        "radar_svg": svg_radar(
+            [s["dimension"].nom for s in resultat.scores_dimensions],
+            [{
                 "nom": administration.nom,
                 "valeurs": [s["score"] for s in resultat.scores_dimensions],
                 "couleur": "#1e6fd9",
             }],
-            "dark": False,
-        },
+        ),
         "total_agents": sum(resultat.distribution.values()),
         "dist_max": max(resultat.distribution.values()) or 1,
         "genere_le": timezone.now(),
-    })
+    }
+
+    if request.GET.get("format") == "pdf":
+        pdf = None
+        try:
+            from weasyprint import HTML
+
+            html = render(request, "app/dsi/rapport.html", contexte).content.decode("utf-8")
+            pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+        except Exception:
+            pdf = None
+        if pdf is None:
+            messages.info(
+                request,
+                "L'export PDF n'est pas disponible ici : utilisez « Imprimer / PDF » depuis le navigateur.",
+            )
+            return redirect("rapport_administration", administration_id=administration_id)
+        reponse = HttpResponse(pdf, content_type="application/pdf")
+        reponse["Content-Disposition"] = (
+            f'attachment; filename="rapport-{administration.pk}.pdf"'
+        )
+        return reponse
+
+    return render(request, "app/dsi/rapport.html", contexte)
 
 
 @login_required

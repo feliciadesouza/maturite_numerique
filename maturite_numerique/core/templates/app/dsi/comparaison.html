@@ -1,0 +1,78 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Comparaison des administrations{% endblock %}
+{% block head %}
+  <script src="{% static 'vendor/chart.umd.min.js' %}" defer></script>
+  <script src="{% static 'js/radar.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Comparaison des administrations</h1>
+  <p class="breadcrumb">Accueil — Comparaison</p>
+</div>
+
+{% if versions_melangees %}
+<div class="alert alert--warning" style="margin-bottom: var(--sp-4);">
+  {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+  <span>Ces administrations n'ont pas toutes été évaluées avec la même version du questionnaire.
+    Interprétez la comparaison avec prudence.</span>
+</div>
+{% endif %}
+
+<div class="cmp-chips">
+  {% for col in colonnes %}
+  <span class="cmp-chip">
+    <span class="dot" style="background: {{ col.couleur }};"></span>
+    {{ col.administration.nom }}
+    {% if col.version %}<span class="text-muted">v{{ col.version }}</span>{% endif %}
+    <a class="rm" href="?{% for id in ids_selection %}{% if id != col.administration.pk %}admin={{ id }}&{% endif %}{% endfor %}"
+       title="Retirer">×</a>
+  </span>
+  {% endfor %}
+
+  {% if autres_administrations %}
+  <details class="cmp-add">
+    <summary>+ Ajouter</summary>
+    <form method="get" class="cmp-add__panel">
+      {% for id in ids_selection %}<input type="hidden" name="admin" value="{{ id }}">{% endfor %}
+      {% for a in autres_administrations %}
+      <label><input type="checkbox" name="admin" value="{{ a.pk }}"> {{ a.nom }}</label>
+      {% endfor %}
+      <button type="submit" class="btn btn--primary" style="align-self: flex-start; margin-top: var(--sp-2);">
+        Mettre à jour</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+
+<div class="cmp-grid">
+  <div class="card">
+    <h3 style="margin-bottom: var(--sp-3);">Profils superposés</h3>
+    {% include "components/_radar.html" with radar_id="radar-cmp" radar_data=radar_data %}
+  </div>
+
+  <div class="twrap card--flush">
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Dimension</th>{% for col in colonnes %}<th>{{ col.administration.nom }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in table %}
+        <tr>
+          <td>{{ row.dimension.nom }}</td>
+          {% for cell in row.cellules %}
+            <td class="score {% if cell %}score--{{ cell.badge }}{% endif %}">{% if cell %}{{ cell.score }}{% else %}—{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr class="total">
+          <td>Score global</td>
+          {% for col in colonnes %}<td class="score">{{ col.resultat.score_global }}</td>{% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
