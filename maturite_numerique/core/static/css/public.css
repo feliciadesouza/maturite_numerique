@@ -43,7 +43,8 @@
 /* Liste des dimensions (accueil + page dédiée) */
 .dim-list { display: flex; flex-direction: column; gap: var(--sp-4); }
 .dim-row { display: flex; gap: var(--sp-4); align-items: flex-start; }
-.dim-ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; color: #fff; }
+.dim-ico { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; flex: none; color: #fff; }
+.dim-ico .icon { width: 24px; height: 24px; }
 .dim-ico--infra { background: var(--dim-infra); }
 .dim-ico--services { background: var(--dim-services); }
 .dim-ico--competences { background: var(--dim-competences); }
@@ -57,6 +58,13 @@
 .dim-ico--engagement.is-soft { color: var(--dim-engagement); background: var(--red-50); }
 .dim-row h3 { font-size: var(--fs-title); }
 .dim-row p { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 2px; }
+
+/* Badge « Poids » teinté à la couleur de la dimension */
+.badge--dim-infra       { background: var(--blue-50);  color: var(--dim-infra); }
+.badge--dim-services    { background: var(--green-50); color: var(--dim-services); }
+.badge--dim-competences { background: var(--amber-50); color: var(--dim-competences); }
+.badge--dim-juridique   { background: #efeafc;         color: var(--dim-juridique); }
+.badge--dim-engagement  { background: var(--red-50);   color: var(--dim-engagement); }
 
 /* Grille de cartes générique */
 .card-grid { display: grid; gap: var(--sp-4); }
@@ -98,8 +106,9 @@
 .cta-dark .btn--secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,0.4); }
 
 /* Bandeau d'en-tête des pages internes du site (démarche, légal…) */
-.page-banner { background: var(--navy); color: #fff; padding: var(--sp-12) var(--sp-8); }
-.page-banner .inner { max-width: 1080px; margin: 0 auto; text-align: center; }
+.page-banner { position: relative; overflow: hidden; background: var(--navy); color: #fff; padding: var(--sp-12) var(--sp-8); }
+.page-banner__decor { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.page-banner .inner { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; text-align: center; }
 .page-banner .eyebrow { color: var(--blue-300); display: block; margin-bottom: var(--sp-2); }
 .page-banner h1 { color: #fff; }
 .page-banner p { color: rgba(255,255,255,0.75); margin-top: var(--sp-3); max-width: 52ch; margin-inline: auto; }

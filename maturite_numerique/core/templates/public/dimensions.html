@@ -7,7 +7,7 @@
 
 <section class="public-section">
   <div class="public-container">
-    <div class="stack">
+    <div class="stack" style="gap: var(--sp-6);">
       {% for d in dimensions %}
       <div class="card">
         <div class="dim-row">
@@ -16,7 +16,7 @@
           <div style="flex:1;">
             <div class="row row--between">
               <h3>{{ d.obj.nom }}</h3>
-              <span class="badge badge--neutre">Poids : {% widthratio d.obj.poids 1 100 %} %</span>
+              <span class="badge badge--dim-{{ d.obj.code }}">Poids : {% widthratio d.obj.poids 1 100 %} %</span>
             </div>
             <p class="text-muted" style="margin-top:4px;">{{ d.obj.description }}.</p>
             <div class="tag-chips">
