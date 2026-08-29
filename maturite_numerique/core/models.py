@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -236,6 +238,10 @@ class Agent(models.Model):
     administration = models.ForeignKey(Administration, on_delete=models.CASCADE, related_name="agents")
     evaluation = models.ForeignKey(
         Evaluation, null=True, blank=True, on_delete=models.CASCADE, related_name="agents"
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4, db_index=True, editable=False,
+        help_text="Jeton d'accès au brouillon d'enquête (reprise sans compte).",
     )
     numero = models.PositiveIntegerField(
         null=True, blank=True, help_text="Numéro séquentiel de l'agent dans l'évaluation (ex. 037)."

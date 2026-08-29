@@ -1,0 +1,42 @@
+{% extends "base_enquete.html" %}
+
+{% block title %}Enquête agent — votre administration{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="sec-pills">
+    <span class="sec-pill is-current">1. Administration</span>
+    <span class="sec-pill">2. Profil</span>
+    <span class="sec-pill">3. Questions</span>
+  </div>
+
+  <h1 style="font-size: var(--fs-h2);">Sélectionnez votre administration</h1>
+  <p class="text-muted text-sm" style="margin: var(--sp-2) 0 var(--sp-4);">
+    Cette première étape rattache vos réponses à la bonne structure.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="admin-list">
+      {% for administration in administrations %}
+      <label class="admin-opt">
+        <input type="radio" name="administration" value="{{ administration.pk }}" {% if forloop.first %}required{% endif %}>
+        <span>
+          <b>{{ administration.nom }}</b>
+          {% if administration.region %}<span>{{ administration.region }}</span>{% endif %}
+        </span>
+      </label>
+      {% empty %}
+      <p class="text-muted">Aucune administration n'est encore enregistrée.</p>
+      {% endfor %}
+    </div>
+
+    <div class="alert alert--success" style="margin: var(--sp-4) 0;">
+      {% include "components/_icon.html" with name="lock" cls="icon--sm" %}
+      <span>Enquête anonyme — aucun compte ni mot de passe requis.</span>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block btn--lg">
+      Continuer vers mon profil {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</button>
+  </form>
+</div>
+{% endblock %}

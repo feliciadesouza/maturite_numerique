@@ -176,24 +176,98 @@ class FormSubmissionTests(TestCase):
         self.assertTrue(Agent.objects.filter(poste="Agent test", administration=self.administration).exists())
         self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent test").exists())
 
-    def test_public_formulaire_b_is_accessible_without_login(self):
-        response = self.client.post(
-            "/agent-enquete/",
-            {
-                "administration": self.administration.pk,
-                "poste": "Agent public",
-                "service": "Digital",
-                "tranche_age": "<30",
-                "anciennete": "2 ans",
-                "niveau_etudes": "Licence",
-                "mode_saisie": "autonome",
-                f"q_{self.question.id}": "Oui",
-            },
+    def test_enquete_publique_accessible_sans_compte(self):
+        self.assertEqual(self.client.get("/enquete/").status_code, 200)
+        self.assertEqual(self.client.get("/agent-enquete/").status_code, 200)
+        self.assertEqual(self.client.get("/enquete/demarrer/").status_code, 200)
+
+
+class EnquetePubliqueTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+        self.administration = Administration.objects.create(nom="Mairie de Lomé", region="Maritime")
+        self.version_b = VersionFormulaire.objects.get(
+            formulaire__code="B", est_active=True
         )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Agent.objects.filter(poste="Agent public", administration=self.administration).exists())
-        self.assertTrue(Reponse.objects.filter(question=self.question, agent__poste="Agent public").exists())
+    def _codes(self, section):
+        return list(
+            Question.objects.filter(
+                version_formulaire=self.version_b, section=section, actif=True
+            ).order_by("ordre")
+        )
+
+    def _payload(self, questions, override=None):
+        override = override or {}
+        data = {}
+        for q in questions:
+            if q.code in override:
+                data[f"q_{q.id}"] = override[q.code]
+                continue
+            code = q.type_champ.code
+            if code == "oui_non":
+                data[f"q_{q.id}"] = "Oui"
+            elif code == "oui_non_partiel":
+                data[f"q_{q.id}"] = "Partiel"
+            elif code == "echelle_1_5":
+                data[f"q_{q.id}"] = "4"
+            elif code == "tranches":
+                data[f"q_{q.id}"] = "50-75%"
+            elif code in ("liste", "choix_multiple"):
+                opt = q.options.first()
+                data[f"q_{q.id}"] = opt.valeur if opt else ""
+            else:
+                data[f"q_{q.id}"] = "Réponse test"
+        return data
+
+    def test_parcours_complet_cree_un_agent_et_un_accuse(self):
+        demarrer = self.client.post("/enquete/demarrer/", {"administration": self.administration.pk})
+        self.assertEqual(demarrer.status_code, 302)
+        agent = Agent.objects.get(administration=self.administration)
+        base = f"/enquete/{agent.token}/section/"
+
+        for section in ["profil", "bases", "usage", "freins"]:
+            questions = self._codes(section)
+            override = {"B2.1": "Oui"} if section == "bases" else None
+            resp = self.client.post(base + section + "/", self._payload(questions, override))
+            self.assertEqual(resp.status_code, 302)
+
+        agent.refresh_from_db()
+        self.assertEqual(agent.statut, "terminee")
+        self.assertRegex(agent.reference, r"^MN-\d{4}-\d{6}$")
+        self.assertIsNotNone(agent.niveau_maturite)
+        conf = self.client.get(f"/enquete/{agent.token}/confirmation/")
+        self.assertEqual(conf.status_code, 200)
+
+    def test_filtre_niveau_0_saute_la_section_usage(self):
+        self.client.post("/enquete/demarrer/", {"administration": self.administration.pk})
+        agent = Agent.objects.get(administration=self.administration)
+        base = f"/enquete/{agent.token}/section/"
+
+        self.client.post(base + "profil/", self._payload(self._codes("profil")))
+        rep = self.client.post(base + "bases/", self._payload(self._codes("bases"), {"B2.1": "Non"}))
+        self.assertEqual(rep.status_code, 302)
+        self.assertEqual(rep.url, base + "freins/")
+
+        # « usage » redirige vers la 1re section effective
+        self.assertEqual(self.client.get(base + "usage/").status_code, 302)
+
+        self.client.post(base + "freins/", self._payload(self._codes("freins")))
+        agent.refresh_from_db()
+        self.assertEqual(agent.statut, "terminee")
+        self.assertEqual(agent.niveau_maturite, 0)
+
+    def test_soumission_idempotente(self):
+        self.client.post("/enquete/demarrer/", {"administration": self.administration.pk})
+        agent = Agent.objects.get(administration=self.administration)
+        base = f"/enquete/{agent.token}/section/"
+        for section in ["profil", "bases", "usage", "freins"]:
+            self.client.post(base + section + "/", self._payload(self._codes(section), {"B2.1": "Oui"}))
+        ref = Agent.objects.get(pk=agent.pk).reference
+        # revisiter une section après clôture redirige vers la confirmation
+        again = self.client.get(base + "profil/")
+        self.assertEqual(again.status_code, 302)
+        self.assertEqual(Agent.objects.get(pk=agent.pk).reference, ref)
 
 
 class SeedDataTests(TestCase):

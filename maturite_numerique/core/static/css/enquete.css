@@ -1,0 +1,85 @@
+/* =========================================================================
+   Maturité Numérique — Styles du parcours d'enquête public (Formulaire B)
+   ========================================================================= */
+
+.enquete-intro { text-align: center; }
+.enquete-intro__mark {
+  width: 72px; height: 72px; border-radius: var(--r-pill); margin: 0 auto var(--sp-4);
+  background: var(--blue-50); color: var(--primary); display: grid; place-items: center;
+}
+.enquete-intro__mark .icon { width: 34px; height: 34px; }
+.enquete-intro .pill { margin: 0 auto var(--sp-4); }
+.enquete-intro h1 { margin-bottom: var(--sp-3); }
+.enquete-intro p.lead { color: var(--text-muted); max-width: 46ch; margin: 0 auto var(--sp-8); }
+.enquete-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-8); text-align: left; }
+.enquete-cards .card { padding: var(--sp-4); }
+.enquete-cards .ico {
+  width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-bottom: var(--sp-3);
+}
+.enquete-cards .ico--time { background: var(--blue-50); color: var(--primary); }
+.enquete-cards .ico--lock { background: var(--green-50); color: var(--green-500); }
+.enquete-cards .ico--help { background: var(--amber-50); color: var(--amber-500); }
+.enquete-cards h3 { font-size: var(--fs-title); }
+.enquete-cards p { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 4px; }
+.enquete-foot-note { font-size: var(--fs-sm); color: var(--text-muted); margin-top: var(--sp-4); }
+
+/* Pastilles de sections */
+.sec-pills { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.sec-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: var(--fs-sm); font-weight: 600; padding: 6px 14px; border-radius: var(--r-pill);
+  background: var(--surface-alt); color: var(--text-muted);
+}
+.sec-pill::before { content: ""; width: 7px; height: 7px; border-radius: var(--r-pill); background: currentColor; }
+.sec-pill.is-done { background: var(--green-50); color: var(--green-500); }
+.sec-pill.is-current { background: var(--primary); color: #fff; }
+
+/* Choix d'administration : liste radio en cartes */
+.admin-list { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.admin-opt {
+  display: flex; align-items: center; gap: var(--sp-3);
+  border: 1px solid var(--border-strong); border-radius: var(--r-control);
+  padding: 14px 16px; cursor: pointer;
+}
+.admin-opt:hover { border-color: var(--primary); }
+.admin-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.admin-opt input { accent-color: var(--primary); }
+.admin-opt b { display: block; }
+.admin-opt span { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* Note conditionnelle inline (filtre Niveau 0) */
+.cond-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--amber-50); color: #8a5a06;
+  border-radius: var(--r-control); padding: 10px 14px; font-size: var(--fs-sm); margin-top: var(--sp-3);
+}
+
+/* Écrans de résultat (confirmation / erreur) */
+.enquete-result { text-align: center; }
+.enquete-result__mark {
+  width: 76px; height: 76px; border-radius: var(--r-pill); margin: 0 auto var(--sp-4);
+  display: grid; place-items: center;
+}
+.enquete-result__mark .icon { width: 36px; height: 36px; }
+.enquete-result__mark--ok { background: var(--green-50); color: var(--green-500); }
+.enquete-result__mark--err { background: var(--red-50); color: var(--red-500); }
+.enquete-result h1 { margin-bottom: var(--sp-3); }
+.enquete-result p { color: var(--text-muted); max-width: 44ch; margin: 0 auto; }
+.ref-pill {
+  display: inline-flex; align-items: center; gap: 8px; margin: var(--sp-6) auto 0;
+  background: var(--green-50); color: var(--green-500); font-weight: 600;
+  padding: 8px 16px; border-radius: var(--r-pill);
+}
+.mail-preview {
+  border: 1px solid var(--border); border-radius: var(--r-control);
+  padding: var(--sp-4); margin: var(--sp-6) 0; text-align: left;
+}
+.mail-preview__from { display: flex; align-items: center; gap: var(--sp-3); }
+.mail-preview .avatar {
+  width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--primary); color: #fff;
+  display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); flex: none;
+}
+
+@media (max-width: 620px) {
+  .enquete-cards { grid-template-columns: 1fr; }
+}
