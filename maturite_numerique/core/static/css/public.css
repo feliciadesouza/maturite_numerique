@@ -138,6 +138,8 @@
   .page-banner .inner { text-align: left; }
   .page-banner h1 { font-size: 1.7rem; }
   .page-banner p { margin-inline: 0; max-width: none; }
+  /* Decor cale sur les proportions desktop : attenue sur mobile. */
+  .page-banner__decor { opacity: 0.55; }
 }
 
 /* Documents légaux */
