@@ -1,9 +1,15 @@
 from django.urls import path
 
 from .views import (
+    acces_par_role,
     administration_detail,
     backoffice,
+    conditions,
+    confidentialite,
+    contact,
     dashboard,
+    demarche,
+    dimensions_publiques,
     enqueteur_home,
     formulaire_a,
     formulaire_b,
@@ -17,6 +23,12 @@ from .views import (
 
 urlpatterns = [
     path('', home, name='home'),
+    path('demarche/', demarche, name='demarche'),
+    path('dimensions/', dimensions_publiques, name='dimensions_publiques'),
+    path('acces-par-role/', acces_par_role, name='acces_par_role'),
+    path('contact/', contact, name='contact'),
+    path('confidentialite/', confidentialite, name='confidentialite'),
+    path('conditions-utilisation/', conditions, name='conditions'),
     path('connexion/', login_view, name='connexion'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),

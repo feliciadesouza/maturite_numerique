@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/layouts.css' %}">
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -34,10 +35,10 @@
           <b>Maturité Numérique</b>
         </a>
         <nav>
-          <a href="{% url 'home' %}#demarche">La démarche</a>
-          <a href="#">Confidentialité</a>
-          <a href="#">Conditions d'utilisation</a>
-          <a href="{% url 'home' %}#contact">Contact</a>
+          <a href="{% url 'demarche' %}">La démarche</a>
+          <a href="{% url 'confidentialite' %}">Confidentialité</a>
+          <a href="{% url 'conditions' %}">Conditions d'utilisation</a>
+          <a href="{% url 'contact' %}">Contact</a>
         </nav>
         <div class="legal">
           <span>© 2026 Maturité Numérique — Outil de diagnostic des administrations publiques, République togolaise.</span>

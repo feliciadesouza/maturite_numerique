@@ -1,0 +1,130 @@
+/* =========================================================================
+   Maturité Numérique — Styles propres au site vitrine
+   ========================================================================= */
+
+.hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: var(--sp-12); align-items: center; }
+.hero__eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--blue-50); color: var(--blue-700);
+  font-size: var(--fs-cap); font-weight: 600; padding: 5px 12px; border-radius: var(--r-pill);
+}
+.hero h1 { margin: var(--sp-4) 0; max-width: 15ch; }
+.hero p { color: var(--text-muted); font-size: var(--fs-title); max-width: 48ch; }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+.hero__note { margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px; }
+.hero__visual { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card);
+  box-shadow: var(--shadow-lg); padding: var(--sp-4); }
+.hero__stats { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.hero__stat { flex: 1; border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-3);
+  display: flex; align-items: center; gap: var(--sp-3); }
+.hero__stat b { font-size: var(--fs-h3); font-weight: 700; }
+.hero__stat span { font-size: var(--fs-cap); color: var(--text-muted); }
+.hero__radar { background: var(--blue-500); border-radius: var(--r-control); padding: var(--sp-6);
+  color: #fff; text-align: center; }
+.hero__radar-caption { font-size: var(--fs-cap); color: rgba(255,255,255,0.85); margin-bottom: var(--sp-3); }
+.radar-mini { width: 160px; height: 130px; margin: 0 auto; }
+.hero__aside-note { margin-top: var(--sp-3); background: var(--green-50); color: var(--green-500);
+  font-size: var(--fs-cap); font-weight: 600; padding: 8px 12px; border-radius: var(--r-control);
+  display: flex; align-items: center; gap: 8px; }
+
+.stat-band { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-6); text-align: center; }
+.stat-band b { display: block; font-size: var(--fs-h1); font-weight: 700; color: var(--primary); line-height: 1.1; }
+.stat-band span { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.section-head { text-align: center; max-width: 42ch; margin: 0 auto var(--sp-8); }
+.section-head .eyebrow { display: block; margin-bottom: var(--sp-2); color: var(--primary); }
+.section-head p { color: var(--text-muted); margin-top: var(--sp-3); }
+
+/* Pondérations : barre à 5 segments */
+.weight-bar { display: flex; height: 10px; border-radius: var(--r-pill); overflow: hidden; margin: var(--sp-3) 0; }
+.weight-bar span { display: block; }
+
+/* Liste des dimensions (accueil + page dédiée) */
+.dim-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+.dim-row { display: flex; gap: var(--sp-4); align-items: flex-start; }
+.dim-ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; color: #fff; }
+.dim-ico--infra { background: var(--dim-infra); }
+.dim-ico--services { background: var(--dim-services); }
+.dim-ico--competences { background: var(--dim-competences); }
+.dim-ico--juridique { background: var(--dim-juridique); }
+.dim-ico--engagement { background: var(--dim-engagement); }
+.dim-ico.is-soft { background: transparent; border: 1px solid var(--border); }
+.dim-ico--infra.is-soft { color: var(--dim-infra); background: var(--blue-50); }
+.dim-ico--services.is-soft { color: var(--dim-services); background: var(--green-50); }
+.dim-ico--competences.is-soft { color: var(--dim-competences); background: var(--amber-50); }
+.dim-ico--juridique.is-soft { color: var(--dim-juridique); background: #efeafc; }
+.dim-ico--engagement.is-soft { color: var(--dim-engagement); background: var(--red-50); }
+.dim-row h3 { font-size: var(--fs-title); }
+.dim-row p { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 2px; }
+
+/* Grille de cartes générique */
+.card-grid { display: grid; gap: var(--sp-4); }
+.card-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid--5 { grid-template-columns: repeat(5, 1fr); }
+
+.step-num { width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--blue-500); color: #fff;
+  display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); margin-bottom: var(--sp-3); }
+.mini-card h3 { font-size: var(--fs-title); }
+.mini-card p { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 4px; }
+
+.role-mini { text-align: left; }
+.role-mini .ico { width: 36px; height: 36px; border-radius: 9px; background: var(--surface-alt);
+  display: grid; place-items: center; margin-bottom: var(--sp-3); color: var(--text-subtle); }
+.role-mini b { display: block; }
+.role-mini p { color: var(--text-muted); font-size: var(--fs-cap); margin-top: 4px; }
+.role-mini a { font-size: var(--fs-sm); font-weight: 600; margin-top: var(--sp-2); display: inline-block; }
+
+.tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
+.tag-chip { font-size: var(--fs-cap); padding: 4px 10px; border-radius: var(--r-pill);
+  background: var(--surface-alt); color: var(--text-subtle); }
+
+.checklist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.checklist li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-sm); }
+.checklist li .icon { color: var(--green-500); margin-top: 2px; }
+
+.cta-band { display: flex; align-items: center; gap: var(--sp-6); flex-wrap: wrap;
+  border-radius: var(--r-card); padding: var(--sp-6) var(--sp-8); }
+.cta-band--green { background: var(--dim-services); color: #fff; }
+.cta-band--green .btn--secondary { background: #fff; border-color: #fff; color: var(--dim-services); }
+.cta-band h2 { color: inherit; font-size: var(--fs-h3); }
+.cta-band p { color: rgba(255,255,255,0.9); font-size: var(--fs-sm); flex: 1; min-width: 220px; }
+
+.cta-dark { background: var(--navy); color: #fff; text-align: center; border-radius: var(--r-card);
+  padding: var(--sp-12) var(--sp-8); }
+.cta-dark h2 { color: #fff; }
+.cta-dark p { color: rgba(255,255,255,0.75); max-width: 46ch; margin: var(--sp-3) auto var(--sp-6); }
+.cta-dark .btn--secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,0.4); }
+
+/* Bandeau d'en-tête des pages internes du site (démarche, légal…) */
+.page-banner { background: var(--navy); color: #fff; padding: var(--sp-12) var(--sp-8); }
+.page-banner .inner { max-width: 1080px; margin: 0 auto; text-align: center; }
+.page-banner .eyebrow { color: var(--blue-300); display: block; margin-bottom: var(--sp-2); }
+.page-banner h1 { color: #fff; }
+.page-banner p { color: rgba(255,255,255,0.75); margin-top: var(--sp-3); max-width: 52ch; margin-inline: auto; }
+
+/* Documents légaux */
+.legal-doc { max-width: 760px; margin: 0 auto; }
+.legal-doc .updated { font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: var(--sp-8); }
+.legal-doc section { border-top: 1px solid var(--border); padding: var(--sp-6) 0; }
+.legal-doc section:first-of-type { border-top: none; padding-top: 0; }
+.legal-doc h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-2); }
+.legal-doc p { color: var(--text-subtle); }
+
+/* Contact */
+.contact-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-6); align-items: start; }
+.contact-info { background: var(--surface-alt); border-radius: var(--r-card); padding: var(--sp-6); }
+.contact-info .line { display: flex; gap: var(--sp-3); margin-top: var(--sp-4); }
+.contact-info .line:first-of-type { margin-top: var(--sp-4); }
+.contact-info .icon { color: var(--primary); flex: none; }
+.contact-info b { display: block; font-size: var(--fs-sm); }
+.contact-info span { font-size: var(--fs-sm); color: var(--text-muted); }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-4); }
+.form-2col .field.full { grid-column: 1 / -1; }
+
+@media (max-width: 860px) {
+  .hero, .contact-grid { grid-template-columns: 1fr; }
+  .stat-band { grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); }
+  .card-grid--3, .card-grid--5, .card-grid--2, .form-2col { grid-template-columns: 1fr; }
+}

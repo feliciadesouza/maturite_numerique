@@ -1,0 +1,84 @@
+{% extends "base_public.html" %}
+
+{% block title %}Accès par rôle — Maturité Numérique{% endblock %}
+
+{% block content %}
+{% include "components/_page_banner.html" with eyebrow="Accès par rôle" titre="Chacun ne voit que ce qui le concerne" sous_titre="Une page de connexion unique redirige chaque compte vers sa page d'atterrissage. La navigation change selon le rôle." %}
+
+<section class="public-section">
+  <div class="public-container">
+    <div class="stack">
+      <div class="card">
+        <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
+          <div class="row" style="gap:var(--sp-3);">
+            <span class="dim-ico dim-ico--infra is-soft">{% include "components/_icon.html" with name="clipboard" %}</span>
+            <b class="title">Agent évaluateur</b>
+          </div>
+          <span class="badge badge--neutre">Atterrissage : Formulaire A</span>
+        </div>
+        <ul class="checklist" style="margin-top:var(--sp-3);">
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Formulaire A (reprise automatique)</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Son profil</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
+          <div class="row" style="gap:var(--sp-3);">
+            <span class="dim-ico dim-ico--services is-soft">{% include "components/_icon.html" with name="users" %}</span>
+            <b class="title">Enquêteur</b>
+          </div>
+          <span class="badge badge--neutre">Atterrissage : Liste des agents</span>
+        </div>
+        <ul class="checklist" style="margin-top:var(--sp-3);">
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Liste des agents à enquêter</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Formulaire B en mode assisté</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Bascule entre enquêtes en cours</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
+          <div class="row" style="gap:var(--sp-3);">
+            <span class="dim-ico dim-ico--juridique is-soft">{% include "components/_icon.html" with name="bar-chart" %}</span>
+            <b class="title">DSI / Décideur</b>
+          </div>
+          <span class="badge badge--neutre">Atterrissage : Tableau de bord</span>
+        </div>
+        <ul class="checklist" style="margin-top:var(--sp-3);">
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Tableau de bord (score + radar)</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Résultats détaillés</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Comparaison multi-administrations</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Export de rapport</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
+          <div class="row" style="gap:var(--sp-3);">
+            <span class="dim-ico dim-ico--engagement is-soft">{% include "components/_icon.html" with name="layers" %}</span>
+            <b class="title">Administrateur de contenu</b>
+          </div>
+          <span class="badge badge--neutre">Atterrissage : Back-office</span>
+        </div>
+        <ul class="checklist" style="margin-top:var(--sp-3);">
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Dimensions</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Questions</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Versions du questionnaire</span></li>
+          <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Aucun accès aux résultats</span></li>
+        </ul>
+      </div>
+
+      <div class="cta-band cta-band--green">
+        <div>
+          <h2>Agent enquêté : aucun compte, aucun menu</h2>
+          <p>L'agent accède par un lien public. La première question demande son administration
+            (avant même son profil), puis le parcours s'adapte à ses réponses. Un enquêteur peut l'accompagner.</p>
+        </div>
+        <a href="{% url 'formulaire_b_public' %}" class="btn btn--secondary btn--lg">
+          Répondre à l'enquête {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

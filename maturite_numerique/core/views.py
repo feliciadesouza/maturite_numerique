@@ -1,13 +1,55 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AdministrationForm, AgentForm, ProfileForm, build_question_form
-from .models import Administration, Agent, Dimension, Question, Reponse, Utilisateur
+from .forms import (
+    AdministrationForm,
+    AgentForm,
+    ContactForm,
+    ProfileForm,
+    build_question_form,
+)
+from .models import Administration, Agent, Dimension, Evaluation, Question, Reponse, Utilisateur
 from .permissions import ROLE_HOME_URLS, role_required
 from .scoring import calculer_score_global, distribution_niveaux_administration
+
+
+# Étiquettes de contenu (vitrine) associées à chaque dimension du référentiel.
+DIMENSION_TAGS = {
+    "infra": [
+        "Postes de travail", "Connexion internet", "Réseau local",
+        "Alimentation électrique", "Maintenance",
+    ],
+    "services": [
+        "Site web officiel", "Démarches en ligne", "Paiement mobile money",
+        "Canaux numériques", "Suivi des demandes",
+    ],
+    "competences": [
+        "Bureautique", "Messagerie", "Outils métiers",
+        "Recherche d'information", "Sécurité de base",
+    ],
+    "juridique": [
+        "Loi n°2019-014", "Textes d'organisation", "Charte des données",
+        "Archivage", "Habilitations",
+    ],
+    "engagement": [
+        "Stratégie numérique", "Budget dédié", "Référent numérique",
+        "Formation continue", "Suivi des projets",
+    ],
+}
+
+
+def _dimensions_contenu():
+    """Dimensions actives enrichies de leurs étiquettes de contenu."""
+    return [
+        {"obj": dim, "tags": DIMENSION_TAGS.get(dim.code, [])}
+        for dim in Dimension.objects.filter(actif=True).order_by("ordre")
+    ]
 
 
 def get_role_home_url(user):
@@ -24,14 +66,67 @@ def get_role_home_url(user):
 
 
 def home(request):
-    """Page d’accueil simple du projet, avant la maquette finale."""
+    """Page d'accueil du site vitrine (redirige les comptes connectés)."""
     if request.user.is_authenticated:
         role_home = get_role_home_url(request.user)
         if role_home:
             return redirect(role_home)
 
-    administrations = Administration.objects.order_by("nom")
-    return render(request, "core/home.html", {"administrations": administrations})
+    score_moyen = (
+        Evaluation.objects.filter(statut="terminee")
+        .aggregate(moy=Avg("score_global"))
+        .get("moy")
+    )
+    context = {
+        "nb_administrations": Administration.objects.count(),
+        "score_moyen": score_moyen,
+        "dimensions": _dimensions_contenu(),
+    }
+    return render(request, "public/accueil.html", context)
+
+
+def demarche(request):
+    return render(request, "public/demarche.html")
+
+
+def dimensions_publiques(request):
+    return render(request, "public/dimensions.html", {"dimensions": _dimensions_contenu()})
+
+
+def acces_par_role(request):
+    return render(request, "public/acces_role.html")
+
+
+def contact(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            message = form.save()
+            destinataire = getattr(settings, "CONTACT_EMAIL", "contact@maturite-numerique.tg")
+            send_mail(
+                subject=f"[Contact] {message.get_sujet_display()} — {message.nom}",
+                message=(
+                    f"De : {message.nom} ({message.email})\n"
+                    f"Administration : {message.administration or '-'}\n\n"
+                    f"{message.message}"
+                ),
+                from_email=None,
+                recipient_list=[destinataire],
+                fail_silently=True,
+            )
+            messages.success(request, "Message envoyé. Réponse sous 48 h ouvrées.")
+            return redirect("contact")
+    else:
+        form = ContactForm()
+    return render(request, "public/contact.html", {"form": form})
+
+
+def confidentialite(request):
+    return render(request, "public/confidentialite.html")
+
+
+def conditions(request):
+    return render(request, "public/conditions.html")
 
 
 def login_view(request):

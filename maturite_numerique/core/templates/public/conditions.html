@@ -1,0 +1,46 @@
+{% extends "base_public.html" %}
+
+{% block title %}Conditions d'utilisation — Maturité Numérique{% endblock %}
+
+{% block content %}
+{% include "components/_page_banner.html" with eyebrow="Conditions" titre="Conditions d'utilisation" sous_titre="Le cadre d'usage de la plateforme pour les administrations et les utilisateurs habilités." %}
+
+<section class="public-section">
+  <div class="public-container legal-doc">
+    <p class="updated">Dernière mise à jour : août 2026</p>
+
+    <section><h2>1. Objet</h2>
+      <p>Les présentes conditions encadrent l'utilisation de l'outil de suivi de maturité numérique par les
+        administrations participantes et leurs utilisateurs habilités.</p></section>
+
+    <section><h2>2. Accès et comptes</h2>
+      <p>L'accès s'effectue par comptes nominatifs attribués selon le rôle (agent évaluateur, enquêteur,
+        décideur, administrateur de contenu). L'agent enquêté accède sans compte, via un lien public d'enquête.</p></section>
+
+    <section><h2>3. Rôles et habilitations</h2>
+      <p>Chaque rôle n'accède qu'aux pages et actions qui le concernent. Le partage d'identifiants est
+        interdit ; toute action est journalisée sous le compte qui l'effectue.</p></section>
+
+    <section><h2>4. Usage autorisé</h2>
+      <p>La plateforme est réservée au diagnostic de maturité numérique. Toute extraction massive, revente
+        ou usage des données à d'autres fins est proscrit.</p></section>
+
+    <section><h2>5. Propriété intellectuelle</h2>
+      <p>La plateforme, le référentiel et les questionnaires restent la propriété de leurs titulaires.
+        Chaque administration demeure propriétaire de ses réponses et résultats.</p></section>
+
+    <section><h2>6. Responsabilité</h2>
+      <p>Les scores et recommandations sont des indicateurs d'aide à la décision ; ils n'engagent pas la
+        responsabilité de l'opérateur quant aux décisions prises par les administrations.</p></section>
+
+    <section><h2>7. Droit applicable</h2>
+      <p>Les présentes conditions sont régies par le droit togolais. Tout litige relève des juridictions
+        compétentes de Lomé, après recherche d'une solution amiable.</p></section>
+
+    <div class="alert alert--warning" style="margin-top:var(--sp-8);">
+      {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+      <span>Contenu de maquette : à faire valider par un conseil juridique qualifié en droit togolais avant publication.</span>
+    </div>
+  </div>
+</section>
+{% endblock %}
