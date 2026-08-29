@@ -1,0 +1,18 @@
+{% comment %} Radar statique (SVG, sans JavaScript). Param : radar_svg (views.svg_radar). {% endcomment %}
+<svg viewBox="0 0 {{ radar_svg.taille }} {{ radar_svg.taille }}" class="radar-svg" role="img"
+     aria-label="Radar des scores par dimension">
+  {% for anneau in radar_svg.anneaux %}
+    <polygon points="{{ anneau }}" fill="none" stroke="#cbd2dc" stroke-width="1"
+             opacity="{% if forloop.last %}0.9{% else %}0.45{% endif %}"/>
+  {% endfor %}
+  {% for axe in radar_svg.axes %}
+    <line x1="{{ radar_svg.cx }}" y1="{{ radar_svg.cy }}" x2="{{ axe.x }}" y2="{{ axe.y }}"
+          stroke="#cbd2dc" stroke-width="1"/>
+    <text x="{{ axe.lx }}" y="{{ axe.ly }}" text-anchor="{{ axe.anchor }}" dominant-baseline="middle"
+          font-size="9" fill="#6b7686">{{ axe.label }}</text>
+  {% endfor %}
+  {% for poly in radar_svg.polygones %}
+    <polygon points="{{ poly.points }}" fill="{{ poly.couleur }}" fill-opacity="0.18"
+             stroke="{{ poly.couleur }}" stroke-width="2"/>
+  {% endfor %}
+</svg>

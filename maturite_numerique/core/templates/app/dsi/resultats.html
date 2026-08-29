@@ -18,8 +18,12 @@
     <span class="pill pill--{{ resultat.badge }}">Niveau {{ resultat.niveau }} · {{ resultat.score_global }} / 5</span>
     {% if resultat.est_apercu %}<span class="badge badge--neutre">Aperçu — évaluation en cours</span>{% endif %}
   </div>
-  <a href="{% url 'rapport_administration' administration_id=administration.id %}" class="btn btn--primary" target="_blank">
-    {% include "components/_icon.html" with name="download" cls="icon--sm" %} Exporter le rapport</a>
+  <div class="row" style="gap: var(--sp-2);">
+    <a href="{% url 'rapport_administration' administration_id=administration.id %}?format=pdf" class="btn btn--primary">
+      {% include "components/_icon.html" with name="download" cls="icon--sm" %} Exporter le rapport</a>
+    <a href="{% url 'rapport_administration' administration_id=administration.id %}" class="btn btn--secondary" target="_blank">
+      Aperçu</a>
+  </div>
 </div>
 
 <div class="dash-grid">

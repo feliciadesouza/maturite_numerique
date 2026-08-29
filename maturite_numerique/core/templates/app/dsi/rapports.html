@@ -7,24 +7,31 @@
   <h1>Rapports</h1>
   <p class="breadcrumb">Accueil — Rapports</p>
 </div>
+
 <div class="twrap card--flush">
   <table>
-    <thead><tr><th>Administration</th><th></th></tr></thead>
+    <thead><tr><th>Administration</th><th>Score</th><th>Évaluée le</th><th></th></tr></thead>
     <tbody>
-      {% for administration in administrations %}
+      {% for ligne in lignes %}
       <tr>
-        <td><b>{{ administration.nom }}</b></td>
+        <td><b>{{ ligne.administration.nom }}</b></td>
+        <td class="tabular">{{ ligne.resultat.score_global }} / 5
+          {% if ligne.resultat.est_apercu %}<span class="text-muted text-sm">(aperçu)</span>{% endif %}</td>
+        <td class="text-muted text-sm">{{ ligne.date|date:"j F Y"|default:"—" }}</td>
         <td style="text-align: right;">
-          <a href="{% url 'rapport_administration' administration_id=administration.id %}" class="btn btn--ghost" target="_blank">
-            {% include "components/_icon.html" with name="file-text" cls="icon--sm" %} Ouvrir le rapport</a>
+          <a href="{% url 'rapport_administration' administration_id=ligne.administration.id %}?format=pdf" class="btn btn--secondary">
+            {% include "components/_icon.html" with name="download" cls="icon--sm" %} PDF</a>
+          <a href="{% url 'rapport_administration' administration_id=ligne.administration.id %}" class="btn btn--ghost" target="_blank">
+            Aperçu</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="2" class="text-muted" style="text-align:center; padding: var(--sp-8);">Aucune administration.</td></tr>
+      <tr><td colspan="4" class="text-muted" style="text-align:center; padding: var(--sp-8);">Aucune administration.</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 <p class="text-muted text-sm" style="margin-top: var(--sp-4);">
-  L'export PDF téléchargeable est ajouté à l'étape suivante ; le rapport est déjà imprimable depuis le navigateur.</p>
+  L'export PDF nécessite les bibliothèques Pango/Cairo (présentes en production).
+  À défaut, « Aperçu » ouvre le rapport imprimable depuis le navigateur.</p>
 {% endblock %}

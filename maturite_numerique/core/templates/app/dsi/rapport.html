@@ -9,8 +9,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <script src="{% static 'vendor/chart.umd.min.js' %}" defer></script>
-  <script src="{% static 'js/radar.js' %}" defer></script>
   <style>
     body { background: var(--white); }
     .rapport { max-width: 820px; margin: 0 auto; padding: var(--sp-8); }
@@ -57,7 +55,7 @@
       </div>
       <div class="card">
         <p class="text-muted text-sm" style="margin-bottom: var(--sp-2);">Profil par dimension</p>
-        {% include "components/_radar.html" with radar_id="radar-rapport" radar_data=radar_data radar_box_class="radar-box--sm" %}
+        {% include "components/_radar_svg.html" with radar_svg=radar_svg %}
       </div>
     </section>
 

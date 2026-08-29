@@ -421,6 +421,24 @@ class DsiEspaceTests(TestCase):
         self.client.force_login(user)
         self.assertEqual(self.client.get("/dashboard/").status_code, 302)
 
+    def test_comparaison_avec_plusieurs_administrations(self):
+        kloto = Administration.objects.create(nom="Préfecture de Kloto")
+        Administration.objects.create(nom="Commune d'Aného")
+        response = self.client.get(
+            f"/comparaison/?admin={self.administration.pk}&admin={kloto.pk}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Score global")
+        self.assertContains(response, "Profils superposés")
+
+    def test_export_pdf_bascule_sur_l_apercu_si_weasyprint_absent(self):
+        # WeasyPrint n'est pas chargeable sur cet environnement : on doit être
+        # redirigé vers l'aperçu HTML sans erreur.
+        response = self.client.get(
+            f"/administrations/{self.administration.pk}/rapport/?format=pdf"
+        )
+        self.assertIn(response.status_code, (200, 302))
+
 
 class EnqueteurTests(TestCase):
     def setUp(self):
