@@ -7,7 +7,16 @@ maintenant, indépendamment de la maquette.
 """
 from dataclasses import dataclass
 
-from .models import Dimension, Reponse, Administration, Agent
+from django.utils import timezone
+
+from .models import (
+    Administration,
+    Agent,
+    Dimension,
+    Recommandation,
+    RegleRecommandation,
+    Reponse,
+)
 
 
 @dataclass
@@ -124,3 +133,106 @@ def distribution_niveaux_administration(administration: Administration) -> dict:
     for agent in agents:
         distribution[agent.niveau_maturite] += 1
     return distribution
+
+
+# --- Libellés, badges et clôture d'une évaluation ---
+
+# Paliers de maturité pour un score global sur 5 (borne haute exclue).
+PALIERS_NIVEAU = [
+    (1.5, "Initial"),
+    (2.5, "Émergent"),
+    (3.5, "Intermédiaire"),
+    (4.5, "Avancé"),
+]
+
+
+def niveau_libelle(score: float) -> str:
+    """Libellé de maturité (5 paliers) pour un score global sur 5."""
+    for seuil, libelle in PALIERS_NIVEAU:
+        if score < seuil:
+            return libelle
+    return "Optimisé"
+
+
+def badge_score(score: float) -> str:
+    """Classe d'un score : 'faible' (< 2,5), 'moyen' (2,5-3,5), 'fort' (>= 3,5)."""
+    if score < 2.5:
+        return "faible"
+    if score < 3.5:
+        return "moyen"
+    return "fort"
+
+
+def score_dimension_competences(distribution: dict) -> float:
+    """
+    Score sur 5 de la dimension "Compétences numériques" à partir de la
+    distribution des agents sur les niveaux 0 à 5 : moyenne des niveaux
+    pondérée par les effectifs (un niveau 0-5 valant déjà une note sur 5).
+    Renvoie 0.0 si aucun agent n'est classé.
+    """
+    total = sum(distribution.values())
+    if not total:
+        return 0.0
+    somme = sum(int(niveau) * effectif for niveau, effectif in distribution.items())
+    return round(somme / total, 2)
+
+
+def generer_recommandations(scores_par_code: dict) -> list:
+    """
+    Applique les RegleRecommandation aux scores d'une évaluation.
+    `scores_par_code` : {code_dimension: score_sur_5}. Renvoie une liste de
+    dicts {priorite, dimension_code, texte} triée par priorité puis par ordre.
+    """
+    recos = []
+    for regle in RegleRecommandation.objects.all():
+        score = scores_par_code.get(regle.dimension_code)
+        if score is not None and score <= float(regle.seuil_max):
+            recos.append({
+                "priorite": regle.priorite,
+                "dimension_code": regle.dimension_code,
+                "texte": regle.texte,
+                "ordre": regle.ordre,
+            })
+    recos.sort(key=lambda r: (r["priorite"], r["ordre"]))
+    return recos
+
+
+def cloturer_evaluation(evaluation) -> None:
+    """
+    Fige l'instantané de résultats d'une évaluation (scores par dimension,
+    distribution, score global pondéré, libellé) et matérialise ses
+    recommandations. Idempotent : rappelable pour recalculer tant que
+    l'évaluation n'est pas archivée.
+    """
+    administration = evaluation.administration
+    distribution = distribution_niveaux_administration(administration)
+
+    scores_par_id = {}
+    scores_par_code = {}
+    score_global = 0.0
+    for dimension in Dimension.objects.filter(actif=True):
+        if dimension.code == "competences":
+            brut = score_dimension_competences(distribution)
+        else:
+            brut = calculer_score_dimension(administration, dimension).score_brut
+        scores_par_id[str(dimension.pk)] = brut
+        if dimension.code:
+            scores_par_code[dimension.code] = brut
+        score_global += brut * float(dimension.poids)
+
+    evaluation.score_global = round(score_global, 2)
+    evaluation.score_par_dimension = scores_par_id
+    evaluation.distribution_niveaux = {str(k): v for k, v in distribution.items()}
+    evaluation.niveau_libelle = niveau_libelle(evaluation.score_global)
+    evaluation.statut = "terminee"
+    evaluation.date_cloture = timezone.now().date()
+    evaluation.save()
+
+    evaluation.recommandations.all().delete()
+    for index, reco in enumerate(generer_recommandations(scores_par_code)):
+        Recommandation.objects.create(
+            evaluation=evaluation,
+            priorite=reco["priorite"],
+            texte=reco["texte"],
+            ordre=index,
+        )

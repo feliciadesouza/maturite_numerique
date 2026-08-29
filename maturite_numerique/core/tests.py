@@ -6,19 +6,26 @@ from core.models import (
     Administration,
     Agent,
     Dimension,
+    Evaluation,
     Formulaire,
     OptionReponse,
     Question,
+    RegleRecommandation,
     Reponse,
     TypeChamp,
     Utilisateur,
     VersionFormulaire,
 )
 from core.scoring import (
+    badge_score,
     calculer_score_dimension,
     classifier_niveau_agent,
+    cloturer_evaluation,
     distribution_niveaux_administration,
+    generer_recommandations,
+    niveau_libelle,
     normaliser_reponse,
+    score_dimension_competences,
 )
 
 User = get_user_model()
@@ -260,3 +267,76 @@ class ScoringEngineTests(TestCase):
         self.assertEqual(distribution[0], 1)
         self.assertEqual(distribution[1], 1)
         self.assertEqual(distribution[2], 0)
+
+
+class MaturityHelpersTests(TestCase):
+    def test_niveau_libelle_par_palier(self):
+        self.assertEqual(niveau_libelle(1.0), "Initial")
+        self.assertEqual(niveau_libelle(2.0), "Émergent")
+        self.assertEqual(niveau_libelle(3.2), "Intermédiaire")
+        self.assertEqual(niveau_libelle(4.0), "Avancé")
+        self.assertEqual(niveau_libelle(4.8), "Optimisé")
+
+    def test_badge_score_seuils(self):
+        self.assertEqual(badge_score(2.1), "faible")
+        self.assertEqual(badge_score(3.0), "moyen")
+        self.assertEqual(badge_score(3.5), "fort")
+
+    def test_score_dimension_competences_pondere_par_effectif(self):
+        # 50 % niveau 0 / 50 % niveau 5 -> moyenne 2.5
+        self.assertEqual(score_dimension_competences({0: 2, 5: 2}), 2.5)
+        self.assertEqual(score_dimension_competences({}), 0.0)
+
+
+class RecommandationsTests(TestCase):
+    def test_seed_recommandations_cree_les_regles(self):
+        call_command("seed_recommandations")
+        self.assertGreaterEqual(RegleRecommandation.objects.count(), 8)
+
+    def test_generer_recommandations_filtre_sur_le_seuil(self):
+        RegleRecommandation.objects.create(
+            dimension_code="competences", seuil_max=2.5, priorite="P1",
+            texte="Former les agents.", ordre=1,
+        )
+        RegleRecommandation.objects.create(
+            dimension_code="infra", seuil_max=2.0, priorite="P2",
+            texte="Renforcer le réseau.", ordre=2,
+        )
+
+        recos = generer_recommandations({"competences": 2.1, "infra": 3.8})
+
+        self.assertEqual(len(recos), 1)
+        self.assertEqual(recos[0]["dimension_code"], "competences")
+        self.assertEqual(recos[0]["priorite"], "P1")
+
+
+class EvaluationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.administration = Administration.objects.create(nom="Mairie de Lomé")
+
+    def test_reference_est_generee_a_la_creation(self):
+        evaluation = Evaluation.objects.create(administration=self.administration)
+        self.assertRegex(evaluation.reference, r"^MN-\d{4}-\d{6}$")
+
+    def test_cloturer_evaluation_fige_l_instantane_et_les_recommandations(self):
+        Dimension.objects.create(
+            nom="Compétences numériques", code="competences", poids="1.00", ordre=1,
+        )
+        RegleRecommandation.objects.create(
+            dimension_code="competences", seuil_max=2.5, priorite="P1",
+            texte="Former les agents.", ordre=1,
+        )
+        Agent.objects.create(administration=self.administration, poste="A", niveau_maturite=0)
+        Agent.objects.create(administration=self.administration, poste="B", niveau_maturite=2)
+
+        evaluation = Evaluation.objects.create(administration=self.administration)
+        cloturer_evaluation(evaluation)
+        evaluation.refresh_from_db()
+
+        self.assertEqual(evaluation.statut, "terminee")
+        self.assertIsNotNone(evaluation.date_cloture)
+        self.assertEqual(float(evaluation.score_global), 1.0)  # (0 + 2) / 2 agents
+        self.assertEqual(evaluation.niveau_libelle, "Initial")
+        self.assertEqual(evaluation.distribution_niveaux["0"], 1)
+        self.assertEqual(evaluation.recommandations.count(), 1)

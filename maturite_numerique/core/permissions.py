@@ -27,6 +27,10 @@ def user_has_role(user, *roles):
     if not user or not user.is_authenticated:
         return False
 
+    # Le superuser a accès à toutes les vues (back-office de secours, support).
+    if user.is_superuser:
+        return True
+
     try:
         profil = user.profil
     except Utilisateur.DoesNotExist:

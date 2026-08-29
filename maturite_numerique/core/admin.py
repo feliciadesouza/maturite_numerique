@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import (
     Dimension, TypeChamp, Formulaire, VersionFormulaire, Question,
     OptionReponse, Administration, Utilisateur, Agent, Reponse,
+    Evaluation, RegleRecommandation, Recommandation, MessageContact,
 )
 
 
@@ -12,10 +13,10 @@ class OptionReponseInline(admin.TabularInline):
 
 @admin.register(Dimension)
 class DimensionAdmin(admin.ModelAdmin):
-    list_display = ("nom", "poids", "ordre", "actif")
+    list_display = ("nom", "code", "poids", "ordre", "couleur", "actif")
     list_editable = ("poids", "ordre", "actif")
     list_filter = ("actif",)
-    search_fields = ("nom", "description")
+    search_fields = ("nom", "code", "description")
     ordering = ("ordre",)
 
 
@@ -98,3 +99,40 @@ class ReponseAdmin(admin.ModelAdmin):
     search_fields = ("question__code", "question__texte", "valeur", "administration__nom", "agent__poste")
     autocomplete_fields = ("question", "administration", "agent", "utilisateur")
     date_hierarchy = "date_reponse"
+
+
+class RecommandationInline(admin.TabularInline):
+    model = Recommandation
+    extra = 0
+
+
+@admin.register(Evaluation)
+class EvaluationAdmin(admin.ModelAdmin):
+    list_display = ("reference", "administration", "statut", "score_global", "niveau_libelle",
+                    "date_ouverture", "date_cloture")
+    list_filter = ("statut", "administration")
+    search_fields = ("reference", "administration__nom", "responsable_nom")
+    readonly_fields = ("reference", "date_ouverture", "score_global", "score_par_dimension",
+                       "distribution_niveaux", "niveau_libelle")
+    autocomplete_fields = ("administration",)
+    date_hierarchy = "date_ouverture"
+    inlines = [RecommandationInline]
+
+
+@admin.register(RegleRecommandation)
+class RegleRecommandationAdmin(admin.ModelAdmin):
+    list_display = ("dimension_code", "seuil_max", "priorite", "ordre", "texte")
+    list_filter = ("priorite", "dimension_code")
+    list_editable = ("seuil_max", "priorite", "ordre")
+    search_fields = ("dimension_code", "texte")
+    ordering = ("priorite", "ordre")
+
+
+@admin.register(MessageContact)
+class MessageContactAdmin(admin.ModelAdmin):
+    list_display = ("nom", "administration", "sujet", "email", "date_creation", "traite")
+    list_filter = ("sujet", "traite")
+    list_editable = ("traite",)
+    search_fields = ("nom", "administration", "email", "message")
+    date_hierarchy = "date_creation"
+    readonly_fields = ("date_creation",)

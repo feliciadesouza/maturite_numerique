@@ -4,12 +4,19 @@ from django.db import transaction
 from core.models import Dimension, TypeChamp, Formulaire, VersionFormulaire, Question, OptionReponse
 
 
+# (code, nom, description, poids, ordre, couleur, icône Lucide)
 DIMENSIONS = [
-    ("Infrastructure TIC", "Équipements, réseaux, serveurs et connectivité disponibles", 0.20, 1),
-    ("Services en ligne", "Disponibilité et accessibilité des services publics numériques", 0.20, 2),
-    ("Compétences numériques", "Niveau de formation et d'aptitudes numériques des agents", 0.20, 3),
-    ("Cadre juridique", "Lois sur la protection des données, cybersécurité, signature électronique", 0.20, 4),
-    ("Engagement institutionnel", "Implication de la direction, stratégie numérique, ressources", 0.20, 5),
+    ("infra", "Infrastructure TIC",
+     "Équipements, réseaux, serveurs et connectivité disponibles", 0.20, 1, "#3E90F0", "server"),
+    ("services", "Services en ligne",
+     "Disponibilité et accessibilité des services publics numériques", 0.20, 2, "#4FBF88", "globe"),
+    ("competences", "Compétences numériques",
+     "Niveau réel des agents, mesuré par enquête et restitué en distribution (N0-N5)",
+     0.25, 3, "#F2B33D", "users"),
+    ("juridique", "Cadre juridique",
+     "Textes, conformité et protection des données à caractère personnel", 0.15, 4, "#8B6FE0", "scale"),
+    ("engagement", "Engagement institutionnel",
+     "Stratégie, budget et portage humain de la transformation numérique", 0.20, 5, "#E85D74", "flag"),
 ]
 
 TYPES_CHAMP = [
@@ -19,7 +26,24 @@ TYPES_CHAMP = [
     ("Échelle 1-5", "echelle_1_5"),
     ("Texte libre", "texte_libre"),
     ("Liste déroulante", "liste"),
+    ("Choix multiple", "choix_multiple"),
 ]
+
+# Bornes affichées aux extrémités des questions de type "échelle 1 à 5".
+BORNES_ECHELLE = {
+    "1.1": ("Très instable", "Très stable"),
+    "5.5": ("Pas du tout", "Fortement"),
+    "B4.5": ("Pas du tout", "Tout à fait"),
+}
+
+# Section du parcours du Formulaire B pour chaque préfixe de code question.
+SECTION_FORMULAIRE_B = {
+    "B1": "profil",
+    "B2": "bases",
+    "B3": "bases",
+    "B4": "usage",
+    "B5": "freins",
+}
 
 # Formulaire A - questions par dimension (code, texte, type_champ_code)
 FORMULAIRE_A = {
@@ -140,9 +164,13 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         dim_objs = {}
-        for nom, description, poids, ordre in DIMENSIONS:
+        for code, nom, description, poids, ordre, couleur, icone in DIMENSIONS:
             dim, _ = Dimension.objects.update_or_create(
-                nom=nom, defaults={"description": description, "poids": poids, "ordre": ordre}
+                nom=nom,
+                defaults={
+                    "code": code, "description": description, "poids": poids,
+                    "ordre": ordre, "couleur": couleur, "icone": icone,
+                },
             )
             dim_objs[nom] = dim
         self.stdout.write(self.style.SUCCESS(f"{len(dim_objs)} dimensions chargées."))
@@ -169,11 +197,13 @@ class Command(BaseCommand):
         count = 0
         for dim_nom, questions in FORMULAIRE_A.items():
             for i, (code, texte, type_code) in enumerate(questions):
+                borne_min, borne_max = BORNES_ECHELLE.get(code, ("", ""))
                 Question.objects.update_or_create(
                     code=code, version_formulaire=version_a,
                     defaults={
                         "dimension": dim_objs[dim_nom], "texte": texte,
                         "type_champ": type_objs[type_code], "ordre": i,
+                        "borne_min_label": borne_min, "borne_max_label": borne_max,
                     },
                 )
                 count += 1
@@ -181,11 +211,15 @@ class Command(BaseCommand):
 
         count_b = 0
         for i, (code, texte, type_code) in enumerate(FORMULAIRE_B):
+            borne_min, borne_max = BORNES_ECHELLE.get(code, ("", ""))
+            section = SECTION_FORMULAIRE_B.get(code.split(".")[0], "")
             question, _ = Question.objects.update_or_create(
                 code=code, version_formulaire=version_b,
                 defaults={
                     "dimension": dim_objs["Compétences numériques"], "texte": texte,
                     "type_champ": type_objs[type_code], "ordre": i,
+                    "section": section,
+                    "borne_min_label": borne_min, "borne_max_label": borne_max,
                 },
             )
             if type_code == "liste" and code in LIST_OPTIONS:
