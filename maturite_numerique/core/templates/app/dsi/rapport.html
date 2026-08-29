@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport de maturité numérique — {{ administration.nom }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'vendor/chart.umd.min.js' %}" defer></script>
+  <script src="{% static 'js/radar.js' %}" defer></script>
+  <style>
+    body { background: var(--white); }
+    .rapport { max-width: 820px; margin: 0 auto; padding: var(--sp-8); }
+    .rapport__band { background: var(--navy); color: #fff; padding: var(--sp-8); border-radius: var(--r-card);
+      display: flex; justify-content: space-between; align-items: center; }
+    .rapport__band .eyebrow { color: rgba(255,255,255,0.7); }
+    .rapport__band h1 { color: #fff; margin-top: 4px; }
+    .rapport__band .mark { width: 44px; height: 44px; border-radius: 10px; background: var(--blue-500);
+      display: grid; place-items: center; }
+    .rapport section { margin-top: var(--sp-8); }
+    .rapport h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-3); }
+    .rapport__foot { margin-top: var(--sp-12); padding-top: var(--sp-4); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; font-size: var(--fs-cap); color: var(--text-muted); }
+    .print-btn { position: fixed; top: 16px; right: 16px; }
+    @media print { .print-btn { display: none; } .rapport { padding: 0; } .rapport__band { border-radius: 0; } }
+  </style>
+</head>
+<body>
+  <button type="button" class="btn btn--primary print-btn" onclick="window.print()">Imprimer / PDF</button>
+  <div class="rapport">
+    <div class="rapport__band">
+      <div>
+        <span class="eyebrow">République togolaise · Diagnostic numérique</span>
+        <h1>Rapport de maturité numérique</h1>
+      </div>
+      <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
+    </div>
+
+    <section>
+      <h2 style="font-size: var(--fs-h2);">{{ administration.nom }}</h2>
+      <p class="text-muted">
+        {% if resultat.evaluation %}Évaluée le {{ resultat.evaluation.date_cloture|date:"j F Y" }} ·
+          Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }}{% endif %} ·
+        {% else %}Aperçu · évaluation en cours ·{% endif %}
+        {{ total_agents }} agent{{ total_agents|pluralize }} enquêté{{ total_agents|pluralize }}
+      </p>
+    </section>
+
+    <section class="dash-grid">
+      <div class="card">
+        <p class="text-muted text-sm">Score global de maturité</p>
+        <div style="font-size: 2.6rem; font-weight: 700; line-height: 1;">{{ resultat.score_global }} <span class="text-muted" style="font-size: var(--fs-h3);">/ 5</span></div>
+        <span class="pill pill--{{ resultat.badge }}" style="margin-top: var(--sp-3);">Niveau {{ resultat.niveau }}</span>
+      </div>
+      <div class="card">
+        <p class="text-muted text-sm" style="margin-bottom: var(--sp-2);">Profil par dimension</p>
+        {% include "components/_radar.html" with radar_id="radar-rapport" radar_data=radar_data radar_box_class="radar-box--sm" %}
+      </div>
+    </section>
+
+    <section>
+      <h2>Résultats par dimension</h2>
+      {% include "components/_dimbars.html" with scores_dimensions=resultat.scores_dimensions %}
+    </section>
+
+    <section>
+      <h2>Distribution des compétences</h2>
+      {% include "components/_distribution.html" with distribution=resultat.distribution total_agents=total_agents dist_max=dist_max %}
+    </section>
+
+    <section>
+      <h2>Recommandations prioritaires</h2>
+      <div class="reco-list">
+        {% for reco in resultat.recommandations %}
+        <div class="reco-item">
+          <span class="reco-tag reco-tag--{{ reco.priorite }}">{{ reco.priorite }}</span>
+          <span>{{ reco.texte }}</span>
+        </div>
+        {% empty %}
+        <p class="text-muted">Aucune recommandation prioritaire.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="rapport__foot">
+      <span>Document confidentiel — usage interne</span>
+      <span>Généré le {{ genere_le|date:"j F Y à H:i" }}</span>
+    </div>
+  </div>
+</body>
+</html>

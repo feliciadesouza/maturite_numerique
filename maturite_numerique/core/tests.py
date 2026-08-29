@@ -381,6 +381,47 @@ class PublicSiteTests(TestCase):
         self.assertEqual(response.url, "/dashboard/")
 
 
+class DsiEspaceTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+        self.administration = Administration.objects.create(nom="Mairie de Lomé", region="Maritime")
+        user = User.objects.create_user(username="dsi_u", password="testpass123")
+        Utilisateur.objects.create(user=user, role="dsi_decideur")
+        self.client.force_login(user)
+
+    def test_pages_dsi_repondent(self):
+        for path in ["/dashboard/", "/administrations/", "/comparaison/", "/rapports/"]:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+
+    def test_resultats_et_rapport_d_une_administration(self):
+        from core.models import Evaluation, RegleRecommandation
+        from core.scoring import cloturer_evaluation
+
+        Agent.objects.create(administration=self.administration, poste="A", niveau_maturite=1)
+        Agent.objects.create(administration=self.administration, poste="B", niveau_maturite=2)
+        RegleRecommandation.objects.create(
+            dimension_code="competences", seuil_max=3.0, priorite="P1",
+            texte="Former les agents.", ordre=1,
+        )
+        evaluation = Evaluation.objects.create(administration=self.administration, statut="en_cours")
+        cloturer_evaluation(evaluation)
+
+        res = self.client.get(f"/administrations/{self.administration.pk}/")
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Recommandations priorisées")
+
+        rap = self.client.get(f"/administrations/{self.administration.pk}/rapport/")
+        self.assertEqual(rap.status_code, 200)
+        self.assertContains(rap, "Rapport de maturité numérique")
+
+    def test_admin_contenu_n_a_pas_acces_au_tableau_de_bord(self):
+        user = User.objects.create_user(username="ac_u", password="testpass123")
+        Utilisateur.objects.create(user=user, role="admin_contenu")
+        self.client.force_login(user)
+        self.assertEqual(self.client.get("/dashboard/").status_code, 302)
+
+
 class EnqueteurTests(TestCase):
     def setUp(self):
         call_command("seed_data")

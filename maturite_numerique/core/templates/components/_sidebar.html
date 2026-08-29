@@ -22,11 +22,11 @@
     {% elif role == 'dsi_decideur' %}
       <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="layout-dashboard" %}<span>Tableau de bord</span></a>
-      <a href="{% url 'dashboard' %}#administrations" class="{% if url_name == 'administration_detail' %}is-active{% endif %}">
+      <a href="{% url 'administrations' %}" class="{% if url_name == 'administrations' or url_name == 'administration_resultats' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="building" %}<span>Administrations</span></a>
-      <a href="{% url 'dashboard' %}#comparaison">
+      <a href="{% url 'comparaison' %}" class="{% if url_name == 'comparaison' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="bar-chart" %}<span>Comparaison</span></a>
-      <a href="{% url 'dashboard' %}#rapports">
+      <a href="{% url 'rapports' %}" class="{% if url_name == 'rapports' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="file-text" %}<span>Rapports</span></a>
       <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="user" %}<span>Mon profil</span></a>

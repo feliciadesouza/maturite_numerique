@@ -205,6 +205,82 @@ def generer_recommandations(scores_par_code: dict) -> list:
     return recos
 
 
+@dataclass
+class ResultatAdministration:
+    administration: Administration
+    evaluation: object          # Evaluation clôturée, ou None
+    score_global: float
+    niveau: str                 # libellé de maturité
+    badge: str                  # 'faible' / 'moyen' / 'fort'
+    scores_dimensions: list     # [{dimension, score, badge}]
+    distribution: dict          # {0..5: effectif}
+    recommandations: list       # [{priorite, texte, dimension}]
+    est_apercu: bool            # True si calculé à la volée (pas de clôture)
+
+
+def resultat_administration(administration) -> ResultatAdministration:
+    """
+    Résultats d'une administration : depuis l'instantané figé s'il existe une
+    évaluation terminée, sinon calculés à la volée (aperçu « évaluation en cours »).
+    """
+    evaluation = (
+        administration.evaluations.filter(statut="terminee")
+        .order_by("-date_cloture", "-id")
+        .first()
+    )
+    dimensions = list(Dimension.objects.filter(actif=True).order_by("ordre"))
+    distribution = distribution_niveaux_administration(administration)
+
+    if evaluation and evaluation.score_global is not None:
+        scores_par_id = {str(k): float(v) for k, v in (evaluation.score_par_dimension or {}).items()}
+        dist_json = evaluation.distribution_niveaux or {}
+        if dist_json:
+            distribution = {int(k): v for k, v in dist_json.items()}
+        recos = [
+            {"priorite": r.priorite, "texte": r.texte, "dimension": r.dimension}
+            for r in evaluation.recommandations.all()
+        ]
+        score_global = float(evaluation.score_global)
+        est_apercu = False
+    else:
+        scores_par_id = {}
+        score_global = 0.0
+        for dimension in dimensions:
+            if dimension.code == "competences":
+                brut = score_dimension_competences(distribution)
+            else:
+                brut = calculer_score_dimension(administration, dimension).score_brut
+            scores_par_id[str(dimension.pk)] = brut
+            score_global += brut * float(dimension.poids)
+        score_global = round(score_global, 2)
+        scores_par_code = {
+            d.code: scores_par_id.get(str(d.pk), 0) for d in dimensions if d.code
+        }
+        recos = generer_recommandations(scores_par_code)
+        for reco in recos:
+            reco["dimension"] = None
+        est_apercu = True
+
+    scores_dimensions = []
+    for dimension in dimensions:
+        valeur = round(float(scores_par_id.get(str(dimension.pk), 0) or 0), 2)
+        scores_dimensions.append(
+            {"dimension": dimension, "score": valeur, "badge": badge_score(valeur)}
+        )
+
+    return ResultatAdministration(
+        administration=administration,
+        evaluation=evaluation,
+        score_global=score_global,
+        niveau=niveau_libelle(score_global),
+        badge=badge_score(score_global),
+        scores_dimensions=scores_dimensions,
+        distribution={n: distribution.get(n, 0) for n in range(6)},
+        recommandations=recos,
+        est_apercu=est_apercu,
+    )
+
+
 def cloturer_evaluation(evaluation) -> None:
     """
     Fige l'instantané de résultats d'une évaluation (scores par dimension,

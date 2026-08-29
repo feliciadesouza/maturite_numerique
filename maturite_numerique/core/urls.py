@@ -2,8 +2,10 @@ from django.urls import path
 
 from .views import (
     acces_par_role,
-    administration_detail,
+    administration_resultats,
+    administrations_liste,
     backoffice,
+    comparaison,
     conditions,
     confidentialite,
     contact,
@@ -27,6 +29,8 @@ from .views import (
     login_view,
     logout_view,
     profile,
+    rapport_administration,
+    rapports,
     roles,
 )
 
@@ -42,12 +46,16 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('dashboard/', dashboard, name='dashboard'),
+    path('administrations/', administrations_liste, name='administrations'),
+    path('administrations/<int:administration_id>/', administration_resultats, name='administration_resultats'),
+    path('administrations/<int:administration_id>/rapport/', rapport_administration, name='rapport_administration'),
+    path('comparaison/', comparaison, name='comparaison'),
+    path('rapports/', rapports, name='rapports'),
     path('back-office/', backoffice, name='backoffice'),
     path('enquetes/', enqueteur_home, name='enqueteur_home'),
     path('enquetes/nouvel-agent/', enqueteur_nouvel_agent, name='enqueteur_nouvel_agent'),
     path('enquetes/agent/<int:agent_id>/', enqueteur_agent_voir, name='enqueteur_agent_voir'),
     path('enquetes/agent/<int:agent_id>/question/<int:index>/', formulaire_b_assiste, name='formulaire_b_assiste'),
-    path('administration/<int:administration_id>/', administration_detail, name='administration_detail'),
     path('formulaire-a/', formulaire_a, name='formulaire_a'),
     path('formulaire-a/etape/<int:numero>/', formulaire_a_etape, name='formulaire_a_etape'),
     path('formulaire-a/termine/', formulaire_a_fin, name='formulaire_a_fin'),

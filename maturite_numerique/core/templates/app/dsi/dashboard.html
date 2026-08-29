@@ -1,0 +1,84 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% block head %}
+  <script src="{% static 'vendor/chart.umd.min.js' %}" defer></script>
+  <script src="{% static 'js/radar.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Tableau de bord</h1>
+  <p class="breadcrumb">Accueil — Tableau de bord</p>
+</div>
+
+<div class="kpi-grid">
+  <div class="card kpi">
+    <div><div class="kpi__label">Administrations</div>
+      <div class="kpi__value tabular">{{ nb_administrations }}</div>
+      <div class="kpi__sub">Total suivies</div></div>
+    <span class="kpi__ico kpi__ico--blue">{% include "components/_icon.html" with name="building" %}</span>
+  </div>
+  <div class="card kpi">
+    <div><div class="kpi__label">Évaluations</div>
+      <div class="kpi__value tabular">{{ nb_eval_en_cours }}</div>
+      <div class="kpi__sub">En cours</div></div>
+    <span class="kpi__ico kpi__ico--amber">{% include "components/_icon.html" with name="clipboard" %}</span>
+  </div>
+  <div class="card kpi">
+    <div><div class="kpi__label">Agents enquêtés</div>
+      <div class="kpi__value tabular">{{ nb_agents }}</div>
+      <div class="kpi__sub">Formulaire B</div></div>
+    <span class="kpi__ico kpi__ico--green">{% include "components/_icon.html" with name="users" %}</span>
+  </div>
+  <div class="card kpi">
+    <div><div class="kpi__label">Score moyen</div>
+      <div class="kpi__value tabular">{{ score_moyen|default:"—" }}</div>
+      <div class="kpi__sub">Sur 5</div></div>
+    <span class="kpi__ico kpi__ico--violet">{% include "components/_icon.html" with name="bar-chart" %}</span>
+  </div>
+</div>
+
+<div class="dash-grid">
+  <div class="radar-card">
+    <h3>Profil de maturité moyen</h3>
+    <p class="sub">Score par dimension, sur 5 — {{ nb_administrations }} administration{{ nb_administrations|pluralize }}</p>
+    {% include "components/_radar.html" with radar_id="radar-dash" radar_data=radar_data %}
+  </div>
+
+  <div class="card">
+    <div class="row row--between" style="margin-bottom: var(--sp-2);">
+      <h3>Administrations récentes</h3>
+      <a href="{% url 'administrations' %}" class="text-sm" style="font-weight:600;">Voir tout</a>
+    </div>
+    <div class="recent-list">
+      {% for r in recentes %}
+      <div class="recent-row">
+        <span>
+          <b><a href="{% url 'administration_resultats' administration_id=r.administration.id %}">{{ r.administration.nom }}</a></b>
+          <span>Score {{ r.score }} / 5{% if r.apercu %} · aperçu{% endif %}</span>
+        </span>
+        <span class="badge badge--{{ r.badge }}">
+          {% if r.badge == 'fort' %}Fort{% elif r.badge == 'moyen' %}Moyen{% else %}Faible{% endif %}</span>
+      </div>
+      {% empty %}
+      <p class="text-muted">Aucune administration enregistrée.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
+  <div class="tile tile--green">
+    <span class="eyebrow">{% include "components/_icon.html" with name="check" cls="icon--sm" %} Progression des évaluations</span>
+    <div class="big">{{ nb_eval_terminees }} terminée{{ nb_eval_terminees|pluralize }}</div>
+    <p>{{ nb_eval_en_cours }} en cours</p>
+  </div>
+  <div class="tile tile--red">
+    <span class="eyebrow">{% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %} Dimension la plus à risque</span>
+    <div class="big">{{ dimension_risque.dimension.nom|default:"—" }} · {{ dimension_risque.score|default:"—" }} / 5</div>
+    <p>Prioriser les actions sur cette dimension</p>
+  </div>
+</div>
+{% endblock %}

@@ -139,3 +139,72 @@
 .recap-row:last-child { border-bottom: none; }
 .recap-row .q { color: var(--text-subtle); }
 .recap-row .v { font-weight: 600; }
+
+/* ---------- Tableau de bord & résultats DSI ---------- */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.kpi {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3);
+}
+.kpi__label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-subtle); display: flex; align-items: center; gap: 6px; }
+.kpi__value { font-size: var(--fs-h1); font-weight: 700; line-height: 1.1; margin-top: 4px; }
+.kpi__sub { font-size: var(--fs-cap); color: var(--text-muted); }
+.kpi__ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.kpi__ico--blue { background: var(--blue-50); color: var(--primary); }
+.kpi__ico--amber { background: var(--amber-50); color: var(--amber-500); }
+.kpi__ico--green { background: var(--green-50); color: var(--green-500); }
+.kpi__ico--violet { background: #efeafc; color: var(--dim-juridique); }
+
+.dash-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.radar-card {
+  background: var(--primary); color: #fff; border-radius: var(--r-card); padding: var(--sp-6);
+}
+.radar-card h3 { color: #fff; }
+.radar-card .sub { color: rgba(255,255,255,0.75); font-size: var(--fs-sm); margin-bottom: var(--sp-3); }
+.radar-box { position: relative; height: 340px; }
+.radar-box--sm { height: 200px; }
+
+.recent-list { display: flex; flex-direction: column; }
+.recent-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  padding: 12px 0; border-bottom: 1px solid var(--border); }
+.recent-row:last-child { border-bottom: none; }
+.recent-row b { display: block; }
+.recent-row span { font-size: var(--fs-sm); color: var(--text-muted); }
+.recent-row a { color: inherit; }
+
+.tile { border-radius: var(--r-card); padding: var(--sp-6); color: #fff; }
+.tile--green { background: var(--dim-services); }
+.tile--red { background: var(--dim-engagement); }
+.tile .eyebrow { color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px; }
+.tile .big { font-size: var(--fs-h1); font-weight: 700; margin: var(--sp-2) 0 4px; }
+.tile p { color: rgba(255,255,255,0.85); font-size: var(--fs-sm); }
+
+/* Détail par dimension (barres) */
+.dimbar { display: grid; grid-template-columns: 180px 1fr 56px; align-items: center; gap: var(--sp-3); padding: 8px 0; }
+.dimbar__name { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); }
+.dimbar__dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.dimbar__track { height: 8px; background: var(--surface-alt); border-radius: var(--r-pill); overflow: hidden; }
+.dimbar__fill { height: 100%; border-radius: inherit; }
+.dimbar__val { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--fs-sm); }
+
+/* Recommandations priorisées */
+.reco-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+.reco-item { display: flex; gap: var(--sp-3); align-items: flex-start; }
+.reco-tag {
+  font-size: var(--fs-cap); font-weight: 700; padding: 3px 8px; border-radius: 5px; flex: none;
+}
+.reco-tag--P1 { background: var(--red-50); color: var(--red-500); }
+.reco-tag--P2 { background: var(--amber-50); color: var(--amber-500); }
+.reco-tag--P3 { background: var(--blue-50); color: var(--primary); }
+
+/* Distribution N0–N5 */
+.dist-chart { display: flex; align-items: flex-end; gap: var(--sp-3); height: 180px; padding-top: var(--sp-4); }
+.dist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.dist-col__bar { width: 100%; max-width: 48px; background: var(--dim-competences); border-radius: 4px 4px 0 0; min-height: 3px; }
+.dist-col__n { font-size: var(--fs-cap); color: var(--text-muted); }
+.dist-col__v { font-size: var(--fs-sm); font-weight: 700; }
+
+@media (max-width: 960px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .dimbar { grid-template-columns: 120px 1fr 48px; }
+}
