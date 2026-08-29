@@ -84,7 +84,7 @@
             <h3>{{ d.obj.nom }}</h3>
             <p>{{ d.obj.description }}</p>
           </div>
-          <span class="badge badge--neutre" style="margin-left:auto;white-space:nowrap;">{% widthratio d.obj.poids 1 100 %} %</span>
+          <span class="badge badge--dim-{{ d.obj.code }}" style="margin-left:auto;white-space:nowrap;">{% widthratio d.obj.poids 1 100 %} %</span>
         </div>
         {% endfor %}
       </div>
