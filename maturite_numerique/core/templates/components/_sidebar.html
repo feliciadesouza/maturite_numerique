@@ -32,11 +32,11 @@
         {% include "components/_icon.html" with name="user" %}<span>Mon profil</span></a>
 
     {% elif role == 'admin_contenu' %}
-      <a href="{% url 'backoffice' %}" class="{% if url_name == 'backoffice' %}is-active{% endif %}">
+      <a href="{% url 'backoffice' %}" class="{% if url_name == 'backoffice' or url_name == 'bo_dimension_editer' or url_name == 'bo_dimension_nouvelle' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="layers" %}<span>Dimensions</span></a>
-      <a href="{% url 'backoffice' %}#questions">
+      <a href="{% url 'bo_questions_index' %}" class="{% if url_name == 'bo_questions_index' or url_name == 'bo_questions' or url_name == 'bo_question_editer' or url_name == 'bo_question_nouvelle' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="list" %}<span>Questions</span></a>
-      <a href="{% url 'backoffice' %}#versions">
+      <a href="{% url 'bo_versions' %}" class="{% if url_name == 'bo_versions' %}is-active{% endif %}">
         {% include "components/_icon.html" with name="history" %}<span>Versions</span></a>
 
     {% else %}

@@ -238,3 +238,14 @@
 .cmp-table tr.total td { font-weight: 700; border-top: 2px solid var(--border-strong); background: var(--surface-alt); }
 
 @media (max-width: 960px) { .cmp-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Back-office ---------- */
+.bo-table td { vertical-align: middle; }
+.bo-table .who b { display: block; }
+.bo-table .who span { font-size: var(--fs-cap); color: var(--text-muted); }
+.bo-table .btn--ghost { padding: 6px 10px; }
+
+.bo-editor { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--sp-4); align-items: start; }
+.bo-preview { background: var(--surface-alt); position: sticky; top: 88px; }
+.bo-preview .qitem__texte { font-size: var(--fs-title); }
+@media (max-width: 900px) { .bo-editor { grid-template-columns: 1fr; } .bo-preview { position: static; } }

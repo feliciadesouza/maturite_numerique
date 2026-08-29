@@ -1,0 +1,26 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if dimension %}Éditer{% else %}Ajouter{% endif %} une dimension{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{% if dimension %}Éditer la dimension{% else %}Ajouter une dimension{% endif %}</h1>
+  <p class="breadcrumb"><a href="{% url 'backoffice' %}">Dimensions</a> — {% if dimension %}{{ dimension.nom }}{% else %}Nouvelle{% endif %}</p>
+</div>
+
+<form method="post" class="card" style="max-width: 620px;">
+  {% csrf_token %}
+  {% for field in form %}
+  <div class="field">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<span class="hint">{{ field.help_text }}</span>{% endif %}
+    {% if field.errors %}<ul class="errorlist">{{ field.errors|striptags }}</ul>{% endif %}
+  </div>
+  {% endfor %}
+  <div class="row" style="gap: var(--sp-3); margin-top: var(--sp-4);">
+    <a href="{% url 'backoffice' %}" class="btn btn--secondary">Annuler</a>
+    <button type="submit" class="btn btn--primary">Enregistrer</button>
+  </div>
+</form>
+{% endblock %}

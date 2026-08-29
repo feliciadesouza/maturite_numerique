@@ -1,0 +1,100 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}{% if question %}Éditer{% else %}Ajouter{% endif %} une question{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{% if question %}Éditer la question{% else %}Ajouter une question{% endif %}</h1>
+  <p class="breadcrumb">
+    <a href="{% url 'backoffice' %}">Back-office</a> —
+    <a href="{% url 'bo_questions' dimension_id=dimension.pk %}">{{ dimension.nom }}</a>
+    {% if question %} — Question {{ question.code }}{% endif %}
+  </p>
+</div>
+
+{% if reponses_existantes and question %}
+<div class="alert alert--warning" style="margin-bottom: var(--sp-6);">
+  {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+  <span>Cette version du questionnaire a déjà reçu des réponses. Enregistrer créera une
+    <strong>version v{{ prochaine_version }}</strong> ; les données de la version actuelle restent conservées.</span>
+</div>
+{% endif %}
+
+<div class="bo-editor">
+  <form method="post" class="card" id="q-form">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<span class="hint">{{ field.help_text }}</span>{% endif %}
+      {% if field.errors %}<ul class="errorlist">{{ field.errors|striptags }}</ul>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="row" style="gap: var(--sp-3); margin-top: var(--sp-4);">
+      <a href="{% url 'bo_questions' dimension_id=dimension.pk %}" class="btn btn--secondary">Annuler</a>
+      <button type="submit" class="btn btn--primary">
+        {% if reponses_existantes and question %}Enregistrer (créer v{{ prochaine_version }}){% else %}Enregistrer{% endif %}</button>
+    </div>
+  </form>
+
+  <div class="card bo-preview">
+    <p class="eyebrow">{% include "components/_icon.html" with name="info" cls="icon--sm" %} Aperçu en direct</p>
+    <div id="q-preview" class="qform" style="margin-top: var(--sp-4);"></div>
+  </div>
+</div>
+
+{{ types_map|json_script:"types-map" }}
+<script>
+(function () {
+  var types = JSON.parse(document.getElementById("types-map").textContent);
+  var form = document.getElementById("q-form");
+  var out = document.getElementById("q-preview");
+  var f = {
+    texte: form.querySelector("#id_texte"),
+    type: form.querySelector("#id_type_champ"),
+    bmin: form.querySelector("#id_borne_min_label"),
+    bmax: form.querySelector("#id_borne_max_label"),
+    aide: form.querySelector("#id_aide"),
+    options: form.querySelector("#id_options_texte"),
+  };
+  function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+  function pills(vals) {
+    return '<div class="qchoices"><div>' + vals.map(function (v) {
+      return '<label><input type="radio" disabled> ' + esc(v) + "</label>";
+    }).join("") + "</div></div>";
+  }
+  function parseOptions() {
+    return (f.options.value || "").split("\n").map(function (l) {
+      l = l.trim(); if (!l) return null;
+      return l.indexOf("|") > -1 ? l.split("|")[1].trim() : l;
+    }).filter(Boolean);
+  }
+  function render() {
+    var code = types[f.type.value] || "";
+    var h = '<div class="qitem"><div class="qitem__head"><span class="qitem__texte">' +
+            (esc(f.texte.value) || "Intitulé de la question") + "</span></div>";
+    if (code === "echelle_1_5") {
+      h += '<div class="qscale"><span class="qscale__borne">' + (esc(f.bmin.value) || "min") +
+           '</span><div class="qchoices"><div>' +
+           [1,2,3,4,5].map(function (n) { return '<label><input type="radio" disabled>' + n + "</label>"; }).join("") +
+           '</div></div><span class="qscale__borne">' + (esc(f.bmax.value) || "max") + "</span></div>";
+    } else if (code === "oui_non") { h += pills(["Oui", "Non"]);
+    } else if (code === "oui_non_partiel") { h += pills(["Oui", "Non", "Partiel"]);
+    } else if (code === "tranches") { h += pills(["< 25 %", "25–50 %", "50–75 %", "> 75 %"]);
+    } else if (code === "liste" || code === "choix_multiple") {
+      var opts = parseOptions(); h += pills(opts.length ? opts : ["Option 1", "Option 2"]);
+    } else if (code === "texte_libre") { h += '<textarea rows="2" disabled></textarea>'; }
+    if (f.aide.value) {
+      h += '<div class="alert alert--info" style="margin-top:12px;">' +
+           '<span>' + esc(f.aide.value) + "</span></div>";
+    }
+    h += "</div>";
+    out.innerHTML = h;
+  }
+  ["input", "change"].forEach(function (ev) { form.addEventListener(ev, render); });
+  render();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base_app.html" %}
+
+{% block title %}Questions par dimension{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Questions</h1>
+  <p class="breadcrumb">Back-office — Questions</p>
+</div>
+
+<div class="twrap card--flush">
+  <table>
+    <thead><tr><th>Dimension</th><th>Questions</th><th></th></tr></thead>
+    <tbody>
+      {% for l in lignes %}
+      <tr>
+        <td>
+          <span class="dimbar__dot" style="background: {{ l.obj.couleur }}; display:inline-block; vertical-align:middle; margin-right:8px;"></span>
+          <b>{{ l.obj.nom }}</b>
+        </td>
+        <td class="tabular">{{ l.nb }}</td>
+        <td style="text-align: right;">
+          <a href="{% url 'bo_questions' dimension_id=l.obj.pk %}" class="btn btn--secondary">Gérer les questions</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
