@@ -30,7 +30,7 @@
           </div>
           <div class="hero__stat">
             {% include "components/_icon.html" with name="bar-chart" %}
-            <span><b>{{ score_moyen|default:"—" }}</b><br>Score moyen</span>
+            <span><b>{{ score_moyen|floatformat:1|default:"n/d" }}</b><br>Score moyen</span>
           </div>
         </div>
         <div class="hero__radar">
@@ -53,7 +53,7 @@
     <div class="stat-band">
       <div><b>5</b><span>dimensions évaluées</span></div>
       <div><b>2</b><span>formulaires complémentaires</span></div>
-      <div><b>6</b><span>niveaux de compétences (N0–N5)</span></div>
+      <div><b>6</b><span>niveaux de compétences (N0 à N5)</span></div>
       <div><b>1</b><span>rapport actionnable</span></div>
     </div>
   </div>
@@ -69,7 +69,7 @@
           pondérées dans un score global sur 5. Une lecture unique, comparable d'une administration à l'autre.</p>
         <div class="text-sm text-muted" style="margin-top:var(--sp-4);">Pondération du score global</div>
         <div class="weight-bar">
-          {% for d in dimensions %}<span style="flex:{{ d.obj.poids }};background:{{ d.obj.couleur }};"></span>{% endfor %}
+          {% for d in dimensions %}<span style="flex:{% widthratio d.obj.poids 1 100 %};background:{{ d.obj.couleur }};"></span>{% endfor %}
         </div>
         <p class="text-sm text-muted">Pondération par défaut · ajustable en back-office.</p>
         <a href="{% url 'dimensions_publiques' %}" class="text-sm" style="font-weight:600;">
@@ -84,7 +84,7 @@
             <h3>{{ d.obj.nom }}</h3>
             <p>{{ d.obj.description }}</p>
           </div>
-          <span class="badge badge--neutre" style="margin-left:auto;">{{ d.obj.poids|floatformat:0 }} %</span>
+          <span class="badge badge--neutre" style="margin-left:auto;white-space:nowrap;">{% widthratio d.obj.poids 1 100 %} %</span>
         </div>
         {% endfor %}
       </div>

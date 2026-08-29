@@ -33,7 +33,7 @@
             </span>
           </div>
         </td>
-        <td class="tabular">{{ d.obj.poids|floatformat:0 }} %</td>
+        <td class="tabular">{% widthratio d.obj.poids 1 100 %} %</td>
         <td>
           {% if d.obj.actif %}<span class="badge badge--fort">Actif</span>
           {% else %}<span class="badge badge--neutre">Inactif</span>{% endif %}
@@ -44,7 +44,7 @@
           <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='bas' %}" style="display:inline;">
             {% csrf_token %}<button class="btn btn--ghost" title="Descendre">↓</button></form>
           <a href="{% url 'bo_dimension_editer' dimension_id=d.obj.pk %}" class="btn btn--secondary">
-            {% include "components/_icon.html" with name="list" cls="icon--sm" %} Éditer</a>
+            {% include "components/_icon.html" with name="edit" cls="icon--sm" %} Éditer</a>
           <a href="{% url 'bo_questions' dimension_id=d.obj.pk %}" class="btn btn--ghost">Questions</a>
         </td>
       </tr>

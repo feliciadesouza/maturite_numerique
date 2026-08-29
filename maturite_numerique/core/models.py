@@ -193,7 +193,7 @@ class Evaluation(models.Model):
         ordering = ["-date_ouverture", "-id"]
 
     def __str__(self):
-        return f"{self.administration} — {self.get_statut_display()}"
+        return f"{self.administration} · {self.get_statut_display()}"
 
     def save(self, *args, **kwargs):
         creation = self._state.adding
@@ -372,4 +372,4 @@ class MessageContact(models.Model):
         verbose_name_plural = "Messages de contact"
 
     def __str__(self):
-        return f"{self.nom} — {self.get_sujet_display()}"
+        return f"{self.nom} · {self.get_sujet_display()}"
