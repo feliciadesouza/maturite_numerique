@@ -1,7 +1,7 @@
 {% extends "base_app.html" %}
 
 {% block title %}Mes enquêtes{% endblock %}
-{% block topbar_title %}Enquête de terrain — {{ administration.nom|default:"—" }}{% endblock %}
+{% block topbar_title %}Enquête de terrain · {{ administration.nom|default:"aucune administration" }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
@@ -31,7 +31,7 @@
   {% if en_cours %}
   <div class="resume-card">
     <span class="eyebrow">Enquête en cours</span>
-    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} — {{ en_cours.poste|default:"Agent" }}</h3>
+    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} · {{ en_cours.poste|default:"Agent" }}</h3>
     <p>{{ en_cours.service|default:"Service non précisé" }} · Question {{ en_cours.progression|add:1 }} / {{ en_cours_total }}</p>
     <a href="{% url 'formulaire_b_assiste' agent_id=en_cours.pk index=en_cours.progression %}" class="btn btn--secondary">
       {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %} Reprendre l'enquête</a>
@@ -65,8 +65,8 @@
           <div class="row" style="gap: var(--sp-3);">
             <span class="agent-avatar">{% include "components/_icon.html" with name="user" cls="icon--sm" %}</span>
             <span class="who">
-              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} — {{ agent.poste|default:"Agent" }}</b>
-              <span>{{ agent.service|default:"—" }}</span>
+              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} · {{ agent.poste|default:"Agent" }}</b>
+              <span>{{ agent.service|default:"service non précisé" }}</span>
             </span>
           </div>
         </td>

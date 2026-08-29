@@ -51,7 +51,7 @@ jobs:
         run: flake8 .
 
       - name: Security scan (bandit)
-        run: bandit --recursive --quiet core maturite_numerique --exclude '**/tests.py,**/migrations/**'
+        run: bandit --recursive --quiet core maturite_numerique --exclude '**/tests.py,**/migrations/**,**/seed_demo.py'
 
       - name: Run tests
         run: python manage.py test

@@ -9,7 +9,7 @@
   <p class="breadcrumb">
     <a href="{% url 'backoffice' %}">Back-office</a> —
     <a href="{% url 'bo_questions' dimension_id=dimension.pk %}">{{ dimension.nom }}</a>
-    {% if question %} — Question {{ question.code }}{% endif %}
+    {% if question %} · Question {{ question.code }}{% endif %}
   </p>
 </div>
 
