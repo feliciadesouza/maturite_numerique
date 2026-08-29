@@ -57,8 +57,17 @@
 }
 .qscale .qchoices input { width: 1px; height: 1px; opacity: 0; position: absolute; }
 
-/* champ texte libre */
-.qitem textarea { width: 100%; }
+/* champ texte libre / saisie courte */
+.qitem textarea,
+.qitem input[type="text"] {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.qitem input[type="text"]:focus,
+.qitem textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+}
 
 /* ---------- Pied de formulaire ---------- */
 .form-foot {
@@ -267,6 +276,18 @@
 @media (max-width: 960px) { .cmp-grid { grid-template-columns: 1fr; } }
 
 /* ---------- Back-office ---------- */
+/* Boutons de réordonnancement (monter / descendre) */
+.reorder { display: inline-flex; gap: 3px; }
+.reorder form { display: inline; }
+.reorder button {
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px; padding: 0;
+  border: 1px solid var(--border-strong); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text-subtle); cursor: pointer;
+}
+.reorder button:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.reorder .icon { width: 16px; height: 16px; }
+
 .bo-table td { vertical-align: middle; }
 .bo-table .who b { display: block; }
 .bo-table .who span { font-size: var(--fs-cap); color: var(--text-muted); }

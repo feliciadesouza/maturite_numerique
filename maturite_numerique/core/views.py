@@ -267,11 +267,16 @@ def backoffice(request):
     version_b = _version_active("B")
     dimensions = []
     for dimension in Dimension.objects.order_by("ordre", "nom"):
-        nb = Question.objects.filter(
-            dimension=dimension, actif=True,
-            version_formulaire__in=[v for v in (version_a, version_b) if v],
-        ).count()
-        dimensions.append({"obj": dimension, "nb_questions": nb})
+        nb_a = Question.objects.filter(
+            dimension=dimension, actif=True, version_formulaire=version_a,
+        ).count() if version_a else 0
+        nb_b = Question.objects.filter(
+            dimension=dimension, actif=True, version_formulaire=version_b,
+        ).count() if version_b else 0
+        dimensions.append({
+            "obj": dimension, "nb_questions": nb_a + nb_b,
+            "nb_a": nb_a, "nb_b": nb_b,
+        })
     return render(request, "app/backoffice/dimensions.html", {
         "dimensions": dimensions,
         "version_a": version_a,

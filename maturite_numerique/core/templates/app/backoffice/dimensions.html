@@ -29,7 +29,7 @@
             <span class="dimbar__dot" style="background: {{ d.obj.couleur }}; width: 12px; height: 12px;"></span>
             <span class="who">
               <b>{{ d.obj.nom }}</b>
-              <span>{{ d.nb_questions }} question{{ d.nb_questions|pluralize }}{% if d.obj.description %} · {{ d.obj.description|truncatewords:4 }}{% endif %}</span>
+              <span>{% if d.nb_b %}{{ d.nb_a }} en Formulaire A · {{ d.nb_b }} en Formulaire B{% else %}{{ d.nb_a }} question{{ d.nb_a|pluralize }}{% endif %}{% if d.obj.description %} · {{ d.obj.description|truncatewords:4 }}{% endif %}</span>
             </span>
           </div>
         </td>
@@ -39,10 +39,14 @@
           {% else %}<span class="badge badge--neutre">Inactif</span>{% endif %}
         </td>
         <td style="text-align: right; white-space: nowrap;">
-          <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='haut' %}" style="display:inline;">
-            {% csrf_token %}<button class="btn btn--ghost o-haut" title="Monter">↑</button></form>
-          <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='bas' %}" style="display:inline;">
-            {% csrf_token %}<button class="btn btn--ghost" title="Descendre">↓</button></form>
+          <span class="reorder">
+            <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='haut' %}">
+              {% csrf_token %}<button type="submit" title="Monter" aria-label="Monter">
+                {% include "components/_icon.html" with name="chevron-up" %}</button></form>
+            <form method="post" action="{% url 'bo_dimension_ordre' dimension_id=d.obj.pk sens='bas' %}">
+              {% csrf_token %}<button type="submit" title="Descendre" aria-label="Descendre">
+                {% include "components/_icon.html" with name="chevron-down" %}</button></form>
+          </span>
           <a href="{% url 'bo_dimension_editer' dimension_id=d.obj.pk %}" class="btn btn--secondary">
             {% include "components/_icon.html" with name="edit" cls="icon--sm" %} Éditer</a>
           <a href="{% url 'bo_questions' dimension_id=d.obj.pk %}" class="btn btn--ghost">Questions</a>
