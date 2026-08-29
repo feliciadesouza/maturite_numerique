@@ -818,27 +818,30 @@ def rapport_administration(request, administration_id):
 
 
 @login_required
-@role_required("agent_evaluateur", "enqueteur", "dsi_decideur", "admin_contenu")
 def profile(request):
-    """Vue de profil utilisateur pour rattacher le compte Django au rôle métier."""
-    profile_obj, _ = Utilisateur.objects.get_or_create(user=request.user)
+    """Profil : coordonnées éditables par l'utilisateur ; rôle métier et
+    administration de rattachement en lecture seule (attribués par l'administrateur)."""
+    profil, _ = Utilisateur.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = ProfileForm(request.POST, instance=profile_obj)
+        form = ProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Profil mis à jour.")
-            return redirect("dashboard")
+            return redirect(get_role_home_url(request.user) or "home")
     else:
-        form = ProfileForm(instance=profile_obj)
+        form = ProfileForm(instance=request.user)
 
-    return render(request, "core/profile.html", {"form": form})
+    return render(request, "core/profile.html", {"form": form, "profil": profil})
 
 
 def _evaluation_en_cours(administration, user):
     """Récupère (ou ouvre) l'évaluation en cours d'une administration."""
     version_a = VersionFormulaire.objects.filter(
         formulaire__code="A", est_active=True
+    ).first()
+    version_b = VersionFormulaire.objects.filter(
+        formulaire__code="B", est_active=True
     ).first()
     evaluation = (
         Evaluation.objects.filter(
@@ -851,12 +854,20 @@ def _evaluation_en_cours(administration, user):
         evaluation = Evaluation.objects.create(
             administration=administration,
             version_formulaire_a=version_a,
+            version_formulaire_b=version_b,
             cree_par=user,
             statut="en_cours",
         )
-    elif evaluation.version_formulaire_a_id is None and version_a:
-        evaluation.version_formulaire_a = version_a
-        evaluation.save(update_fields=["version_formulaire_a"])
+    else:
+        maj = []
+        if evaluation.version_formulaire_a_id is None and version_a:
+            evaluation.version_formulaire_a = version_a
+            maj.append("version_formulaire_a")
+        if evaluation.version_formulaire_b_id is None and version_b:
+            evaluation.version_formulaire_b = version_b
+            maj.append("version_formulaire_b")
+        if maj:
+            evaluation.save(update_fields=maj)
     return evaluation, version_a
 
 

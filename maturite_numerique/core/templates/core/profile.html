@@ -1,14 +1,59 @@
-{% extends 'core/base.html' %}
+{% extends "base_app.html" %}
 
-{% block title %}Profil - Maturité numérique{% endblock %}
+{% block title %}Mon profil{% endblock %}
+{% block topbar_title %}Mon profil{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Profil utilisateur</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Enregistrer le profil</button>
-    </form>
+<div class="page-head">
+  <h1>Mon profil</h1>
+  <p class="breadcrumb">Compte · Coordonnées</p>
 </div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr; gap: var(--sp-4); align-items: start;">
+  <div class="card">
+    <h3 style="margin-bottom: var(--sp-4);">Mes coordonnées</h3>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="profile-names">
+        <div class="field">
+          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+        </div>
+        <div class="field">
+          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+      <button type="submit" class="btn btn--primary">Enregistrer</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom: var(--sp-3);">Accès</h3>
+    <dl class="profile-meta">
+      <dt>Identifiant</dt><dd>{{ user.username }}</dd>
+      <dt>Rôle métier</dt><dd>{{ profil.get_role_display|default:"Non attribué" }}</dd>
+      <dt>Administration</dt><dd>{{ profil.administration.nom|default:"Aucune" }}</dd>
+    </dl>
+    <p class="text-muted text-sm" style="margin-top: var(--sp-4);">
+      Le rôle et l'administration de rattachement sont gérés par l'administrateur.
+      Contactez l'équipe projet pour toute modification.</p>
+  </div>
+</div>
+
+<style>
+  .profile-names { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-4); }
+  .profile-meta { display: grid; grid-template-columns: auto 1fr; gap: 6px var(--sp-4); font-size: var(--fs-sm); }
+  .profile-meta dt { color: var(--text-muted); }
+  .profile-meta dd { font-weight: 600; }
+  @media (max-width: 860px) {
+    .page-head + .grid { grid-template-columns: 1fr; }
+    .profile-names { grid-template-columns: 1fr; }
+  }
+</style>
 {% endblock %}
