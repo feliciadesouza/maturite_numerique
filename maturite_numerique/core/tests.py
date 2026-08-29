@@ -260,7 +260,7 @@ class SeedDataTests(TestCase):
     def test_seed_data_creates_response_options_for_list_questions(self):
         call_command("seed_data")
 
-        question = Question.objects.get(code="B1.2", version_formulaire__formulaire__code="B")
+        question = Question.objects.get(code="B1.3", version_formulaire__formulaire__code="B")
         options = OptionReponse.objects.filter(question=question)
 
         self.assertTrue(options.exists())
@@ -470,10 +470,13 @@ class EnqueteurTests(TestCase):
         )
         from core.views import _questions_agent_ordonnees
 
-        total = len(_questions_agent_ordonnees(agent))
-        self.assertGreater(total, 0)
+        self.assertGreater(len(_questions_agent_ordonnees(agent)), 0)
 
-        for index in range(total):
+        index = 0
+        for _ in range(50):  # garde-fou
+            agent.refresh_from_db()
+            if agent.statut == "terminee":
+                break
             questions = _questions_agent_ordonnees(agent)
             if index >= len(questions):
                 break
@@ -481,8 +484,6 @@ class EnqueteurTests(TestCase):
             code = q.type_champ.code
             if code == "oui_non":
                 valeur = "Oui"
-            elif code == "oui_non_partiel":
-                valeur = "Partiel"
             elif code == "echelle_1_5":
                 valeur = "4"
             elif code in ("liste", "choix_multiple"):
@@ -494,6 +495,7 @@ class EnqueteurTests(TestCase):
                 f"/enquetes/agent/{agent.pk}/question/{index}/", {f"q_{q.id}": valeur}
             )
             self.assertEqual(resp.status_code, 302)
+            index += 1
 
         agent.refresh_from_db()
         self.assertEqual(agent.statut, "terminee")

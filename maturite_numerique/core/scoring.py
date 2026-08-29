@@ -101,22 +101,26 @@ def classifier_niveau_agent(reponses_agent: dict) -> int:
     au Formulaire B, selon la grille de classification définie au chapitre 3.
 
     `reponses_agent` : dict {code_question: valeur}, ex. {"B2.1": "Non", "B3.1": "Oui", ...}
+    La comparaison est insensible à la casse (les options peuvent être des slugs).
     """
-    if reponses_agent.get("B2.1", "").lower() == "non":
+    def v(code):
+        return (reponses_agent.get(code) or "").strip().lower()
+
+    if v("B2.1") == "non":
         return 0  # N'a jamais utilisé un ordinateur
 
     niveau = 1  # sait allumer/utiliser un ordinateur (implicite si B2.1 = Oui)
 
-    if reponses_agent.get("B3.4") == "Oui" or reponses_agent.get("B3.5") == "Oui":
+    if v("B3.4") == "oui" or v("B3.5") == "oui":
         niveau = 2  # WhatsApp / réseaux sociaux / email de base
 
-    if reponses_agent.get("B4.1") in ("Souvent", "Rarement") or reponses_agent.get("B4.2") in ("Souvent", "Rarement"):
+    if v("B4.1") in ("souvent", "rarement") or v("B4.2") in ("souvent", "rarement"):
         niveau = 3  # Word / Excel occasionnellement
 
-    if reponses_agent.get("B4.4") == "Oui":
+    if v("B4.4") == "oui":
         niveau = 4  # Outils métier, autonome
 
-    if reponses_agent.get("B4.6") == "Oui" and niveau >= 4:
+    if v("B4.6") == "oui" and niveau >= 4:
         niveau = 5  # Capable de former d'autres agents
 
     return niveau
