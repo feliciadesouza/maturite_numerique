@@ -90,8 +90,12 @@
 
 .checklist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
 .checklist li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-sm); }
-.checklist li .icon { color: var(--green-500); margin-top: 2px; flex: none; }
-.checklist--primary li .icon { color: var(--primary); }
+.checklist li .icon { color: var(--check-color, var(--green-500)); margin-top: 2px; flex: none; }
+.checklist--primary { --check-color: var(--primary); }
+.role-card .title { font-size: var(--fs-h3); }
+/* Variante en ligne, alignée sous le titre (page Accès par rôle) */
+.checklist--inline { flex-direction: row; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); padding-left: 60px; }
+@media (max-width: 600px) { .checklist--inline { padding-left: 0; } }
 
 /* Frise des étapes (démarche) : cartes reliées par des flèches */
 .steps-flow { display: flex; align-items: stretch; gap: var(--sp-2); }
@@ -102,12 +106,18 @@
   .steps-flow .step-arrow { align-self: center; transform: rotate(90deg); }
 }
 
-.cta-band { display: flex; align-items: center; gap: var(--sp-6); flex-wrap: wrap;
+.cta-band { display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap;
   border-radius: var(--r-card); padding: var(--sp-6) var(--sp-8); }
 .cta-band--green { background: var(--dim-services); color: #fff; }
 .cta-band--green .btn--secondary { background: #fff; border-color: #fff; color: var(--dim-services); }
+.cta-band > div { flex: 1; min-width: 280px; }
 .cta-band h2 { color: inherit; font-size: var(--fs-h3); }
-.cta-band p { color: rgba(255,255,255,0.9); font-size: var(--fs-sm); flex: 1; min-width: 220px; }
+.cta-band p { color: rgba(255,255,255,0.9); font-size: var(--fs-sm); margin-top: var(--sp-2); }
+.cta-band .btn { flex: none; }
+.cta-band__ico {
+  flex: none; width: 52px; height: 52px; border-radius: var(--r-pill);
+  background: rgba(255,255,255,0.16); color: #fff; display: grid; place-items: center;
+}
 
 .cta-dark { background: var(--navy); color: #fff; text-align: center; border-radius: var(--r-card);
   padding: var(--sp-12) var(--sp-8); }
