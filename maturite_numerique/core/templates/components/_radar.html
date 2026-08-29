@@ -1,0 +1,5 @@
+{% comment %} Params : radar_id (identifiant unique), radar_data (dict labels/series/dark) {% endcomment %}
+{{ radar_data|json_script:radar_id }}
+<div class="radar-box {{ radar_box_class }}">
+  <canvas data-radar="{{ radar_id }}" role="img" aria-label="Radar des scores par dimension"></canvas>
+</div>

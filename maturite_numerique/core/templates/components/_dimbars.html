@@ -1,0 +1,15 @@
+{% comment %} Params : scores_dimensions (liste {dimension, score, badge}) {% endcomment %}
+<div>
+  {% for s in scores_dimensions %}
+  <div class="dimbar">
+    <span class="dimbar__name">
+      <span class="dimbar__dot" style="background: {{ s.dimension.couleur }};"></span>
+      {{ s.dimension.nom }}
+    </span>
+    <span class="dimbar__track">
+      <span class="dimbar__fill" style="width: {% widthratio s.score 5 100 %}%; background: {{ s.dimension.couleur }};"></span>
+    </span>
+    <span class="dimbar__val">{{ s.score }} / 5</span>
+  </div>
+  {% endfor %}
+</div>

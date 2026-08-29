@@ -1,0 +1,38 @@
+{% extends "base_app.html" %}
+
+{% block title %}Administrations{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Administrations</h1>
+  <p class="breadcrumb">Accueil — Administrations</p>
+</div>
+
+<form method="get" class="row" style="margin-bottom: var(--sp-4); gap: 8px;">
+  <input type="search" name="q" value="{{ recherche }}" placeholder="Rechercher une administration…"
+         class="input" style="max-width: 320px;">
+</form>
+
+<div class="twrap card--flush">
+  <table>
+    <thead><tr><th>Administration</th><th>Score global</th><th>Niveau</th><th></th></tr></thead>
+    <tbody>
+      {% for ligne in lignes %}
+      <tr>
+        <td><b>{{ ligne.administration.nom }}</b>
+          {% if ligne.administration.region %}<br><span class="text-muted text-sm">{{ ligne.administration.region }}</span>{% endif %}</td>
+        <td class="tabular">{{ ligne.score }} / 5{% if ligne.apercu %} <span class="text-muted text-sm">(aperçu)</span>{% endif %}</td>
+        <td><span class="badge badge--{{ ligne.badge }}">{{ ligne.niveau }}</span></td>
+        <td style="text-align: right;">
+          <a href="{% url 'administration_resultats' administration_id=ligne.administration.id %}" class="btn btn--ghost">
+            Voir les résultats</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted" style="text-align:center; padding: var(--sp-8);">
+        Aucune administration{% if recherche %} ne correspond à « {{ recherche }} »{% endif %}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

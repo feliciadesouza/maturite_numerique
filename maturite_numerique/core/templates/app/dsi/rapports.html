@@ -1,0 +1,30 @@
+{% extends "base_app.html" %}
+
+{% block title %}Rapports{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Rapports</h1>
+  <p class="breadcrumb">Accueil — Rapports</p>
+</div>
+<div class="twrap card--flush">
+  <table>
+    <thead><tr><th>Administration</th><th></th></tr></thead>
+    <tbody>
+      {% for administration in administrations %}
+      <tr>
+        <td><b>{{ administration.nom }}</b></td>
+        <td style="text-align: right;">
+          <a href="{% url 'rapport_administration' administration_id=administration.id %}" class="btn btn--ghost" target="_blank">
+            {% include "components/_icon.html" with name="file-text" cls="icon--sm" %} Ouvrir le rapport</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="2" class="text-muted" style="text-align:center; padding: var(--sp-8);">Aucune administration.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-muted text-sm" style="margin-top: var(--sp-4);">
+  L'export PDF téléchargeable est ajouté à l'étape suivante ; le rapport est déjà imprimable depuis le navigateur.</p>
+{% endblock %}

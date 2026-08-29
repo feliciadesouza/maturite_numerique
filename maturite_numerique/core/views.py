@@ -28,10 +28,9 @@ from .models import (
 )
 from .permissions import ROLE_HOME_URLS, role_required
 from .scoring import (
-    calculer_score_global,
     classifier_niveau_agent,
-    distribution_niveaux_administration,
     reponses_par_code,
+    resultat_administration,
 )
 
 
@@ -173,13 +172,80 @@ def logout_view(request):
 @login_required
 @role_required("dsi_decideur")
 def dashboard(request):
-    """Tableau de bord réservé au DSI / décideur."""
-    administrations = Administration.objects.order_by("nom")
-    scores = []
-    for administration in administrations:
-        scores.append((administration, calculer_score_global(administration)))
+    """Tableau de bord du DSI / décideur."""
+    evals_terminees = Evaluation.objects.filter(statut="terminee")
+    dimensions = list(Dimension.objects.filter(actif=True).order_by("ordre"))
 
-    return render(request, "core/dashboard.html", {"scores": scores})
+    sommes, comptes = {}, {}
+    for evaluation in evals_terminees:
+        for code, valeur in (evaluation.score_par_dimension or {}).items():
+            sommes[code] = sommes.get(code, 0.0) + float(valeur)
+            comptes[code] = comptes.get(code, 0) + 1
+
+    radar_series = []
+    dimension_risque = None
+    for dimension in dimensions:
+        key = str(dimension.pk)
+        moyenne = round(sommes[key] / comptes[key], 2) if comptes.get(key) else 0.0
+        radar_series.append({"dimension": dimension, "score": moyenne})
+        if dimension_risque is None or moyenne < dimension_risque["score"]:
+            dimension_risque = {"dimension": dimension, "score": moyenne}
+
+    radar_data = {
+        "labels": [d.nom for d in dimensions],
+        "series": [{
+            "nom": "Profil moyen",
+            "valeurs": [s["score"] for s in radar_series],
+            "couleur": "#ffffff",
+        }],
+        "dark": True,
+    }
+
+    score_moyen = evals_terminees.aggregate(m=Avg("score_global")).get("m")
+    recentes = []
+    for administration in Administration.objects.order_by("-id")[:5]:
+        res = resultat_administration(administration)
+        recentes.append({
+            "administration": administration,
+            "score": res.score_global,
+            "badge": res.badge,
+            "apercu": res.est_apercu,
+        })
+
+    return render(request, "app/dsi/dashboard.html", {
+        "nb_administrations": Administration.objects.count(),
+        "nb_eval_en_cours": Evaluation.objects.filter(statut="en_cours").count(),
+        "nb_eval_terminees": evals_terminees.count(),
+        "nb_agents": Agent.objects.filter(statut="terminee").count(),
+        "score_moyen": round(score_moyen, 1) if score_moyen else None,
+        "radar_data": radar_data,
+        "radar_series": radar_series,
+        "recentes": recentes,
+        "dimension_risque": dimension_risque,
+    })
+
+
+@login_required
+@role_required("dsi_decideur")
+def administrations_liste(request):
+    """Liste des administrations suivies avec leur niveau."""
+    recherche = request.GET.get("q", "").strip()
+    administrations = Administration.objects.order_by("nom")
+    if recherche:
+        administrations = administrations.filter(nom__icontains=recherche)
+    lignes = []
+    for administration in administrations:
+        res = resultat_administration(administration)
+        lignes.append({
+            "administration": administration,
+            "score": res.score_global,
+            "niveau": res.niveau,
+            "badge": res.badge,
+            "apercu": res.est_apercu,
+        })
+    return render(request, "app/dsi/administrations.html", {
+        "lignes": lignes, "recherche": recherche,
+    })
 
 
 @login_required
@@ -370,23 +436,75 @@ def enqueteur_agent_voir(request, agent_id):
     return render(request, "app/enqueteur/agent_voir.html", {"agent": agent, "lignes": lignes})
 
 
+def _radar_resultat(resultat):
+    """Données radar (une série) pour la page Résultats."""
+    return {
+        "labels": [s["dimension"].nom for s in resultat.scores_dimensions],
+        "series": [{
+            "nom": resultat.administration.nom,
+            "valeurs": [s["score"] for s in resultat.scores_dimensions],
+            "couleur": "#ffffff",
+        }],
+        "dark": True,
+    }
+
+
 @login_required
 @role_required("dsi_decideur")
-def administration_detail(request, administration_id):
-    """Vue de détail d’une administration avec son score global."""
+def administration_resultats(request, administration_id):
+    """Résultats détaillés d'une administration : radar, recommandations, distribution."""
     administration = get_object_or_404(Administration, pk=administration_id)
-    resultat = calculer_score_global(administration)
-    distribution = distribution_niveaux_administration(administration)
+    resultat = resultat_administration(administration)
+    valeurs = resultat.distribution.values()
+    return render(request, "app/dsi/resultats.html", {
+        "administration": administration,
+        "resultat": resultat,
+        "radar_data": _radar_resultat(resultat),
+        "total_agents": sum(valeurs),
+        "dist_max": max(valeurs) or 1,
+    })
 
-    return render(
-        request,
-        "core/administration_detail.html",
-        {
-            "administration": administration,
-            "resultat": resultat,
-            "distribution": distribution,
+
+@login_required
+@role_required("dsi_decideur")
+def comparaison(request):
+    """Comparaison multi-administrations (contenu ajouté en phase suivante)."""
+    return render(request, "app/dsi/a_venir.html", {
+        "titre": "Comparaison des administrations",
+        "message": "Le radar superposé et le tableau comparatif arrivent prochainement.",
+    })
+
+
+@login_required
+@role_required("dsi_decideur")
+def rapports(request):
+    """Liste des rapports (contenu ajouté en phase suivante)."""
+    administrations = Administration.objects.order_by("nom")
+    return render(request, "app/dsi/rapports.html", {"administrations": administrations})
+
+
+@login_required
+@role_required("dsi_decideur")
+def rapport_administration(request, administration_id):
+    """Rapport synthétique imprimable (base de l'export PDF, phase suivante)."""
+    administration = get_object_or_404(Administration, pk=administration_id)
+    resultat = resultat_administration(administration)
+    return render(request, "app/dsi/rapport.html", {
+        "administration": administration,
+        "resultat": resultat,
+        "radar_data": {
+            "labels": [s["dimension"].nom for s in resultat.scores_dimensions],
+            "series": [{
+                "nom": administration.nom,
+                "valeurs": [s["score"] for s in resultat.scores_dimensions],
+                "couleur": "#1e6fd9",
+            }],
+            "dark": False,
         },
-    )
+        "total_agents": sum(resultat.distribution.values()),
+        "dist_max": max(resultat.distribution.values()) or 1,
+        "genere_le": timezone.now(),
+    })
 
 
 @login_required
