@@ -7,45 +7,45 @@
 
 <section class="public-section">
   <div class="public-container">
-    <div class="stack">
-      <div class="card">
+    <div class="stack" style="gap: var(--sp-4);">
+      <div class="card role-card">
         <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
           <div class="row" style="gap:var(--sp-3);">
             <span class="dim-ico dim-ico--infra is-soft">{% include "components/_icon.html" with name="clipboard" %}</span>
             <b class="title">Agent évaluateur</b>
           </div>
-          <span class="badge badge--neutre">Atterrissage : Formulaire A</span>
+          <span class="badge badge--dim-infra">Atterrissage : Formulaire A</span>
         </div>
-        <ul class="checklist" style="margin-top:var(--sp-3);">
+        <ul class="checklist checklist--inline" style="--check-color: var(--dim-infra); margin-top:var(--sp-3);">
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Formulaire A (reprise automatique)</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Son profil</span></li>
         </ul>
       </div>
 
-      <div class="card">
+      <div class="card role-card">
         <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
           <div class="row" style="gap:var(--sp-3);">
             <span class="dim-ico dim-ico--services is-soft">{% include "components/_icon.html" with name="users" %}</span>
             <b class="title">Enquêteur</b>
           </div>
-          <span class="badge badge--neutre">Atterrissage : Liste des agents</span>
+          <span class="badge badge--dim-services">Atterrissage : Liste des agents</span>
         </div>
-        <ul class="checklist" style="margin-top:var(--sp-3);">
+        <ul class="checklist checklist--inline" style="--check-color: var(--dim-services); margin-top:var(--sp-3);">
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Liste des agents à enquêter</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Formulaire B en mode assisté</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Bascule entre enquêtes en cours</span></li>
         </ul>
       </div>
 
-      <div class="card">
+      <div class="card role-card">
         <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
           <div class="row" style="gap:var(--sp-3);">
             <span class="dim-ico dim-ico--juridique is-soft">{% include "components/_icon.html" with name="bar-chart" %}</span>
             <b class="title">DSI / Décideur</b>
           </div>
-          <span class="badge badge--neutre">Atterrissage : Tableau de bord</span>
+          <span class="badge badge--dim-juridique">Atterrissage : Tableau de bord</span>
         </div>
-        <ul class="checklist" style="margin-top:var(--sp-3);">
+        <ul class="checklist checklist--inline" style="--check-color: var(--dim-juridique); margin-top:var(--sp-3);">
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Tableau de bord (score + radar)</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Résultats détaillés</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Comparaison multi-administrations</span></li>
@@ -53,15 +53,15 @@
         </ul>
       </div>
 
-      <div class="card">
+      <div class="card role-card">
         <div class="row row--between" style="flex-wrap:wrap;gap:var(--sp-3);">
           <div class="row" style="gap:var(--sp-3);">
             <span class="dim-ico dim-ico--engagement is-soft">{% include "components/_icon.html" with name="layers" %}</span>
             <b class="title">Administrateur de contenu</b>
           </div>
-          <span class="badge badge--neutre">Atterrissage : Back-office</span>
+          <span class="badge badge--dim-engagement">Atterrissage : Back-office</span>
         </div>
-        <ul class="checklist" style="margin-top:var(--sp-3);">
+        <ul class="checklist checklist--inline" style="--check-color: var(--dim-engagement); margin-top:var(--sp-3);">
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Dimensions</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Questions</span></li>
           <li>{% include "components/_icon.html" with name="check" cls="icon--sm" %}<span>Versions du questionnaire</span></li>
@@ -70,6 +70,7 @@
       </div>
 
       <div class="cta-band cta-band--green">
+        <span class="cta-band__ico">{% include "components/_icon.html" with name="link" %}</span>
         <div>
           <h2>Agent enquêté : aucun compte, aucun menu</h2>
           <p>L'agent accède par un lien public. La première question demande son administration
