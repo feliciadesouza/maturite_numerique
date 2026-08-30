@@ -879,6 +879,14 @@ def _css_rapport_pdf():
                 contenu,
             )
             blocs.append(contenu)
+
+        # Ajustements propres au rendu WeasyPrint (pas de flexbox à hauteur %).
+        blocs.append(
+            ".print-btn{display:none !important}"
+            ".dist-chart{display:table;width:100%;height:auto;border-spacing:6px 0}"
+            ".dist-col{display:table-cell;vertical-align:bottom;text-align:center;height:auto}"
+            ".dist-col__bar{display:inline-block}"
+        )
         return "\n".join(blocs)
 
     return cache.get_or_set("pdf:css_rapport", _build, 3600)
@@ -916,6 +924,11 @@ def rapport_administration(request, administration_id):
             # PDF se génère sans aucun appel réseau (cf. _css_rapport_pdf).
             html = re.sub(
                 r'<link\b[^>]*rel=["\']stylesheet["\'][^>]*>', "", html
+            )
+            # Le bouton « Imprimer / PDF » n'a pas de sens dans le PDF lui-même.
+            html = re.sub(
+                r'<button\b[^>]*class="[^"]*print-btn[^"]*"[^>]*>.*?</button>',
+                "", html, flags=re.S,
             )
             html = html.replace(
                 "</head>", "<style>%s</style></head>" % _css_rapport_pdf(), 1
