@@ -9,18 +9,21 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <style>
     @page { size: A4; margin: 12mm; }
-    body { background: var(--white); }
+    body, .rapport { background: #fff; }
     .rapport { max-width: 820px; margin: 0 auto; padding: var(--sp-8); }
     .rapport__band { background: var(--navy); color: #fff; padding: var(--sp-6) var(--sp-8);
       border-radius: var(--r-card); display: flex; justify-content: space-between; align-items: center; }
     .rapport__band .eyebrow { color: rgba(255,255,255,0.7); }
-    .rapport__band h1 { color: #fff; margin-top: 4px; }
-    .rapport__band .mark { width: 44px; height: 44px; border-radius: 10px; background: var(--blue-500);
-      display: grid; place-items: center; }
+    .rapport__band h1 { color: #fff; margin-top: 4px; font-size: 1.9rem; line-height: 1.15;
+      white-space: nowrap; }
+    .rapport__band .mark { width: 52px; height: 52px; border-radius: 14px; background: var(--blue-500);
+      display: grid; place-items: center; flex: none; }
+    .rapport__band .mark svg { width: 26px; height: 26px; }
     .rapport section { margin-top: var(--sp-5); }
     .rapport h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-3); }
     .rapport .card { padding: var(--sp-5); }
-    .rapport .radar-svg { max-width: 190px; }
+    .rapport .radar-svg { max-width: 240px; }
+    .rapport .dimbar__fill { border-radius: var(--r-pill); }
     .rapport__rule { border: 0; border-top: 1px solid var(--border); margin: var(--sp-5) 0 0; }
     .rapport .reco-item { align-items: center; }
     .rapport .reco-num { flex: none; width: 28px; height: 28px; border-radius: 50%;
@@ -62,7 +65,7 @@
       </div>
       <div class="card">
         <p class="text-muted text-sm" style="margin-bottom: var(--sp-2);">Profil par dimension</p>
-        {% include "components/_radar_svg.html" with radar_svg=radar_svg %}
+        {% include "components/_radar_svg.html" with radar_svg=radar_svg sans_labels=True %}
       </div>
     </section>
 
@@ -86,7 +89,7 @@
     </section>
 
     <div class="rapport__foot">
-      <span>Document confidentiel usage interne</span>
+      <span>Document confidentiel — usage interne</span>
       <span>Généré le {{ genere_le|date:"j F Y à H:i" }}</span>
     </div>
   </div>
