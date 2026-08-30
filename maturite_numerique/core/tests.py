@@ -380,6 +380,12 @@ class PublicSiteTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/tableau-de-bord/")
 
+    def test_accueil_redirige_un_superuser_sans_role(self):
+        su = User.objects.create_superuser(username="root", password="testpass123")
+        self.client.force_login(su)
+        response = self.client.get("/")
+        self.assertRedirects(response, "/tableau-de-bord/", fetch_redirect_response=False)
+
 
 class DsiEspaceTests(TestCase):
     def setUp(self):

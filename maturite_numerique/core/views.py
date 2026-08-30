@@ -77,16 +77,21 @@ def _dimensions_contenu():
 
 
 def get_role_home_url(user):
-    """Retourne la page d’accueil correspondant au rôle métier d’un utilisateur."""
+    """Page d'atterrissage d'un compte connecté, selon son rôle métier.
+    Un superuser sans rôle métier (compte de support) atterrit sur le
+    tableau de bord — la barre latérale lui donne ensuite accès à tout."""
     if not user or not user.is_authenticated:
         return None
 
     try:
         profil = user.profil
     except Utilisateur.DoesNotExist:
-        return None
+        profil = None
 
-    return ROLE_HOME_URLS.get(profil.role)
+    home = ROLE_HOME_URLS.get(profil.role) if profil else None
+    if home is None and user.is_superuser:
+        return "dashboard"
+    return home
 
 
 def home(request):
