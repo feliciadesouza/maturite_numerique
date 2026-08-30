@@ -7,14 +7,8 @@ from django.core.exceptions import PermissionDenied
 from .models import Utilisateur
 
 
-ROLE_CHOICES = {
-    "agent_evaluateur": "Agent évaluateur",
-    "enqueteur": "Enquêteur",
-    "dsi_decideur": "DSI / Décideur",
-    "admin_contenu": "Administrateur de contenu",
-}
-
 # Page d'atterrissage après connexion, selon le rôle métier.
+# Libellés des rôles : unique source = Utilisateur.ROLE_CHOICES (models.py).
 ROLE_HOME_URLS = {
     "agent_evaluateur": "formulaire_a",
     "enqueteur": "enqueteur_home",

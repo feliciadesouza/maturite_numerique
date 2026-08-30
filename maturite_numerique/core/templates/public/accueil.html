@@ -112,15 +112,16 @@
     <div class="section-head">
       <span class="eyebrow">Accès par rôle</span>
       <h2>Chacun ne voit que ce qui le concerne</h2>
-      <p>La navigation s'adapte au rôle connecté · l'agent enquêté accède même sans compte, via un simple lien.</p>
+      <p>Quatre rôles se connectent avec un compte fourni par l'administration ; l'agent enquêté, lui,
+        répond sans compte via un simple lien.</p>
     </div>
     <div class="card-grid card-grid--5">
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="clipboard" %}</span>
-        <b>Agent évaluateur</b><p>Remplit le Formulaire A pour son administration.</p></div>
+        <b>Agent évaluateur</b><p>Avec un compte : remplit le Formulaire A pour son administration.</p></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="users" %}</span>
-        <b>Enquêteur</b><p>Conduit l'enquête agents en mode assisté.</p></div>
+        <b>Enquêteur</b><p>Avec un compte : conduit l'enquête agents en mode assisté.</p></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="lock" %}</span>
-        <b>Agent enquêté</b><p>Répond via un lien public.</p>
+        <b>Agent enquêté</b><p>Sans compte : répond au Formulaire B par un lien public.</p>
         <a href="{% url 'formulaire_b_public' %}">Répondre à l'enquête</a></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="bar-chart" %}</span>
         <b>DSI / Décideur</b><p>Analyse les résultats et pilote le plan d'action.</p></div>

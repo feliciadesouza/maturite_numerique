@@ -38,7 +38,6 @@ from .views import (
     profile,
     rapport_administration,
     rapports,
-    roles,
 )
 
 urlpatterns = [
@@ -86,5 +85,4 @@ urlpatterns = [
     path('enquete/<uuid:token>/envoi/', enquete_envoi, name='enquete_envoi'),
     path('enquete/<uuid:token>/confirmation/', enquete_confirmation, name='enquete_confirmation'),
     path('profile/', profile, name='profile'),
-    path('roles/', roles, name='roles'),
 ]
