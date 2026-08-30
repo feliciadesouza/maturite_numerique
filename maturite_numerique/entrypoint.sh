@@ -22,7 +22,14 @@ if [ "$SEED_DEMO" = "1" ]; then
 fi
 
 echo "→ Gunicorn sur le port ${PORT:-8000}"
+# Peu de RAM sur l'offre gratuite : moins de workers, mais des threads pour
+# encaisser l'attente des requêtes PostgreSQL (base distante). Les workers sont
+# recyclés régulièrement pour éviter toute dérive mémoire (WeasyPrint).
 exec gunicorn maturite_numerique.wsgi:application \
   --bind "0.0.0.0:${PORT:-8000}" \
-  --workers "${WEB_CONCURRENCY:-3}" \
+  --worker-class gthread \
+  --workers "${WEB_CONCURRENCY:-2}" \
+  --threads "${WEB_THREADS:-4}" \
+  --max-requests 400 --max-requests-jitter 50 \
+  --timeout 60 \
   --access-logfile - --error-logfile -
