@@ -1220,10 +1220,3 @@ def enquete_confirmation(request, token):
     if agent.statut != "terminee":
         return redirect("enquete_section", token=agent.token, section="profil")
     return render(request, "enquete/confirmation.html", {"agent": agent})
-
-
-@login_required
-@role_required("admin_contenu", "dsi_decideur")
-def roles(request):
-    """Vue documentaire sur les rôles métier du projet."""
-    return render(request, "core/roles.html")
