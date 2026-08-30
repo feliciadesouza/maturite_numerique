@@ -6,7 +6,7 @@
 {% block content %}
 <div class="enquete-intro">
   <div class="enquete-intro__mark">{% include "components/_icon.html" with name="graduation-cap" %}</div>
-  <span class="pill pill--fort">Sans compte · environ 5 minutes</span>
+  <span class="pill pill--fort">Sans compte environ 5 minutes</span>
   <h1>Évaluation des compétences numériques</h1>
   <p class="lead">Vous participez à une enquête pour mesurer le niveau numérique des agents de votre
     administration. Répondez simplement : il n'y a pas de bonne ou de mauvaise réponse.</p>
@@ -33,6 +33,6 @@
 
   <a href="{% url 'enquete_demarrer' %}" class="btn btn--primary btn--lg">
     Commencer l'évaluation {% include "components/_icon.html" with name="arrow-right" cls="icon--sm" %}</a>
-  <p class="enquete-foot-note">Aucun mot de passe requis · La première étape vous demandera votre administration.</p>
+  <p class="enquete-foot-note">Aucun mot de passe requis La première étape vous demandera votre administration.</p>
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-Nouveau message de contact · {{ message.get_sujet_display }}
+Nouveau message de contact {{ message.get_sujet_display }}
 
 De : {{ message.nom }} <{{ message.email }}>
 Administration : {{ message.administration|default:"non précisée" }}

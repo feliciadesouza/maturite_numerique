@@ -10,7 +10,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Tableau de bord</h1>
-  <p class="breadcrumb">Accueil · Tableau de bord</p>
+  <p class="breadcrumb">Accueil Tableau de bord</p>
 </div>
 
 <div class="kpi-grid">
@@ -43,7 +43,7 @@
 <div class="dash-grid">
   <div class="radar-card">
     <h3>Profil de maturité moyen</h3>
-    <p class="sub">Score par dimension, sur 5 · {{ nb_administrations }} administration{{ nb_administrations|pluralize }}</p>
+    <p class="sub">Score par dimension, sur 5 {{ nb_administrations }} administration{{ nb_administrations|pluralize }}</p>
     {% include "components/_radar.html" with radar_id="radar-dash" radar_data=radar_data %}
   </div>
 
@@ -57,7 +57,7 @@
       <div class="recent-row">
         <span>
           <b><a href="{% url 'administration_resultats' administration_id=r.administration.id %}">{{ r.administration.nom }}</a></b>
-          <span>Score {{ r.score }} / 5{% if r.apercu %} · aperçu{% endif %}</span>
+          <span>Score {{ r.score }} / 5{% if r.apercu %} aperçu{% endif %}</span>
         </span>
         <span class="badge badge--{{ r.badge }}">
           {% if r.badge == 'fort' %}Fort{% elif r.badge == 'moyen' %}Moyen{% else %}Faible{% endif %}</span>
@@ -78,7 +78,7 @@
   <div class="tile tile--red">
     <span class="eyebrow">{% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %} Dimension la plus à risque</span>
     <div class="big">{{ dimension_risque.dimension.nom|default:"Aucune" }}</div>
-    <p>{{ dimension_risque.score|default:"n/d" }} / 5 · prioriser les actions sur cette dimension</p>
+    <p>{{ dimension_risque.score|default:"n/d" }} / 5 prioriser les actions sur cette dimension</p>
   </div>
 </div>
 {% endblock %}

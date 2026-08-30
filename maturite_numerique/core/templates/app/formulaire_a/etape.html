@@ -1,13 +1,13 @@
 {% extends "base_app.html" %}
 
-{% block title %}Formulaire A · {{ titre_etape }}{% endblock %}
-{% block topbar_title %}Diagnostic de maturité numérique · Togo{% endblock %}
+{% block title %}Formulaire A {{ titre_etape }}{% endblock %}
+{% block topbar_title %}Diagnostic de maturité numérique Togo{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>Formulaire A · Fiche Administration</h1>
+  <h1>Formulaire A Fiche Administration</h1>
   <p class="breadcrumb">{{ evaluation.administration.nom }}
-    {% if evaluation.responsable_nom %}· Responsable : {{ evaluation.responsable_nom }}{% endif %}</p>
+    {% if evaluation.responsable_nom %} Responsable : {{ evaluation.responsable_nom }}{% endif %}</p>
 </div>
 
 <div class="card" style="margin-bottom: var(--sp-6);">
@@ -15,7 +15,7 @@
 </div>
 
 <div class="step-meta">
-  <span>Étape {{ numero }} / {{ total }} · {{ titre_etape }}</span>
+  <span>Étape {{ numero }} / {{ total }} {{ titre_etape }}</span>
   <span>{{ progression }} %</span>
 </div>
 <div class="progress" style="margin-bottom: var(--sp-6);"><span style="width: {{ progression }}%;"></span></div>
@@ -81,7 +81,7 @@
     }).then(function () {
       if (status) status.textContent = "Réponses enregistrées automatiquement";
     }).catch(function () {
-      if (status) status.textContent = "Hors ligne · réponses conservées sur cet appareil";
+      if (status) status.textContent = "Hors ligne réponses conservées sur cet appareil";
     });
   }
   form.addEventListener("change", function () {

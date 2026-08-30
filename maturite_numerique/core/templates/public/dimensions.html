@@ -1,6 +1,6 @@
 {% extends "base_public.html" %}
 
-{% block title %}Les 5 dimensions · Maturité Numérique{% endblock %}
+{% block title %}Les 5 dimensions Maturité Numérique{% endblock %}
 
 {% block content %}
 {% include "components/_page_banner.html" with eyebrow="Les 5 dimensions" titre="Ce que mesure chaque dimension" sous_titre="Cinq angles complémentaires, pondérés dans un score global sur 5. Les pondérations sont ajustables en back-office." %}
@@ -25,7 +25,7 @@
             {% if d.obj.code == "competences" %}
             <div class="alert alert--warning" style="margin-top:var(--sp-3);">
               {% include "components/_icon.html" with name="info" cls="icon--sm" %}
-              <span>Mesurée par enquête auprès d'un échantillon d'agents · pas déclarative.</span>
+              <span>Mesurée par enquête auprès d'un échantillon d'agents pas déclarative.</span>
             </div>
             {% endif %}
           </div>

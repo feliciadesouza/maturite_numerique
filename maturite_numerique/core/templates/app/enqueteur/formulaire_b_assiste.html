@@ -1,17 +1,17 @@
 {% extends "base_app.html" %}
 
-{% block title %}Formulaire B · mode assisté{% endblock %}
+{% block title %}Formulaire B mode assisté{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>Formulaire B · Mode assisté</h1>
+  <h1>Formulaire B Mode assisté</h1>
   <p class="breadcrumb">L'enquêteur lit la question à voix haute et saisit la réponse</p>
 </div>
 
 <div class="assist-banner" style="margin-bottom: var(--sp-6);">
   <span class="tag">{% include "components/_icon.html" with name="users" cls="icon--sm" %} Mode assisté</span>
   <span>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }}
-    {% if agent.administration %}· {{ agent.administration.nom }}{% endif %}</span>
+    {% if agent.administration %} {{ agent.administration.nom }}{% endif %}</span>
   <span class="spacer"></span>
   <span>Question {{ numero_question }} / {{ total }}</span>
 </div>

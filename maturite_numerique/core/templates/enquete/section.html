@@ -1,11 +1,11 @@
 {% extends "base_enquete.html" %}
 
-{% block title %}Enquête agent · {{ libelle_section }}{% endblock %}
+{% block title %}Enquête agent {{ libelle_section }}{% endblock %}
 
 {% block content %}
 <div style="margin-bottom: var(--sp-4);">
-  <h1 style="font-size: var(--fs-h2);">Formulaire B · Enquête agent</h1>
-  <p class="text-muted text-sm">Mode autonome · Auto-évaluation</p>
+  <h1 style="font-size: var(--fs-h2);">Formulaire B Enquête agent</h1>
+  <p class="text-muted text-sm">Mode autonome Auto-évaluation</p>
 </div>
 
 <div class="sec-pills">
@@ -26,7 +26,7 @@
 
 <form method="post" class="card" id="form-b" data-autosave-url="{% url 'enquete_section' token=agent.token section=section %}">
   {% csrf_token %}
-  <p class="eyebrow" style="margin-bottom: var(--sp-4);">Section · {{ libelle_section }}</p>
+  <p class="eyebrow" style="margin-bottom: var(--sp-4);">Section {{ libelle_section }}</p>
 
   <div class="qform">
     {% for c in champs %}
@@ -65,7 +65,7 @@
     <label for="email_accuse">Recevoir un accusé par e-mail (facultatif)</label>
     <input type="email" name="email_accuse" id="email_accuse" value="{{ agent.email_accuse }}"
            placeholder="prenom.nom@exemple.tg">
-    <span class="hint">Non relié à vos réponses · sert uniquement à l'accusé de participation.</span>
+    <span class="hint">Non relié à vos réponses sert uniquement à l'accusé de participation.</span>
   </div>
   {% endif %}
 

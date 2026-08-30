@@ -1,18 +1,18 @@
 {% extends "base_app.html" %}
 
-{% block title %}Gestion des formulaires · Dimensions{% endblock %}
+{% block title %}Gestion des formulaires Dimensions{% endblock %}
 {% block topbar_title %}Back-office du questionnaire{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <h1>Gestion des formulaires</h1>
-  <p class="breadcrumb">Back-office · Dimensions</p>
+  <p class="breadcrumb">Back-office Dimensions</p>
 </div>
 
 <div class="row row--between" style="flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4);">
   <div class="wrap-flex">
-    {% if version_a %}<span class="badge badge--version">Formulaire A · v{{ version_a.numero_version }}</span>{% endif %}
-    {% if version_b %}<span class="badge badge--version">Formulaire B · v{{ version_b.numero_version }}</span>{% endif %}
+    {% if version_a %}<span class="badge badge--version">Formulaire A v{{ version_a.numero_version }}</span>{% endif %}
+    {% if version_b %}<span class="badge badge--version">Formulaire B v{{ version_b.numero_version }}</span>{% endif %}
   </div>
   <a href="{% url 'bo_dimension_nouvelle' %}" class="btn btn--primary">
     {% include "components/_icon.html" with name="plus" cls="icon--sm" %} Ajouter une dimension</a>
@@ -29,7 +29,7 @@
             <span class="dimbar__dot" style="background: {{ d.obj.couleur }}; width: 12px; height: 12px;"></span>
             <span class="who">
               <b>{{ d.obj.nom }}</b>
-              <span>{% if d.nb_b %}{{ d.nb_a }} en Formulaire A · {{ d.nb_b }} en Formulaire B{% else %}{{ d.nb_a }} question{{ d.nb_a|pluralize }}{% endif %}{% if d.obj.description %} · {{ d.obj.description|truncatewords:4 }}{% endif %}</span>
+              <span>{% if d.nb_b %}{{ d.nb_a }} en Formulaire A {{ d.nb_b }} en Formulaire B{% else %}{{ d.nb_a }} question{{ d.nb_a|pluralize }}{% endif %}{% if d.obj.description %} {{ d.obj.description|truncatewords:4 }}{% endif %}</span>
             </span>
           </div>
         </td>
