@@ -1,7 +1,7 @@
+import base64
 import math
-import mimetypes
 import os
-from urllib.parse import urlparse
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -834,38 +834,58 @@ def rapports(request):
     return render(request, "app/dsi/rapports.html", {"lignes": lignes})
 
 
+def _lire_statique(rel):
+    """Chemin absolu d'un fichier statique *source* (dev et prod), ou None."""
+    chemin = finders.find(rel)
+    if chemin is None and settings.STATIC_ROOT:
+        candidat = os.path.join(settings.STATIC_ROOT, *rel.split("/"))
+        chemin = candidat if os.path.exists(candidat) else None
+    return chemin
+
+
+def _css_rapport_pdf():
+    """CSS complet du rapport, autonome (polices Inter incluses en data: URI).
+
+    WeasyPrint tourne dans le conteneur et ne peut pas toujours rappeler le
+    domaine public pour charger tokens.css / app.css / les .woff2 (hairpin
+    réseau derrière le proxy). On embarque donc tout dans le HTML : plus aucun
+    accès réseau pour produire le PDF.
+    """
+    def _build():
+        polices = {}
+        for nom in ("400", "500", "600", "700"):
+            fpath = _lire_statique("fonts/inter-latin-%s-normal.woff2" % nom)
+            if fpath:
+                with open(fpath, "rb") as fh:
+                    polices[nom] = base64.b64encode(fh.read()).decode("ascii")
+
+        def _remplacer_police(m):
+            poids = re.search(r"-(\d+)-normal", m.group(1))
+            b64 = polices.get(poids.group(1)) if poids else None
+            if not b64:
+                return m.group(0)
+            return 'url("data:font/woff2;base64,%s") format("woff2")' % b64
+
+        blocs = []
+        for nom in ("css/tokens.css", "css/app.css"):
+            cpath = _lire_statique(nom)
+            if not cpath:
+                continue
+            with open(cpath, "r", encoding="utf-8") as fh:
+                contenu = fh.read()
+            contenu = re.sub(
+                r'url\(["\']?\.\./fonts/([^"\')]+\.woff2)["\']?\)\s*format\("woff2"\)',
+                _remplacer_police,
+                contenu,
+            )
+            blocs.append(contenu)
+        return "\n".join(blocs)
+
+    return cache.get_or_set("pdf:css_rapport", _build, 3600)
+
+
 @login_required
 @role_required("dsi_decideur")
-def _pdf_static_fetcher(url):
-    """Fournit à WeasyPrint les fichiers ``/static/`` depuis le disque.
-
-    Sans cela, WeasyPrint tente un aller-retour HTTP vers le domaine public
-    pour charger les feuilles de style ; derrière le proxy HTTPS de la
-    plateforme, la requête échoue silencieusement et le PDF sort sans aucun
-    style. On sert donc le fichier local (nom hashé compris via STATIC_ROOT).
-    """
-    from weasyprint import default_url_fetcher
-
-    static_url = settings.STATIC_URL or "/static/"
-    marker = static_url if static_url.startswith("/") else "/" + static_url
-    chemin = urlparse(url).path
-
-    if marker in chemin:
-        rel = chemin.split(marker, 1)[1]
-        local = finders.find(rel)
-        if local is None and settings.STATIC_ROOT:
-            candidat = os.path.join(settings.STATIC_ROOT, *rel.split("/"))
-            if os.path.exists(candidat):
-                local = candidat
-        if local:
-            with open(local, "rb") as fichier:
-                return {
-                    "string": fichier.read(),
-                    "mime_type": mimetypes.guess_type(local)[0] or "application/octet-stream",
-                }
-    return default_url_fetcher(url)
-
-
 def rapport_administration(request, administration_id):
     """Rapport synthétique : page imprimable, ou PDF (WeasyPrint) si demandé."""
     administration = get_object_or_404(Administration, pk=administration_id)
@@ -892,11 +912,15 @@ def rapport_administration(request, administration_id):
             from weasyprint import HTML
 
             html = render(request, "app/dsi/rapport.html", contexte).content.decode("utf-8")
-            pdf = HTML(
-                string=html,
-                base_url=request.build_absolute_uri("/"),
-                url_fetcher=_pdf_static_fetcher,
-            ).write_pdf()
+            # Retire les <link> vers /static/ et injecte le CSS en ligne : le
+            # PDF se génère sans aucun appel réseau (cf. _css_rapport_pdf).
+            html = re.sub(
+                r'<link\b[^>]*rel=["\']stylesheet["\'][^>]*>', "", html
+            )
+            html = html.replace(
+                "</head>", "<style>%s</style></head>" % _css_rapport_pdf(), 1
+            )
+            pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
         except Exception:
             pdf = None
         if pdf is None:
