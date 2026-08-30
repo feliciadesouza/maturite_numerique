@@ -3,7 +3,7 @@
   {% for niveau, effectif in distribution.items %}
   <div class="dist-col">
     <span class="dist-col__v">{{ effectif }}</span>
-    <span class="dist-col__bar" style="height: {% if dist_max %}{% widthratio effectif dist_max 100 %}{% else %}0{% endif %}%;"></span>
+    <span class="dist-col__bar" style="height: {% if dist_max %}{% widthratio effectif dist_max 150 %}{% else %}3{% endif %}px;"></span>
     <span class="dist-col__n">N{{ niveau }}</span>
   </div>
   {% endfor %}
