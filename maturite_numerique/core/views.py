@@ -756,6 +756,7 @@ def svg_radar(labels, series, taille=240):
         pts = [point(rayon * min(max(v, 0), 5) / 5, a) for v, a in zip(s["valeurs"], angles)]
         polygones.append({
             "points": " ".join(f"{x},{y}" for x, y in pts),
+            "sommets": [{"x": x, "y": y} for x, y in pts],
             "couleur": s["couleur"], "nom": s["nom"],
         })
     return {"taille": taille, "cx": cx, "cy": cy, "anneaux": anneaux, "axes": axes, "polygones": polygones}
