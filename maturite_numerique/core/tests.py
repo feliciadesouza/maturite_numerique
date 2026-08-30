@@ -1,7 +1,7 @@
 ﻿from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from core.models import (
     Administration,
@@ -438,6 +438,20 @@ class DsiEspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Score global")
         self.assertContains(response, "Profils superposés")
+
+    def test_rapport_administration_reserve_au_role_dsi(self):
+        anon = Client()
+        self.assertEqual(
+            anon.get(f"/administrations/{self.administration.pk}/rapport/").status_code,
+            302,
+        )
+        autre = User.objects.create_user(username="enq_rap", password="testpass123")
+        Utilisateur.objects.create(user=autre, role="enqueteur")
+        anon.force_login(autre)
+        self.assertEqual(
+            anon.get(f"/administrations/{self.administration.pk}/rapport/").status_code,
+            403,
+        )
 
     def test_export_pdf_bascule_sur_l_apercu_si_weasyprint_absent(self):
         # WeasyPrint n'est pas chargeable sur cet environnement : on doit être
