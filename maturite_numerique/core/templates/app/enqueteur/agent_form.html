@@ -11,11 +11,15 @@
 <form method="post" class="card" style="max-width: 560px;">
   {% csrf_token %}
   {% for field in form %}
-  <div class="field">
-    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-    {{ field }}
-    {% if field.errors %}<ul class="errorlist">{{ field.errors|striptags }}</ul>{% endif %}
-  </div>
+    {% if field.name == "administration" and not plusieurs_admins %}
+      {{ field.as_hidden }}
+    {% else %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<ul class="errorlist">{{ field.errors|striptags }}</ul>{% endif %}
+      </div>
+    {% endif %}
   {% endfor %}
   <div class="row" style="gap: var(--sp-3); margin-top: var(--sp-4);">
     <a href="{% url 'enqueteur_home' %}" class="btn btn--secondary">Annuler</a>

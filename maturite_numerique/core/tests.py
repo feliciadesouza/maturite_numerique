@@ -450,6 +450,7 @@ class EnqueteurTests(TestCase):
         Utilisateur.objects.create(
             user=self.user, role="enqueteur", administration=self.administration
         )
+        self.administration.enqueteurs.add(self.user)
         self.client.force_login(self.user)
 
     def test_liste_des_enquetes_repond(self):
@@ -457,6 +458,7 @@ class EnqueteurTests(TestCase):
 
     def test_nouvel_agent_cree_et_numerote(self):
         response = self.client.post("/enquetes/nouvel-agent/", {
+            "administration": self.administration.pk,
             "poste": "Agent d'accueil", "service": "État civil",
         })
         self.assertEqual(response.status_code, 302)
@@ -464,6 +466,28 @@ class EnqueteurTests(TestCase):
         self.assertEqual(agent.numero, 1)
         self.assertEqual(agent.mode_saisie, "assiste")
         self.assertEqual(agent.enqueteur, self.user)
+        self.assertEqual(agent.administration, self.administration)
+
+    def test_enqueteur_voit_les_agents_de_toutes_ses_administrations(self):
+        autre = Administration.objects.create(nom="Préfecture de Kloto", region="Plateaux")
+        autre.enqueteurs.add(self.user)
+        hors_perimetre = Administration.objects.create(nom="Mairie de Sokodé")
+
+        a1 = Agent.objects.create(administration=self.administration, poste="A1")
+        Agent.objects.create(administration=autre, poste="A2")
+        a3 = Agent.objects.create(administration=hors_perimetre, poste="A3")
+
+        page = self.client.get("/enquetes/")
+        self.assertContains(page, "A1")
+        self.assertContains(page, "A2")
+        self.assertNotContains(page, "A3")
+        # Un agent hors périmètre n'est pas accessible.
+        self.assertEqual(
+            self.client.get(f"/enquetes/agent/{a3.pk}/question/0/").status_code, 404
+        )
+        self.assertEqual(
+            self.client.get(f"/enquetes/agent/{a1.pk}/question/0/").status_code, 200
+        )
 
     def test_parcours_assiste_question_par_question(self):
         agent = Agent.objects.create(

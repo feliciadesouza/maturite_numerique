@@ -141,11 +141,17 @@ class ProfileForm(forms.ModelForm):
 
 
 class NouvelAgentForm(forms.ModelForm):
-    """Ajout d'un agent à enquêter par l'enquêteur (l'administration est fixée)."""
+    """Ajout d'un agent à enquêter par l'enquêteur.
+
+    L'administration est choisie parmi celles où l'enquêteur est affecté
+    (passées via `administrations`) ; pré-sélectionnée s'il n'y en a qu'une.
+    """
     class Meta:
         model = Agent
-        fields = ["poste", "service", "tranche_age", "anciennete", "niveau_etudes"]
+        fields = ["administration", "poste", "service", "tranche_age",
+                  "anciennete", "niveau_etudes"]
         labels = {
+            "administration": "Administration",
             "poste": "Poste occupé / fonction",
             "service": "Service / direction",
             "tranche_age": "Tranche d'âge",
@@ -156,6 +162,14 @@ class NouvelAgentForm(forms.ModelForm):
             "poste": forms.TextInput(attrs={"placeholder": "Ex. : Agent d'accueil"}),
             "service": forms.TextInput(attrs={"placeholder": "Ex. : État civil"}),
         }
+
+    def __init__(self, *args, administrations=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if administrations is not None:
+            self.fields["administration"].queryset = administrations
+            self.fields["administration"].empty_label = None
+            if administrations.count() == 1:
+                self.fields["administration"].initial = administrations.first()
 
 
 # --- Back-office : administrateur de contenu ---

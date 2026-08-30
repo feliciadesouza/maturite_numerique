@@ -454,11 +454,16 @@ def bo_versions(request):
     return render(request, "app/backoffice/versions.html", {"formulaires": formulaires})
 
 
+def _administrations_enqueteur(user):
+    """Administrations où l'enquêteur connecté est affecté."""
+    return Administration.objects.filter(enqueteurs=user).order_by("nom")
+
+
 def _agent_de_l_enqueteur(request, agent_id):
-    """Agent de l'administration assignée à l'enquêteur connecté, ou 404."""
+    """Agent d'une administration où l'enquêteur connecté est affecté, ou 404."""
     profil = get_object_or_404(Utilisateur, user=request.user)
     return get_object_or_404(
-        Agent, pk=agent_id, administration=profil.administration
+        Agent, pk=agent_id, administration__enqueteurs=request.user
     ), profil
 
 
@@ -475,12 +480,15 @@ def _questions_agent_ordonnees(agent):
 @login_required
 @role_required("enqueteur")
 def enqueteur_home(request):
-    """Liste des agents à enquêter pour l'administration assignée."""
-    profil = get_object_or_404(Utilisateur, user=request.user)
-    administration = profil.administration
+    """Liste des agents à enquêter, sur toutes les administrations affectées."""
+    administrations = list(_administrations_enqueteur(request.user))
+    plusieurs_admins = len(administrations) > 1
+    administration = administrations[0] if len(administrations) == 1 else None
     tous = (
-        Agent.objects.filter(administration=administration).order_by("numero", "poste")
-        if administration else Agent.objects.none()
+        Agent.objects.filter(administration__in=administrations)
+        .select_related("administration")
+        .order_by("administration__nom", "numero", "poste")
+        if administrations else Agent.objects.none()
     )
 
     compteurs = {
@@ -513,6 +521,8 @@ def enqueteur_home(request):
 
     return render(request, "app/enqueteur/liste_agents.html", {
         "administration": administration,
+        "administrations": administrations,
+        "plusieurs_admins": plusieurs_admins,
         "agents": agents,
         "compteurs": compteurs,
         "termines": termines,
@@ -527,32 +537,31 @@ def enqueteur_home(request):
 @login_required
 @role_required("enqueteur")
 def enqueteur_nouvel_agent(request):
-    """Ajout d'un agent à la liste d'enquête."""
-    profil = get_object_or_404(Utilisateur, user=request.user)
-    if not profil.administration:
+    """Ajout d'un agent à la liste d'enquête (dans une des administrations affectées)."""
+    administrations = _administrations_enqueteur(request.user)
+    if not administrations.exists():
         messages.warning(request, "Aucune administration ne vous est assignée.")
         return redirect("enqueteur_home")
 
-    if request.method == "POST":
-        form = NouvelAgentForm(request.POST)
-        if form.is_valid():
-            agent = form.save(commit=False)
-            agent.administration = profil.administration
-            agent.mode_saisie = "assiste"
-            agent.enqueteur = request.user
-            evaluation, _ = _evaluation_en_cours(profil.administration, request.user)
-            agent.evaluation = evaluation
-            dernier = (
-                Agent.objects.filter(evaluation=evaluation, numero__isnull=False)
-                .aggregate(m=Max("numero"))["m"] or 0
-            )
-            agent.numero = dernier + 1
-            agent.save()
-            messages.success(request, f"Agent {agent.numero:03d} ajouté à la liste.")
-            return redirect("formulaire_b_assiste", agent_id=agent.pk, index=0)
-    else:
-        form = NouvelAgentForm()
-    return render(request, "app/enqueteur/agent_form.html", {"form": form})
+    form = NouvelAgentForm(request.POST or None, administrations=administrations)
+    if request.method == "POST" and form.is_valid():
+        agent = form.save(commit=False)
+        agent.administration = form.cleaned_data["administration"]
+        agent.mode_saisie = "assiste"
+        agent.enqueteur = request.user
+        evaluation, _ = _evaluation_en_cours(agent.administration, request.user)
+        agent.evaluation = evaluation
+        dernier = (
+            Agent.objects.filter(evaluation=evaluation, numero__isnull=False)
+            .aggregate(m=Max("numero"))["m"] or 0
+        )
+        agent.numero = dernier + 1
+        agent.save()
+        messages.success(request, f"Agent {agent.numero:03d} ajouté à la liste.")
+        return redirect("formulaire_b_assiste", agent_id=agent.pk, index=0)
+    return render(request, "app/enqueteur/agent_form.html", {
+        "form": form, "plusieurs_admins": administrations.count() > 1,
+    })
 
 
 @login_required
