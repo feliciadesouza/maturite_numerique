@@ -1,10 +1,14 @@
 import math
+import mimetypes
+import os
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.staticfiles import finders
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db.models import Avg, Max
@@ -832,6 +836,36 @@ def rapports(request):
 
 @login_required
 @role_required("dsi_decideur")
+def _pdf_static_fetcher(url):
+    """Fournit à WeasyPrint les fichiers ``/static/`` depuis le disque.
+
+    Sans cela, WeasyPrint tente un aller-retour HTTP vers le domaine public
+    pour charger les feuilles de style ; derrière le proxy HTTPS de la
+    plateforme, la requête échoue silencieusement et le PDF sort sans aucun
+    style. On sert donc le fichier local (nom hashé compris via STATIC_ROOT).
+    """
+    from weasyprint import default_url_fetcher
+
+    static_url = settings.STATIC_URL or "/static/"
+    marker = static_url if static_url.startswith("/") else "/" + static_url
+    chemin = urlparse(url).path
+
+    if marker in chemin:
+        rel = chemin.split(marker, 1)[1]
+        local = finders.find(rel)
+        if local is None and settings.STATIC_ROOT:
+            candidat = os.path.join(settings.STATIC_ROOT, *rel.split("/"))
+            if os.path.exists(candidat):
+                local = candidat
+        if local:
+            with open(local, "rb") as fichier:
+                return {
+                    "string": fichier.read(),
+                    "mime_type": mimetypes.guess_type(local)[0] or "application/octet-stream",
+                }
+    return default_url_fetcher(url)
+
+
 def rapport_administration(request, administration_id):
     """Rapport synthétique : page imprimable, ou PDF (WeasyPrint) si demandé."""
     administration = get_object_or_404(Administration, pk=administration_id)
@@ -858,7 +892,11 @@ def rapport_administration(request, administration_id):
             from weasyprint import HTML
 
             html = render(request, "app/dsi/rapport.html", contexte).content.decode("utf-8")
-            pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+            pdf = HTML(
+                string=html,
+                base_url=request.build_absolute_uri("/"),
+                url_fetcher=_pdf_static_fetcher,
+            ).write_pdf()
         except Exception:
             pdf = None
         if pdf is None:
