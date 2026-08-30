@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <style>
     @page { size: A4; margin: 12mm; }
-    body, .rapport { background: #fff; }
+    html, body, .rapport { background: #fff !important; }
     .rapport { max-width: 820px; margin: 0 auto; padding: var(--sp-8); }
-    .rapport__band { background: var(--navy); color: #fff; padding: var(--sp-6) var(--sp-8);
+    .rapport__band { background: var(--navy); color: #fff; padding: var(--sp-8);
       border-radius: var(--r-card); display: flex; justify-content: space-between; align-items: center; }
     .rapport__band .eyebrow { color: rgba(255,255,255,0.7); }
     .rapport__band h1 { color: #fff; margin-top: 4px; font-size: 1.9rem; line-height: 1.15;
@@ -22,7 +22,8 @@
     .rapport section { margin-top: var(--sp-5); }
     .rapport h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-3); }
     .rapport .card { padding: var(--sp-5); }
-    .rapport .radar-svg { max-width: 240px; }
+    .rapport .dash-grid > .card:first-child { background: var(--surface-alt); border-color: transparent; }
+    .rapport .radar-svg { max-width: 280px; }
     .rapport .dimbar__fill { border-radius: var(--r-pill); }
     .rapport__rule { border: 0; border-top: 1px solid var(--border); margin: var(--sp-5) 0 0; }
     .rapport .reco-item { align-items: center; }
@@ -40,7 +41,7 @@
   <div class="rapport">
     <div class="rapport__band">
       <div>
-        <span class="eyebrow">République togolaise Diagnostic numérique</span>
+        <span class="eyebrow">République togolaise · Diagnostic numérique</span>
         <h1>Rapport de maturité numérique</h1>
       </div>
       <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
@@ -49,9 +50,9 @@
     <section>
       <h2 style="font-size: var(--fs-h2);">{{ administration.nom }}</h2>
       <p class="text-muted">
-        {% if resultat.evaluation %}Évaluée le {{ resultat.evaluation.date_cloture|date:"j F Y" }}
-          Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }}{% endif %}
-        {% else %}Aperçu évaluation en cours {% endif %}
+        {% if resultat.evaluation %}Évaluée le {{ resultat.evaluation.date_cloture|date:"j F Y" }} ·
+          Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }} · {% endif %}
+        {% else %}Aperçu évaluation en cours · {% endif %}
         {{ total_agents }} agent{{ total_agents|pluralize }} enquêté{{ total_agents|pluralize }}
       </p>
       <hr class="rapport__rule">
