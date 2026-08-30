@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 from decouple import Csv, config
@@ -63,6 +64,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # Sert les fichiers statiques en production (aucun serveur web devant gunicorn).
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    # ETag + réponse 304 « Not Modified » : évite de renvoyer un corps déjà
+    # connu du navigateur (utile quand plusieurs testeurs rechargent les pages).
+    'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -134,6 +138,25 @@ else:
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
         }
+    }
+
+
+# Cache
+# https://docs.djangoproject.com/en/6.0/topics/cache/
+# Cache mémoire local au process : suffisant pour mémoriser quelques secondes
+# les données identiques servies à tous les visiteurs (pages vitrine). Chaque
+# worker gunicorn a le sien ; pas de dépendance externe (Redis) sur l'offre
+# gratuite. En test : cache neutre pour ne pas fausser les assertions.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'maturite-numerique',
+        'TIMEOUT': 300,
+    }
+}
+if 'test' in sys.argv:
+    CACHES['default'] = {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 
 

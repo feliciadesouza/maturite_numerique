@@ -38,3 +38,9 @@ services:
         value: ""
       - key: EMAIL_BACKEND
         value: django.core.mail.backends.console.EmailBackend
+      # Gunicorn : dimensionné pour les 512 Mo de l'offre gratuite.
+      # 2 workers x 4 threads ; à monter si l'on passe sur un plan payant.
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: WEB_THREADS
+        value: "4"

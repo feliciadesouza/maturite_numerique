@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db.models import Avg, Max
 from django.http import HttpResponse
@@ -12,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+from django.views.decorators.gzip import gzip_page
 
 from .forms import (
     ContactForm,
@@ -70,11 +72,40 @@ DIMENSION_TAGS = {
 
 
 def _dimensions_contenu():
-    """Dimensions actives enrichies de leurs étiquettes de contenu."""
-    return [
-        {"obj": dim, "tags": DIMENSION_TAGS.get(dim.code, [])}
-        for dim in Dimension.objects.filter(actif=True).order_by("ordre")
-    ]
+    """Dimensions actives enrichies de leurs étiquettes de contenu.
+
+    Identique pour tous les visiteurs et modifiable seulement en back-office :
+    on mémorise le résultat 5 min pour éviter la requête à chaque affichage
+    des pages vitrine (accueil, « Les 5 dimensions »).
+    """
+    def _build():
+        return [
+            {"obj": dim, "tags": DIMENSION_TAGS.get(dim.code, [])}
+            for dim in Dimension.objects.filter(actif=True).order_by("ordre")
+        ]
+
+    return cache.get_or_set("public:dimensions_contenu", _build, 300)
+
+
+def _accueil_chiffres():
+    """Chiffres clés de la page d'accueil, mémorisés 5 min (identiques pour tous)."""
+    def _build():
+        score_moyen = (
+            Evaluation.objects.filter(statut="terminee")
+            .aggregate(moy=Avg("score_global"))
+            .get("moy")
+        )
+        return {
+            "nb_administrations": Administration.objects.count(),
+            "score_moyen": score_moyen,
+        }
+
+    return cache.get_or_set("public:accueil_chiffres", _build, 300)
+
+
+def _purger_cache_public():
+    """Vide le cache des pages vitrine (à appeler après une édition en back-office)."""
+    cache.delete_many(["public:dimensions_contenu", "public:accueil_chiffres"])
 
 
 def get_role_home_url(user):
@@ -95,6 +126,7 @@ def get_role_home_url(user):
     return home
 
 
+@gzip_page
 def home(request):
     """Page d'accueil du site vitrine (redirige les comptes connectés)."""
     if request.user.is_authenticated:
@@ -102,27 +134,26 @@ def home(request):
         if role_home:
             return redirect(role_home)
 
-    score_moyen = (
-        Evaluation.objects.filter(statut="terminee")
-        .aggregate(moy=Avg("score_global"))
-        .get("moy")
-    )
+    chiffres = _accueil_chiffres()
     context = {
-        "nb_administrations": Administration.objects.count(),
-        "score_moyen": score_moyen,
+        "nb_administrations": chiffres["nb_administrations"],
+        "score_moyen": chiffres["score_moyen"],
         "dimensions": _dimensions_contenu(),
     }
     return render(request, "public/accueil.html", context)
 
 
+@gzip_page
 def demarche(request):
     return render(request, "public/demarche.html")
 
 
+@gzip_page
 def dimensions_publiques(request):
     return render(request, "public/dimensions.html", {"dimensions": _dimensions_contenu()})
 
 
+@gzip_page
 def acces_par_role(request):
     return render(request, "public/acces_role.html")
 
@@ -147,10 +178,12 @@ def contact(request):
     return render(request, "public/contact.html", {"form": form})
 
 
+@gzip_page
 def confidentialite(request):
     return render(request, "public/confidentialite.html")
 
 
+@gzip_page
 def conditions(request):
     return render(request, "public/conditions.html")
 
@@ -311,6 +344,7 @@ def bo_dimension_form(request, dimension_id=None):
             if dimension is None:
                 obj.ordre = (Dimension.objects.aggregate(m=Max("ordre"))["m"] or 0) + 1
             obj.save()
+            _purger_cache_public()
             messages.success(request, "Dimension enregistrée.")
             return redirect("backoffice")
     else:
@@ -333,6 +367,7 @@ def bo_dimension_ordre(request, dimension_id, sens):
         dimension.ordre, autre.ordre = autre.ordre, dimension.ordre
         dimension.save(update_fields=["ordre"])
         autre.save(update_fields=["ordre"])
+        _purger_cache_public()
     return redirect("backoffice")
 
 
