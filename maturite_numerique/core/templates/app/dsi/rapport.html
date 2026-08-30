@@ -18,6 +18,11 @@
       display: grid; place-items: center; }
     .rapport section { margin-top: var(--sp-8); }
     .rapport h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-3); }
+    .rapport__rule { border: 0; border-top: 1px solid var(--border); margin: var(--sp-6) 0 0; }
+    .rapport .reco-item { align-items: center; }
+    .rapport .reco-num { flex: none; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--blue-500); color: #fff; font-weight: 700; font-size: var(--fs-sm);
+      display: inline-block; text-align: center; line-height: 28px; }
     .rapport__foot { margin-top: var(--sp-12); padding-top: var(--sp-4); border-top: 1px solid var(--border);
       display: flex; justify-content: space-between; font-size: var(--fs-cap); color: var(--text-muted); }
     .print-btn { position: fixed; top: 16px; right: 16px; }
@@ -43,6 +48,7 @@
         {% else %}Aperçu évaluation en cours {% endif %}
         {{ total_agents }} agent{{ total_agents|pluralize }} enquêté{{ total_agents|pluralize }}
       </p>
+      <hr class="rapport__rule">
     </section>
 
     <section class="dash-grid" style="grid-template-columns: 1fr 1fr;">
@@ -63,22 +69,22 @@
     </section>
 
     <section>
-      <h2>Distribution des compétences</h2>
-      {% include "components/_distribution.html" with distribution=resultat.distribution total_agents=total_agents dist_max=dist_max %}
-    </section>
-
-    <section>
       <h2>Recommandations prioritaires</h2>
       <div class="reco-list">
         {% for reco in resultat.recommandations %}
         <div class="reco-item">
-          <span class="reco-tag reco-tag--{{ reco.priorite }}">{{ reco.priorite }}</span>
+          <span class="reco-num">{{ forloop.counter }}</span>
           <span>{{ reco.texte }}</span>
         </div>
         {% empty %}
         <p class="text-muted">Aucune recommandation prioritaire.</p>
         {% endfor %}
       </div>
+    </section>
+
+    <section>
+      <h2>Distribution des compétences</h2>
+      {% include "components/_distribution.html" with distribution=resultat.distribution total_agents=total_agents dist_max=dist_max %}
     </section>
 
     <div class="rapport__foot">

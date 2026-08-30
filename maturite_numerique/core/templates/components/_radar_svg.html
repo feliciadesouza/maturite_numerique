@@ -15,6 +15,9 @@
   {% for poly in radar_svg.polygones %}
     <polygon points="{{ poly.points }}" fill="{{ poly.couleur }}" fill-opacity="0.18"
              stroke="{{ poly.couleur }}" stroke-width="2"/>
+    {% for s in poly.sommets %}
+      <circle cx="{{ s.x }}" cy="{{ s.y }}" r="2.6" fill="{{ poly.couleur }}"/>
+    {% endfor %}
   {% endfor %}
 </svg>
 {% endlocalize %}
