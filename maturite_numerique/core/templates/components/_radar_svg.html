@@ -9,8 +9,10 @@
   {% for axe in radar_svg.axes %}
     <line x1="{{ radar_svg.cx }}" y1="{{ radar_svg.cy }}" x2="{{ axe.x }}" y2="{{ axe.y }}"
           stroke="#cbd2dc" stroke-width="1"/>
+    {% if not sans_labels %}
     <text x="{{ axe.lx }}" y="{{ axe.ly }}" text-anchor="{{ axe.anchor }}" dominant-baseline="middle"
           font-size="9" fill="#6b7686">{{ axe.label }}</text>
+    {% endif %}
   {% endfor %}
   {% for poly in radar_svg.polygones %}
     <polygon points="{{ poly.points }}" fill="{{ poly.couleur }}" fill-opacity="0.18"
