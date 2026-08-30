@@ -106,7 +106,13 @@ if DATABASE_URL:
     import dj_database_url
 
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            # Ping la connexion avant réutilisation : indispensable avec un
+            # PostgreSQL qui met le calcul en veille après inactivité (Neon).
+            conn_health_checks=True,
+        ),
     }
 elif DB_ENGINE == 'django.db.backends.sqlite3':
     DATABASES = {

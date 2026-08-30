@@ -1,11 +1,9 @@
 # Blueprint Render — https://render.com/docs/blueprint-spec
 # Depuis le tableau de bord Render : New + > Blueprint > sélectionner ce dépôt.
-databases:
-  - name: maturite-db
-    plan: free
-    databaseName: maturite_numerique
-    user: maturite
-
+#
+# La base de données est hébergée sur Neon (PostgreSQL gratuit, sans expiration).
+# Après création du service, coller la chaîne de connexion Neon dans la variable
+# DATABASE_URL (tableau de bord Render > Environment).
 services:
   - type: web
     name: maturite-numerique
@@ -16,10 +14,9 @@ services:
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
+      # postgres://user:pwd@ep-xxx-pooler.<region>.aws.neon.tech/dbname?sslmode=require
       - key: DATABASE_URL
-        fromDatabase:
-          name: maturite-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
