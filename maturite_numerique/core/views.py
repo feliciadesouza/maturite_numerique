@@ -881,15 +881,8 @@ def _css_rapport_pdf():
             )
             blocs.append(contenu)
 
-        # Ajustements propres au rendu WeasyPrint (flexbox à hauteur % non géré).
-        blocs.append(
-            ".print-btn{display:none !important}"
-            ".dist-chart{display:block;height:auto;text-align:center;white-space:nowrap}"
-            ".dist-col{display:inline-block;vertical-align:bottom;width:15%;height:auto;"
-            "white-space:normal}"
-            ".dist-col>*{display:block;text-align:center}"
-            ".dist-col__bar{margin:4px auto 0}"
-        )
+        # Le bouton d'impression n'a pas de sens dans le PDF.
+        blocs.append(".print-btn{display:none !important}")
         return "\n".join(blocs)
 
     return cache.get_or_set("pdf:css_rapport", _build, 3600)
