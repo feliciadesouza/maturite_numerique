@@ -171,6 +171,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Stockage des fichiers statiques. En production (DEBUG faux, cf. plus bas),
 # WhiteNoise prend le relais : compression + noms hashés (cache long).
+# Non strict : une référence non résolue dans un fichier tiers (ex. commentaire
+# sourceMappingURL) est un avertissement, pas une erreur de build.
+WHITENOISE_MANIFEST_STRICT = False
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {
