@@ -182,7 +182,6 @@ h3, .h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; 
   font-size: var(--fs-cap); font-weight: 600; padding: 3px 10px; border-radius: var(--r-pill);
   border: 1px solid transparent;
 }
-.badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--r-pill); background: currentColor; }
 .badge--fort   { background: var(--green-50); color: var(--green-500); }
 .badge--moyen  { background: var(--amber-50); color: var(--amber-500); }
 .badge--faible { background: var(--red-50);   color: var(--red-500); }
@@ -197,7 +196,6 @@ h3, .h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; 
 .pill--fort   { background: var(--green-50); color: var(--green-500); }
 .pill--moyen  { background: var(--amber-50); color: var(--amber-500); }
 .pill--faible { background: var(--red-50);   color: var(--red-500); }
-.pill::before { content: ""; width: 7px; height: 7px; border-radius: var(--r-pill); background: currentColor; }
 
 /* ---------- Champs de formulaire ---------- */
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-4); }

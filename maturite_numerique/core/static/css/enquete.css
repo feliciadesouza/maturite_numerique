@@ -30,7 +30,6 @@
   font-size: var(--fs-sm); font-weight: 600; padding: 6px 14px; border-radius: var(--r-pill);
   background: var(--surface-alt); color: var(--text-muted);
 }
-.sec-pill::before { content: ""; width: 7px; height: 7px; border-radius: var(--r-pill); background: currentColor; }
 .sec-pill.is-done { background: var(--green-50); color: var(--green-500); }
 .sec-pill.is-current { background: var(--primary); color: #fff; }
 
