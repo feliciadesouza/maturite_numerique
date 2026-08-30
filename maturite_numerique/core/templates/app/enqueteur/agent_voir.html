@@ -1,11 +1,11 @@
 {% extends "base_app.html" %}
 
-{% block title %}Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} · récapitulatif{% endblock %}
+{% block title %}Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} récapitulatif{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} · {{ agent.poste|default:"Agent" }}</h1>
-  <p class="breadcrumb"><a href="{% url 'enqueteur_home' %}">Mes enquêtes</a> · Récapitulatif</p>
+  <h1>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} {{ agent.poste|default:"Agent" }}</h1>
+  <p class="breadcrumb"><a href="{% url 'enqueteur_home' %}">Mes enquêtes</a> Récapitulatif</p>
 </div>
 
 <div class="row" style="gap: var(--sp-3); margin-bottom: var(--sp-6);">
@@ -20,7 +20,7 @@
   <div class="recap-list">
     {% for ligne in lignes %}
     <div class="recap-row">
-      <span class="q">{{ ligne.question.code }} · {{ ligne.question.texte }}</span>
+      <span class="q">{{ ligne.question.code }} {{ ligne.question.texte }}</span>
       <span class="v">{{ ligne.valeur }}</span>
     </div>
     {% empty %}

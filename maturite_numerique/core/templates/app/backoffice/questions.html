@@ -1,12 +1,12 @@
 {% extends "base_app.html" %}
 
-{% block title %}Questions · {{ dimension.nom }}{% endblock %}
+{% block title %}Questions {{ dimension.nom }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <h1>Dimension : {{ dimension.nom }}</h1>
-  <p class="breadcrumb"><a href="{% url 'backoffice' %}">Dimensions</a> · {{ dimension.nom }}
-    {% if version %}· {{ version.formulaire.get_code_display }} v{{ version.numero_version }}{% endif %}</p>
+  <p class="breadcrumb"><a href="{% url 'backoffice' %}">Dimensions</a> {{ dimension.nom }}
+    {% if version %} {{ version.formulaire.get_code_display }} v{{ version.numero_version }}{% endif %}</p>
 </div>
 
 <div class="row row--between" style="margin-bottom: var(--sp-4);">

@@ -1,14 +1,14 @@
 {% extends "base_app.html" %}
 
 {% block title %}Mes enquêtes{% endblock %}
-{% block topbar_title %}Enquête de terrain{% if administration %} · {{ administration.nom }}{% elif plusieurs_admins %} · {{ administrations|length }} administrations{% endif %}{% endblock %}
+{% block topbar_title %}Enquête de terrain{% if administration %} {{ administration.nom }}{% elif plusieurs_admins %} {{ administrations|length }} administrations{% endif %}{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <h1>Mes enquêtes</h1>
   <p class="breadcrumb">
-    {% if administration %}Administration assignée : {{ administration.nom }} · {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
-    {% elif plusieurs_admins %}Affecté à {{ administrations|length }} administrations · {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
+    {% if administration %}Administration assignée : {{ administration.nom }} {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
+    {% elif plusieurs_admins %}Affecté à {{ administrations|length }} administrations {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
     {% else %}Aucune administration ne vous est assignée.{% endif %}</p>
 </div>
 
@@ -32,8 +32,8 @@
   {% if en_cours %}
   <div class="resume-card">
     <span class="eyebrow">Enquête en cours</span>
-    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} · {{ en_cours.poste|default:"Agent" }}</h3>
-    <p>{{ en_cours.service|default:"Service non précisé" }} · Question {{ en_cours.progression|add:1 }} / {{ en_cours_total }}</p>
+    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} {{ en_cours.poste|default:"Agent" }}</h3>
+    <p>{{ en_cours.service|default:"Service non précisé" }} Question {{ en_cours.progression|add:1 }} / {{ en_cours_total }}</p>
     <a href="{% url 'formulaire_b_assiste' agent_id=en_cours.pk index=en_cours.progression %}" class="btn btn--secondary">
       {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %} Reprendre l'enquête</a>
   </div>
@@ -66,8 +66,8 @@
           <div class="row" style="gap: var(--sp-3);">
             <span class="agent-avatar">{% include "components/_icon.html" with name="user" cls="icon--sm" %}</span>
             <span class="who">
-              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} · {{ agent.poste|default:"Agent" }}</b>
-              <span>{% if plusieurs_admins %}{{ agent.administration.nom }} · {% endif %}{{ agent.service|default:"service non précisé" }}</span>
+              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} {{ agent.poste|default:"Agent" }}</b>
+              <span>{% if plusieurs_admins %}{{ agent.administration.nom }} {% endif %}{{ agent.service|default:"service non précisé" }}</span>
             </span>
           </div>
         </td>

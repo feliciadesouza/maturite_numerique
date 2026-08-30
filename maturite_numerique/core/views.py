@@ -133,7 +133,7 @@ def contact(request):
             message = form.save()
             destinataire = getattr(settings, "CONTACT_EMAIL", "contact@maturite-numerique.tg")
             send_mail(
-                subject=f"[Contact] {message.get_sujet_display()} · {message.nom}",
+                subject=f"[Contact] {message.get_sujet_display()} {message.nom}",
                 message=render_to_string("email/contact.txt", {"message": message}),
                 from_email=None,
                 recipient_list=[destinataire],
@@ -417,7 +417,7 @@ def bo_question_form(request, question_id=None, dimension_id=None):
                 appliquer_options(obj, form.options_parsees())
                 messages.success(
                     request,
-                    f"Question modifiée · version v{nouvelle_version.numero_version} créée "
+                    f"Question modifiée version v{nouvelle_version.numero_version} créée "
                     "(les données précédentes sont conservées).",
                 )
             else:
@@ -518,10 +518,10 @@ def enqueteur_home(request):
     total_questions = len(_questions_agent_ordonnees(en_cours)) if en_cours else 0
 
     filtres = [
-        ("tous", f"Tous · {compteurs['tous']}"),
-        ("a_faire", f"À faire · {compteurs['a_faire']}"),
-        ("en_cours", f"En cours · {compteurs['en_cours']}"),
-        ("terminee", f"Terminées · {compteurs['terminee']}"),
+        ("tous", f"Tous {compteurs['tous']}"),
+        ("a_faire", f"À faire {compteurs['a_faire']}"),
+        ("en_cours", f"En cours {compteurs['en_cours']}"),
+        ("terminee", f"Terminées {compteurs['terminee']}"),
     ]
 
     return render(request, "app/enqueteur/liste_agents.html", {
