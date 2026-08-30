@@ -59,6 +59,7 @@ class AdministrationAdmin(admin.ModelAdmin):
     list_filter = ("pays", "region", "secteur")
     search_fields = ("nom", "secteur", "region", "pays")
     ordering = ("nom",)
+    filter_horizontal = ("enqueteurs",)
 
 
 @admin.register(Utilisateur)

@@ -1,13 +1,14 @@
 {% extends "base_app.html" %}
 
 {% block title %}Mes enquêtes{% endblock %}
-{% block topbar_title %}Enquête de terrain · {{ administration.nom|default:"aucune administration" }}{% endblock %}
+{% block topbar_title %}Enquête de terrain{% if administration %} · {{ administration.nom }}{% elif plusieurs_admins %} · {{ administrations|length }} administrations{% endif %}{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <h1>Mes enquêtes</h1>
   <p class="breadcrumb">
     {% if administration %}Administration assignée : {{ administration.nom }} · {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
+    {% elif plusieurs_admins %}Affecté à {{ administrations|length }} administrations · {{ compteurs.tous }} agent{{ compteurs.tous|pluralize }}
     {% else %}Aucune administration ne vous est assignée.{% endif %}</p>
 </div>
 
@@ -66,7 +67,7 @@
             <span class="agent-avatar">{% include "components/_icon.html" with name="user" cls="icon--sm" %}</span>
             <span class="who">
               <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} · {{ agent.poste|default:"Agent" }}</b>
-              <span>{{ agent.service|default:"service non précisé" }}</span>
+              <span>{% if plusieurs_admins %}{{ agent.administration.nom }} · {% endif %}{{ agent.service|default:"service non précisé" }}</span>
             </span>
           </div>
         </td>

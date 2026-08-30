@@ -137,6 +137,11 @@ class Administration(models.Model):
     secteur = models.CharField(max_length=150, blank=True)
     region = models.CharField(max_length=150, blank=True)
     pays = models.CharField(max_length=100, default="Togo")
+    enqueteurs = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="administrations_enquetees",
+        limit_choices_to={"profil__role": "enqueteur"},
+        help_text="Comptes enquêteurs autorisés à mener l'enquête agents dans cette administration.",
+    )
 
     class Meta:
         verbose_name_plural = "Administrations"
