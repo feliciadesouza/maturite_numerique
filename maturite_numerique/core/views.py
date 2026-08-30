@@ -184,6 +184,8 @@ def dashboard(request):
     sommes, comptes = {}, {}
     for evaluation in evals_terminees:
         for code, valeur in (evaluation.score_par_dimension or {}).items():
+            if valeur is None:
+                continue
             sommes[code] = sommes.get(code, 0.0) + float(valeur)
             comptes[code] = comptes.get(code, 0) + 1
 
@@ -634,7 +636,7 @@ def _radar_resultat(resultat):
         "labels": [s["dimension"].nom for s in resultat.scores_dimensions],
         "series": [{
             "nom": resultat.administration.nom,
-            "valeurs": [s["score"] for s in resultat.scores_dimensions],
+            "valeurs": [s["score"] or 0 for s in resultat.scores_dimensions],
             "couleur": "#ffffff",
         }],
         "dark": True,
@@ -737,7 +739,7 @@ def comparaison(request):
         "labels": [d.nom for d in dimensions],
         "series": [{
             "nom": col["administration"].nom,
-            "valeurs": [s["score"] for s in col["resultat"].scores_dimensions],
+            "valeurs": [s["score"] or 0 for s in col["resultat"].scores_dimensions],
             "couleur": col["couleur"],
         } for col in colonnes],
         "dark": False,
@@ -784,7 +786,7 @@ def rapport_administration(request, administration_id):
             [s["dimension"].nom for s in resultat.scores_dimensions],
             [{
                 "nom": administration.nom,
-                "valeurs": [s["score"] for s in resultat.scores_dimensions],
+                "valeurs": [s["score"] or 0 for s in resultat.scores_dimensions],
                 "couleur": "#1e6fd9",
             }],
         ),

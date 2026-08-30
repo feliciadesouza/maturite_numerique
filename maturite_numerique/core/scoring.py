@@ -60,11 +60,16 @@ def normaliser_reponse(valeur: str) -> float | None:
     return None
 
 
-def calculer_score_dimension(administration: Administration, dimension: Dimension) -> ScoreDimension:
-    """Calcule le score d'une administration pour une dimension donnée."""
-    reponses = Reponse.objects.filter(
-        administration=administration, question__dimension=dimension
-    ).select_related("question")
+def calculer_score_dimension(administration: Administration, dimension: Dimension,
+                             *, evaluation=None) -> ScoreDimension:
+    """Score d'une dimension. Rattaché à une évaluation (campagne) si fournie,
+    sinon à toutes les réponses de l'administration (compat / rétro-calcul)."""
+    reponses = Reponse.objects.filter(question__dimension=dimension)
+    if evaluation is not None:
+        reponses = reponses.filter(evaluation=evaluation)
+    else:
+        reponses = reponses.filter(administration=administration)
+    reponses = reponses.select_related("question")
 
     notes = []
     for r in reponses:
@@ -135,13 +140,20 @@ def reponses_par_code(agent) -> dict:
 
 
 def distribution_niveaux_administration(administration: Administration) -> dict:
-    """
-    Distribution des agents d'une administration sur les 6 niveaux (0 à 5).
-    Utilisé pour le score de la dimension "Compétences numériques" - on ne
-    prend jamais une simple moyenne, cf. justification au chapitre 3.
-    """
+    """Distribution N0-N5 de TOUS les agents d'une administration (toutes campagnes)."""
     agents = Agent.objects.filter(administration=administration, niveau_maturite__isnull=False)
     distribution = {n: 0 for n in range(6)}
+    for agent in agents:
+        distribution[agent.niveau_maturite] += 1
+    return distribution
+
+
+def distribution_niveaux(evaluation) -> dict:
+    """Distribution N0-N5 des agents rattachés à UNE évaluation (campagne)."""
+    distribution = {n: 0 for n in range(6)}
+    if evaluation is None:
+        return distribution
+    agents = Agent.objects.filter(evaluation=evaluation, niveau_maturite__isnull=False)
     for agent in agents:
         distribution[agent.niveau_maturite] += 1
     return distribution
@@ -175,18 +187,43 @@ def badge_score(score: float) -> str:
     return "fort"
 
 
-def score_dimension_competences(distribution: dict) -> float:
+def score_dimension_competences(distribution: dict):
     """
     Score sur 5 de la dimension "Compétences numériques" à partir de la
     distribution des agents sur les niveaux 0 à 5 : moyenne des niveaux
     pondérée par les effectifs (un niveau 0-5 valant déjà une note sur 5).
-    Renvoie 0.0 si aucun agent n'est classé.
+    Renvoie None si aucun agent n'est classé (dimension « en attente » :
+    à distinguer d'un vrai score de 0 où tous les agents seraient N0).
     """
     total = sum(distribution.values())
     if not total:
-        return 0.0
+        return None
     somme = sum(int(niveau) * effectif for niveau, effectif in distribution.items())
     return round(somme / total, 2)
+
+
+def _instantane(evaluation, distribution):
+    """Scores par dimension + score global pondéré d'une évaluation.
+    Une dimension sans donnée (compétences sans répondant) vaut None et est
+    exclue du global, dont les pondérations sont renormalisées sur le reste."""
+    administration = evaluation.administration
+    scores_par_id, scores_par_code = {}, {}
+    poids_pris, somme_ponderee = 0.0, 0.0
+    for dimension in Dimension.objects.filter(actif=True):
+        if dimension.code == "competences":
+            brut = score_dimension_competences(distribution)
+        else:
+            brut = calculer_score_dimension(
+                administration, dimension, evaluation=evaluation
+            ).score_brut
+        scores_par_id[str(dimension.pk)] = brut
+        if dimension.code:
+            scores_par_code[dimension.code] = brut
+        if brut is not None:
+            poids_pris += float(dimension.poids)
+            somme_ponderee += brut * float(dimension.poids)
+    score_global = round(somme_ponderee / poids_pris, 2) if poids_pris else 0.0
+    return scores_par_id, scores_par_code, score_global
 
 
 def generer_recommandations(scores_par_code: dict) -> list:
@@ -216,7 +253,7 @@ class ResultatAdministration:
     score_global: float
     niveau: str                 # libellé de maturité
     badge: str                  # 'faible' / 'moyen' / 'fort'
-    scores_dimensions: list     # [{dimension, score, badge}]
+    scores_dimensions: list     # [{dimension, score, badge, en_attente}]
     distribution: dict          # {0..5: effectif}
     recommandations: list       # [{priorite, texte, dimension}]
     est_apercu: bool            # True si calculé à la volée (pas de clôture)
@@ -225,7 +262,7 @@ class ResultatAdministration:
 def resultat_administration(administration) -> ResultatAdministration:
     """
     Résultats d'une administration : depuis l'instantané figé s'il existe une
-    évaluation terminée, sinon calculés à la volée (aperçu « évaluation en cours »).
+    évaluation terminée, sinon calculés à la volée sur l'évaluation en cours.
     """
     evaluation = (
         administration.evaluations.filter(statut="terminee")
@@ -233,10 +270,13 @@ def resultat_administration(administration) -> ResultatAdministration:
         .first()
     )
     dimensions = list(Dimension.objects.filter(actif=True).order_by("ordre"))
-    distribution = distribution_niveaux_administration(administration)
+    distribution = {n: 0 for n in range(6)}
 
     if evaluation and evaluation.score_global is not None:
-        scores_par_id = {str(k): float(v) for k, v in (evaluation.score_par_dimension or {}).items()}
+        scores_par_id = {
+            str(k): (float(v) if v is not None else None)
+            for k, v in (evaluation.score_par_dimension or {}).items()
+        }
         dist_json = evaluation.distribution_niveaux or {}
         if dist_json:
             distribution = {int(k): v for k, v in dist_json.items()}
@@ -247,30 +287,36 @@ def resultat_administration(administration) -> ResultatAdministration:
         score_global = float(evaluation.score_global)
         est_apercu = False
     else:
-        scores_par_id = {}
-        score_global = 0.0
-        for dimension in dimensions:
-            if dimension.code == "competences":
-                brut = score_dimension_competences(distribution)
-            else:
-                brut = calculer_score_dimension(administration, dimension).score_brut
-            scores_par_id[str(dimension.pk)] = brut
-            score_global += brut * float(dimension.poids)
-        score_global = round(score_global, 2)
-        scores_par_code = {
-            d.code: scores_par_id.get(str(d.pk), 0) for d in dimensions if d.code
-        }
-        recos = generer_recommandations(scores_par_code)
+        apercu = (
+            administration.evaluations.exclude(statut="archivee")
+            .order_by("-date_ouverture", "-id")
+            .first()
+        )
+        distribution = distribution_niveaux(apercu)
+        if apercu is not None:
+            scores_par_id, scores_par_code, score_global = _instantane(apercu, distribution)
+        else:
+            scores_par_id, scores_par_code, score_global = {}, {}, 0.0
+        recos = generer_recommandations(
+            {k: v for k, v in scores_par_code.items() if v is not None}
+        )
         for reco in recos:
             reco["dimension"] = None
         est_apercu = True
 
     scores_dimensions = []
     for dimension in dimensions:
-        valeur = round(float(scores_par_id.get(str(dimension.pk), 0) or 0), 2)
-        scores_dimensions.append(
-            {"dimension": dimension, "score": valeur, "badge": badge_score(valeur)}
-        )
+        brut = scores_par_id.get(str(dimension.pk))
+        if brut is None:
+            scores_dimensions.append(
+                {"dimension": dimension, "score": None, "badge": "neutre", "en_attente": True}
+            )
+        else:
+            valeur = round(float(brut), 2)
+            scores_dimensions.append(
+                {"dimension": dimension, "score": valeur,
+                 "badge": badge_score(valeur), "en_attente": False}
+            )
 
     return ResultatAdministration(
         administration=administration,
@@ -292,32 +338,20 @@ def cloturer_evaluation(evaluation) -> None:
     recommandations. Idempotent : rappelable pour recalculer tant que
     l'évaluation n'est pas archivée.
     """
-    administration = evaluation.administration
-    distribution = distribution_niveaux_administration(administration)
+    distribution = distribution_niveaux(evaluation)
+    scores_par_id, scores_par_code, score_global = _instantane(evaluation, distribution)
 
-    scores_par_id = {}
-    scores_par_code = {}
-    score_global = 0.0
-    for dimension in Dimension.objects.filter(actif=True):
-        if dimension.code == "competences":
-            brut = score_dimension_competences(distribution)
-        else:
-            brut = calculer_score_dimension(administration, dimension).score_brut
-        scores_par_id[str(dimension.pk)] = brut
-        if dimension.code:
-            scores_par_code[dimension.code] = brut
-        score_global += brut * float(dimension.poids)
-
-    evaluation.score_global = round(score_global, 2)
+    evaluation.score_global = score_global
     evaluation.score_par_dimension = scores_par_id
     evaluation.distribution_niveaux = {str(k): v for k, v in distribution.items()}
-    evaluation.niveau_libelle = niveau_libelle(evaluation.score_global)
+    evaluation.niveau_libelle = niveau_libelle(score_global)
     evaluation.statut = "terminee"
     evaluation.date_cloture = timezone.now().date()
     evaluation.save()
 
+    scores_reco = {k: v for k, v in scores_par_code.items() if v is not None}
     evaluation.recommandations.all().delete()
-    for index, reco in enumerate(generer_recommandations(scores_par_code)):
+    for index, reco in enumerate(generer_recommandations(scores_reco)):
         Recommandation.objects.create(
             evaluation=evaluation,
             priorite=reco["priorite"],

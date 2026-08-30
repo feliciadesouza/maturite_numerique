@@ -63,7 +63,13 @@
         <tr>
           <td>{{ row.dimension.nom }}</td>
           {% for cell in row.cellules %}
-            <td class="score {% if cell %}score--{{ cell.badge }}{% endif %}">{% if cell %}{{ cell.score }}{% else %}n/d{% endif %}</td>
+            {% if cell and not cell.en_attente %}
+              <td class="score score--{{ cell.badge }}">{{ cell.score }}</td>
+            {% elif cell and cell.en_attente %}
+              <td class="score text-muted">en attente</td>
+            {% else %}
+              <td class="score text-muted">n/d</td>
+            {% endif %}
           {% endfor %}
         </tr>
         {% endfor %}
