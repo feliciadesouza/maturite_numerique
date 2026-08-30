@@ -723,13 +723,15 @@ def administration_resultats(request, administration_id):
 PALETTE_COMPARAISON = ["#3e90f0", "#4fbf88", "#8b6fe0", "#f2b33d", "#e85d74", "#16202e"]
 
 
-def svg_radar(labels, series, taille=240):
+def svg_radar(labels, series, taille=240, marge=44):
     """
     Géométrie d'un radar en SVG (rendu sans JavaScript, pour le rapport PDF).
     `series` : [{nom, valeurs (0-5), couleur}].
+    `marge` : espace réservé autour pour les étiquettes d'axes ; le réduire
+    quand le radar est affiché sans étiquettes (il remplit alors le cadre).
     """
     cx = cy = taille / 2
-    rayon = taille / 2 - 44
+    rayon = taille / 2 - marge
     n = len(labels) or 1
     angles = [(-math.pi / 2) + i * (2 * math.pi / n) for i in range(n)]
 
@@ -904,6 +906,7 @@ def rapport_administration(request, administration_id):
                 "valeurs": [s["score"] or 0 for s in resultat.scores_dimensions],
                 "couleur": "#1e6fd9",
             }],
+            marge=16,
         ),
         "total_agents": sum(resultat.distribution.values()),
         "dist_max": max(resultat.distribution.values()) or 1,
