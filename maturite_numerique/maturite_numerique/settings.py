@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 from decouple import Csv, config
@@ -35,6 +36,16 @@ ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv()
 )
 
+# Domaine attribué par la plateforme (Render injecte RENDER_EXTERNAL_HOSTNAME).
+_platform_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if _platform_host and _platform_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_platform_host)
+
+# Origines de confiance pour les requêtes POST (Django ≥ 4 l'exige derrière HTTPS).
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+if _platform_host:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{_platform_host}')
+
 
 # Application definition
 
@@ -50,6 +61,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Sert les fichiers statiques en production (aucun serveur web devant gunicorn).
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,9 +97,18 @@ WSGI_APPLICATION = 'maturite_numerique.wsgi.application'
 # SQLite par défaut pour le développement local (aucune config requise).
 # Pour PostgreSQL (cible de production, cf. Chapitre 1) : définir DB_ENGINE=
 # django.db.backends.postgresql et les variables DB_* dans l'environnement.
+# Priorité à DATABASE_URL (Render, Neon, Heroku…) ; sinon DB_* explicites ;
+# sinon SQLite en local.
+DATABASE_URL = config('DATABASE_URL', default='')
 DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
 
-if DB_ENGINE == 'django.db.backends.sqlite3':
+if DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
+    }
+elif DB_ENGINE == 'django.db.backends.sqlite3':
     DATABASES = {
         'default': {
             'ENGINE': DB_ENGINE,
@@ -147,6 +169,15 @@ STATIC_URL = 'static/'
 # Destination de `collectstatic` (utilisée en conteneur / production).
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Stockage des fichiers statiques. En production (DEBUG faux, cf. plus bas),
+# WhiteNoise prend le relais : compression + noms hashés (cache long).
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'
+    },
+}
+
 LOGIN_URL = 'connexion'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
@@ -163,3 +194,24 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Maturité Numérique <no-reply@maturite-numerique.tg>')
 CONTACT_EMAIL = config('CONTACT_EMAIL', default='contact@maturite-numerique.tg')
+
+
+# --- Durcissement production (actif uniquement quand DEBUG est faux) ---
+if not DEBUG:
+    STORAGES['staticfiles']['BACKEND'] = (
+        'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    )
+    # La TLS est terminée par le proxy de la plateforme, qui renseigne cet en-tête.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    # La sonde de santé de la plateforme peut arriver en HTTP interne.
+    SECURE_REDIRECT_EXEMPT = [r'^healthz$']
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    # HSTS : 0 par défaut au premier déploiement (on l'augmente une fois le
+    # domaine confirmé en HTTPS, sinon il « verrouille » un domaine mal configuré).
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
