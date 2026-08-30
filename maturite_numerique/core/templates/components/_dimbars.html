@@ -6,10 +6,15 @@
       <span class="dimbar__dot" style="background: {{ s.dimension.couleur }};"></span>
       {{ s.dimension.nom }}
     </span>
-    <span class="dimbar__track">
-      <span class="dimbar__fill" style="width: {% widthratio s.score 5 100 %}%; background: {{ s.dimension.couleur }};"></span>
-    </span>
-    <span class="dimbar__val">{{ s.score }} / 5</span>
+    {% if s.en_attente %}
+      <span class="dimbar__track"></span>
+      <span class="dimbar__val text-muted" style="font-weight: 500;">en attente</span>
+    {% else %}
+      <span class="dimbar__track">
+        <span class="dimbar__fill" style="width: {% widthratio s.score 5 100 %}%; background: {{ s.dimension.couleur }};"></span>
+      </span>
+      <span class="dimbar__val">{{ s.score }} / 5</span>
+    {% endif %}
   </div>
   {% endfor %}
 </div>

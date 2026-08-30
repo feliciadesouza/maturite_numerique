@@ -398,13 +398,15 @@ class DsiEspaceTests(TestCase):
         from core.models import Evaluation, RegleRecommandation
         from core.scoring import cloturer_evaluation
 
-        Agent.objects.create(administration=self.administration, poste="A", niveau_maturite=1)
-        Agent.objects.create(administration=self.administration, poste="B", niveau_maturite=2)
         RegleRecommandation.objects.create(
             dimension_code="competences", seuil_max=3.0, priorite="P1",
             texte="Former les agents.", ordre=1,
         )
         evaluation = Evaluation.objects.create(administration=self.administration, statut="en_cours")
+        Agent.objects.create(administration=self.administration, evaluation=evaluation,
+                             poste="A", niveau_maturite=1)
+        Agent.objects.create(administration=self.administration, evaluation=evaluation,
+                             poste="B", niveau_maturite=2)
         cloturer_evaluation(evaluation)
 
         res = self.client.get(f"/administrations/{self.administration.pk}/")
@@ -622,7 +624,8 @@ class MaturityHelpersTests(TestCase):
     def test_score_dimension_competences_pondere_par_effectif(self):
         # 50 % niveau 0 / 50 % niveau 5 -> moyenne 2.5
         self.assertEqual(score_dimension_competences({0: 2, 5: 2}), 2.5)
-        self.assertEqual(score_dimension_competences({}), 0.0)
+        # aucun agent classé -> None (dimension « en attente », pas un vrai 0)
+        self.assertIsNone(score_dimension_competences({}))
 
 
 class RecommandationsTests(TestCase):
@@ -664,10 +667,12 @@ class EvaluationTests(TestCase):
             dimension_code="competences", seuil_max=2.5, priorite="P1",
             texte="Former les agents.", ordre=1,
         )
-        Agent.objects.create(administration=self.administration, poste="A", niveau_maturite=0)
-        Agent.objects.create(administration=self.administration, poste="B", niveau_maturite=2)
-
         evaluation = Evaluation.objects.create(administration=self.administration)
+        Agent.objects.create(administration=self.administration, evaluation=evaluation,
+                             poste="A", niveau_maturite=0)
+        Agent.objects.create(administration=self.administration, evaluation=evaluation,
+                             poste="B", niveau_maturite=2)
+
         cloturer_evaluation(evaluation)
         evaluation.refresh_from_db()
 
@@ -677,3 +682,17 @@ class EvaluationTests(TestCase):
         self.assertEqual(evaluation.niveau_libelle, "Initial")
         self.assertEqual(evaluation.distribution_niveaux["0"], 1)
         self.assertEqual(evaluation.recommandations.count(), 1)
+
+    def test_cloture_sans_repondant_form_b_met_competences_en_attente(self):
+        Dimension.objects.create(nom="Infrastructure TIC", code="infra", poids="0.75", ordre=1)
+        Dimension.objects.create(nom="Compétences numériques", code="competences",
+                                 poids="0.25", ordre=2)
+        evaluation = Evaluation.objects.create(administration=self.administration)
+        cloturer_evaluation(evaluation)
+        evaluation.refresh_from_db()
+
+        codes = {d.code: str(d.pk) for d in Dimension.objects.all()}
+        # Compétences : aucun agent classé -> None (en attente), exclue du global.
+        self.assertIsNone(evaluation.score_par_dimension[codes["competences"]])
+        self.assertEqual(evaluation.score_par_dimension[codes["infra"]], 0.0)
+        self.assertEqual(float(evaluation.score_global), 0.0)
