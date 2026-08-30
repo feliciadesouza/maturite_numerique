@@ -114,6 +114,9 @@ if DATABASE_URL:
             conn_health_checks=True,
         ),
     }
+    # L'endpoint « -pooler » de Neon est un PgBouncer en mode transaction :
+    # les curseurs côté serveur ne survivent pas d'une transaction à l'autre.
+    DATABASES['default'].setdefault('DISABLE_SERVER_SIDE_CURSORS', True)
 elif DB_ENGINE == 'django.db.backends.sqlite3':
     DATABASES = {
         'default': {

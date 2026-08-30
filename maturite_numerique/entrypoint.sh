@@ -11,12 +11,9 @@ python manage.py seed_data
 echo "→ Comptes de test par rôle (idempotent)"
 python manage.py create_test_users
 
-# Superuser d'administration : créé si les variables DJANGO_SUPERUSER_* sont
-# définies (createsuperuser --noinput les lit). Sans échec si déjà présent.
-if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
-  echo "→ Superuser $DJANGO_SUPERUSER_USERNAME"
-  python manage.py createsuperuser --noinput 2>/dev/null || echo "  (déjà existant)"
-fi
+# Superuser d'administration : créé/resynchronisé depuis DJANGO_SUPERUSER_*.
+echo "→ Superuser d'administration"
+python manage.py ensure_superuser
 
 # Jeu de données de démonstration : uniquement si SEED_DEMO=1 (remet tout à zéro).
 if [ "$SEED_DEMO" = "1" ]; then
