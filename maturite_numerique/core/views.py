@@ -880,12 +880,14 @@ def _css_rapport_pdf():
             )
             blocs.append(contenu)
 
-        # Ajustements propres au rendu WeasyPrint (pas de flexbox à hauteur %).
+        # Ajustements propres au rendu WeasyPrint (flexbox à hauteur % non géré).
         blocs.append(
             ".print-btn{display:none !important}"
-            ".dist-chart{display:table;width:100%;height:auto;border-spacing:6px 0}"
-            ".dist-col{display:table-cell;vertical-align:bottom;text-align:center;height:auto}"
-            ".dist-col__bar{display:inline-block}"
+            ".dist-chart{display:block;height:auto;text-align:center;white-space:nowrap}"
+            ".dist-col{display:inline-block;vertical-align:bottom;width:15%;height:auto;"
+            "white-space:normal}"
+            ".dist-col>*{display:block;text-align:center}"
+            ".dist-col__bar{margin:4px auto 0}"
         )
         return "\n".join(blocs)
 
