@@ -91,13 +91,15 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/maturite-numerique:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/maturite-numerique:latest
 
-  deploy-staging:
-    name: Deploy staging
+  deploy:
+    name: Deploy
     needs: build-image
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Gate deployment with environment approval
+      - name: Info
         run: |
-          echo "Déploiement protégé par l’environnement 'staging'."
-          echo "Ajoute ici ta commande réelle de déploiement via secrets et variables d’environnement."
+          echo "Le déploiement est géré par Render (blueprint render.yaml, autoDeploy)."
+          echo "Render reconstruit et redéploie à chaque push sur master."
+          echo "Ce job ne fait que documenter la chaîne ; l'image est aussi"
+          echo "publiée sur ghcr.io par le job build-image pour un autre hébergeur."
