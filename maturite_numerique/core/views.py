@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from .forms import (
     ContactForm,
@@ -154,8 +155,14 @@ def conditions(request):
     return render(request, "public/conditions.html")
 
 
+@never_cache
 def login_view(request):
-    """Page de connexion basique pour les utilisateurs Django."""
+    """Page de connexion basique pour les utilisateurs Django.
+
+    ``never_cache`` empêche le navigateur (ou un proxy) de réutiliser une
+    ancienne page contenant un jeton CSRF périmé, ce qui provoquerait un 403
+    à la soumission du formulaire.
+    """
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -173,6 +180,7 @@ def login_view(request):
     return render(request, "core/connexion.html", {"form": form})
 
 
+@never_cache
 def logout_view(request):
     logout(request)
     messages.info(request, "Déconnexion réussie.")
