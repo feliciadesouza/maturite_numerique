@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from core.models import (
+    Agent,
     Dimension,
     Formulaire,
     OptionReponse,
@@ -53,14 +54,10 @@ OPT_AGE = [
     ("<30", "Moins de 30 ans"), ("30-45", "30 à 45 ans"),
     ("45-55", "45 à 55 ans"), (">55", "Plus de 55 ans"),
 ]
-OPT_ANCIENNETE = [
-    ("<5", "Moins de 5 ans"), ("5-15", "5 à 15 ans"), (">15", "Plus de 15 ans"),
-]
-OPT_ETUDES = [
-    ("aucun", "Aucun diplôme"), ("primaire", "Primaire"),
-    ("college", "Collège / BEPC"), ("bac", "Baccalauréat"),
-    ("superieur", "Études supérieures"),
-]
+# Source de vérité unique : les mêmes libellés servent d'options aux questions
+# B1.4 / B1.5 et de `choices` aux champs Agent.anciennete / Agent.niveau_etudes.
+OPT_ANCIENNETE = Agent.ANCIENNETE_CHOICES
+OPT_ETUDES = Agent.NIVEAU_ETUDES_CHOICES
 OPT_TEL = [("smartphone", "Smartphone"), ("basique", "Téléphone basique"), ("aucun", "Aucun")]
 OPT_ORDI_POSTE = [("oui", "Oui"), ("non", "Non"), ("partage", "Partagé avec des collègues")]
 OPT_FREINS = [

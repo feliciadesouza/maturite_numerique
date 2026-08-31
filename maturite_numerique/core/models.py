@@ -235,6 +235,18 @@ class Agent(models.Model):
         ("<30", "Moins de 30 ans"), ("30-45", "30-45 ans"),
         ("45-55", "45-55 ans"), (">55", "Plus de 55 ans"),
     ]
+    ANCIENNETE_CHOICES = [
+        ("<5", "Moins de 5 ans"),
+        ("5-15", "5 à 15 ans"),
+        (">15", "Plus de 15 ans"),
+    ]
+    NIVEAU_ETUDES_CHOICES = [
+        ("aucun", "Aucun diplôme"),
+        ("primaire", "Primaire"),
+        ("college", "Collège / BEPC"),
+        ("bac", "Baccalauréat"),
+        ("superieur", "Études supérieures"),
+    ]
     STATUT_CHOICES = [
         ("a_faire", "À faire"),
         ("en_cours", "En cours"),
@@ -256,8 +268,8 @@ class Agent(models.Model):
     poste = models.CharField(max_length=150)
     service = models.CharField(max_length=150, blank=True)
     tranche_age = models.CharField(max_length=10, choices=TRANCHE_AGE_CHOICES, blank=True)
-    anciennete = models.CharField(max_length=20, blank=True)
-    niveau_etudes = models.CharField(max_length=100, blank=True)
+    anciennete = models.CharField(max_length=20, choices=ANCIENNETE_CHOICES, blank=True)
+    niveau_etudes = models.CharField(max_length=100, choices=NIVEAU_ETUDES_CHOICES, blank=True)
     mode_saisie = models.CharField(
         max_length=20, choices=[("autonome", "Autonome"), ("assiste", "Assisté par un enquêteur")],
         default="autonome"
