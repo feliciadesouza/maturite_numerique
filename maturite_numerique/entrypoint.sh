@@ -8,12 +8,8 @@ python manage.py migrate --noinput
 echo "→ Questionnaire de référence (idempotent)"
 python manage.py seed_data
 
-echo "→ Comptes de test par rôle (idempotent)"
+echo "→ Comptes de test (rôles + superuser 'admin'), resynchronisés à chaque démarrage"
 python manage.py create_test_users
-
-# Superuser d'administration : créé/resynchronisé depuis DJANGO_SUPERUSER_*.
-echo "→ Superuser d'administration"
-python manage.py ensure_superuser
 
 # Jeu de données de démonstration : uniquement si SEED_DEMO=1 (remet tout à zéro).
 if [ "$SEED_DEMO" = "1" ]; then
