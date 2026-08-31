@@ -271,6 +271,54 @@ class EnquetePubliqueTests(TestCase):
         self.assertEqual(Agent.objects.get(pk=agent.pk).reference, ref)
 
 
+class FormulaireAConditionsTests(TestCase):
+    def setUp(self):
+        call_command("seed_data")
+        self.admin = Administration.objects.create(nom="Mairie de Lomé")
+        user = User.objects.create_user(username="agent_a_cond", password="x")
+        Utilisateur.objects.create(
+            user=user, role="agent_evaluateur", administration=self.admin
+        )
+        self.client.force_login(user)
+        self.version_a = VersionFormulaire.objects.get(
+            formulaire__code="A", est_active=True
+        )
+        # « Services en ligne » = étape 3 (Identification, Infra, Services…).
+        self.url = "/formulaire-a/etape/3/"
+
+    def _q(self, code):
+        return Question.objects.get(code=code, version_formulaire=self.version_a)
+
+    def test_seed_pose_les_conditions_sur_2_2_a_2_6_et_4_4(self):
+        for code in ("2.2", "2.3", "2.4", "2.5", "2.6"):
+            q = self._q(code)
+            self.assertEqual(q.question_condition, self._q("2.1"))
+            self.assertIn("25-50%", q.valeur_condition)
+        self.assertEqual(self._q("4.4").question_condition, self._q("4.1"))
+
+    def test_2_1_faible_ne_requiert_pas_le_detail(self):
+        q21 = self._q("2.1")
+        resp = self.client.post(self.url, {f"q_{q21.id}": "0-25%"})
+        self.assertEqual(resp.status_code, 302)  # étape validée sans 2.2..2.6
+
+    def test_2_1_eleve_requiert_le_detail(self):
+        q21 = self._q("2.1")
+        resp = self.client.post(self.url, {f"q_{q21.id}": "50-75%"})
+        self.assertEqual(resp.status_code, 200)  # 2.2..2.6 manquantes -> re-render
+
+    def test_baisser_2_1_supprime_les_reponses_devenues_masquees(self):
+        from core.models import Evaluation
+
+        self.client.get("/formulaire-a/")  # ouvre l'évaluation
+        evaluation = Evaluation.objects.get(administration=self.admin)
+        q21, q22 = self._q("2.1"), self._q("2.2")
+        Reponse.objects.create(evaluation=evaluation, question=q22, valeur="oui")
+        self.client.post(self.url, {f"q_{q21.id}": "0-25%"})
+        self.assertFalse(
+            Reponse.objects.filter(evaluation=evaluation, question=q22).exists()
+        )
+
+
 class SeedDataTests(TestCase):
     def test_seed_data_creates_response_options_for_list_questions(self):
         call_command("seed_data")

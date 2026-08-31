@@ -167,10 +167,24 @@ BORNES_ECHELLE = {
     "B4.5": ("Pas du tout", "Tout à fait"),
 }
 
-# Conditions d'affichage : {code: (code de la question dont dépend l'affichage, valeur attendue)}
+# Conditions d'affichage : {code: (code de la question déclencheuse, valeur(s)
+# attendue(s) — plusieurs valeurs séparées par des virgules ; la question ne
+# s'affiche que si la réponse déclencheuse figure dans cette liste).
 CONDITIONS_B = {
     "B3.4": ("B3.3", "smartphone"),
     "B3.6": ("B3.5", "oui"),
+}
+CONDITIONS_A = {
+    # Détail des services en ligne : seulement si l'administration en propose
+    # (2.1 ≠ « 0 à 25 % »).
+    "2.2": ("2.1", "25-50%,50-75%,75-100%"),
+    "2.3": ("2.1", "25-50%,50-75%,75-100%"),
+    "2.4": ("2.1", "25-50%,50-75%,75-100%"),
+    "2.5": ("2.1", "25-50%,50-75%,75-100%"),
+    "2.6": ("2.1", "25-50%,50-75%,75-100%"),
+    # Conformité à la loi : seulement s'il existe une politique de protection
+    # des données (4.1 = Oui ou Partiel).
+    "4.4": ("4.1", "oui,partiel"),
 }
 
 
@@ -227,8 +241,8 @@ class Command(BaseCommand):
                 )
             return question
 
-        # Formulaire A
-        count_a = 0
+        # Formulaire A (deux passes : questions puis conditions)
+        a_objs = {}
         ordre = 0
         for groupe, questions in FORMULAIRE_A.items():
             if groupe == "identification":
@@ -236,10 +250,16 @@ class Command(BaseCommand):
             else:
                 dimension, section = dim_objs[groupe], ""
             for code, texte, type_code, opts in questions:
-                enregistrer(code, texte, type_code, opts, version_a, dimension, section, ordre)
+                a_objs[code] = enregistrer(
+                    code, texte, type_code, opts, version_a, dimension, section, ordre
+                )
                 ordre += 1
-                count_a += 1
-        self.stdout.write(self.style.SUCCESS(f"{count_a} questions du Formulaire A chargées."))
+        for code, (code_cond, valeur) in CONDITIONS_A.items():
+            if code in a_objs and code_cond in a_objs:
+                a_objs[code].question_condition = a_objs[code_cond]
+                a_objs[code].valeur_condition = valeur
+                a_objs[code].save(update_fields=["question_condition", "valeur_condition"])
+        self.stdout.write(self.style.SUCCESS(f"{len(a_objs)} questions du Formulaire A chargées."))
 
         # Formulaire B (deux passes : questions puis conditions)
         b_objs = {}
