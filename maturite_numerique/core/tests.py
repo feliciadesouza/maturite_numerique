@@ -243,6 +243,21 @@ class EnquetePubliqueTests(TestCase):
         self.assertEqual(agent.statut, "terminee")
         self.assertEqual(agent.niveau_maturite, 0)
 
+    def test_conditions_questions_bases_suite(self):
+        from core.views import _questions_section
+
+        def visibles(reponses):
+            return [q.code for q in _questions_section(self.version_b, "bases_suite", reponses)]
+
+        # B3.6 (« la consultez-vous… ») ne doit apparaître que si B3.5 = Oui,
+        # même si la réponse est stockée « Oui » et la condition saisie « oui ».
+        self.assertIn("B3.6", visibles({"B3.5": "Oui"}))
+        self.assertNotIn("B3.6", visibles({"B3.5": "Non"}))
+        self.assertNotIn("B3.6", visibles({}))
+        # B3.4 (« si smartphone… ») ne doit apparaître que si B3.3 = smartphone.
+        self.assertIn("B3.4", visibles({"B3.3": "smartphone"}))
+        self.assertNotIn("B3.4", visibles({"B3.3": "basique"}))
+
     def test_soumission_idempotente(self):
         self.client.post("/enquete/demarrer/", {"administration": self.administration.pk})
         agent = Agent.objects.get(administration=self.administration)
