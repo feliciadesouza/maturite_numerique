@@ -586,6 +586,26 @@ def enqueteur_home(request):
     })
 
 
+def _prefiller_profil_agent(agent):
+    """Reporte nom / poste / service saisis à la création dans les réponses
+    B1.0 / B1.1 / B1.2, pour que la section « Profil » du questionnaire assisté
+    soit pré-remplie (l'enquêteur n'a plus qu'à confirmer)."""
+    version_b = _version_b()
+    if not version_b:
+        return
+    valeurs = {"B1.0": agent.nom, "B1.1": agent.poste, "B1.2": agent.service}
+    for question in Question.objects.filter(
+        version_formulaire=version_b, code__in=valeurs, actif=True
+    ):
+        valeur = (valeurs.get(question.code) or "").strip()
+        if not valeur:
+            continue
+        Reponse.objects.update_or_create(
+            question=question, evaluation=None, agent=agent,
+            defaults={"valeur": valeur[:255], "administration": agent.administration},
+        )
+
+
 @login_required
 @role_required("enqueteur")
 def enqueteur_nouvel_agent(request):
@@ -609,6 +629,7 @@ def enqueteur_nouvel_agent(request):
         )
         agent.numero = dernier + 1
         agent.save()
+        _prefiller_profil_agent(agent)
         messages.success(request, f"Agent {agent.numero:03d} ajouté à la liste.")
         return redirect("formulaire_b_assiste", agent_id=agent.pk, index=0)
     return render(request, "app/enqueteur/agent_form.html", {
@@ -1143,9 +1164,11 @@ LIBELLES_SECTIONS_B = {
     "usage": "Usage", "freins": "Freins",
 }
 # Report des réponses du profil vers les champs structurés de l'agent.
+# (Le mode de saisie n'est pas une question : il découle du contexte —
+# enquêteur assisté ou lien public autonome.)
 MAPPING_PROFIL_B = {
     "B1.0": "nom", "B1.1": "poste", "B1.2": "service", "B1.3": "tranche_age",
-    "B1.4": "anciennete", "B1.5": "niveau_etudes", "B1.6": "mode_saisie",
+    "B1.4": "anciennete", "B1.5": "niveau_etudes",
 }
 
 
