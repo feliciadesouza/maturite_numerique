@@ -1188,7 +1188,12 @@ def _questions_section(version_b, section, reponses):
     for question in questions:
         condition = question.question_condition
         if condition and question.valeur_condition:
-            if reponses.get(condition.code, "") != question.valeur_condition:
+            # Comparaison insensible à la casse/aux espaces : la réponse d'un
+            # champ oui/non est stockée « Oui »/« Non » alors qu'une condition
+            # peut être saisie « oui » (seed ou back-office).
+            donnee = (reponses.get(condition.code) or "").strip().lower()
+            attendu = question.valeur_condition.strip().lower()
+            if donnee != attendu:
                 continue
         visibles.append(question)
     return visibles
