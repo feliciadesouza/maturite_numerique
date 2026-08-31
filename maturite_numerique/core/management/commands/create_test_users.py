@@ -14,6 +14,10 @@ TEST_USERS = [
     ("admin_contenu", "Admin123!", "admin_contenu"),
 ]
 
+# Superuser de test : mot de passe connu, resynchronisé à chaque exécution
+# (contrairement aux comptes de rôle, on ne se fie pas au « if created »).
+SUPERUSER = ("admin", "Admin123!", "admin@maturite-numerique.tg")
+
 # Rôles rattachés à une administration pour les parcours de collecte.
 ROLES_AVEC_ADMINISTRATION = {"agent_evaluateur", "enqueteur"}
 
@@ -25,6 +29,16 @@ class Command(BaseCommand):
         administration, _ = Administration.objects.get_or_create(
             nom="Mairie de Lomé", defaults={"region": "Maritime", "pays": "Togo"}
         )
+
+        su_name, su_pwd, su_email = SUPERUSER
+        su, _ = User.objects.get_or_create(
+            username=su_name, defaults={"email": su_email}
+        )
+        su.is_staff = su.is_superuser = su.is_active = True
+        su.set_password(su_pwd)
+        su.save()
+        self.stdout.write(self.style.SUCCESS(f"Superuser '{su_name}' prêt."))
+
         for username, password, role in TEST_USERS:
             user, created = User.objects.get_or_create(username=username)
             if created:
