@@ -41,7 +41,7 @@
   <div class="rapport">
     <div class="rapport__band">
       <div>
-        <span class="eyebrow">République togolaise · Diagnostic numérique</span>
+        <span class="eyebrow">République togolaise Diagnostic numérique</span>
         <h1>Rapport de maturité numérique</h1>
       </div>
       <span class="mark">{% include "components/_icon.html" with name="graduation-cap" %}</span>
@@ -50,9 +50,9 @@
     <section>
       <h2 style="font-size: var(--fs-h2);">{{ administration.nom }}</h2>
       <p class="text-muted">
-        {% if resultat.evaluation %}Évaluée le {{ resultat.evaluation.date_cloture|date:"j F Y" }} ·
-          Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }} · {% endif %}
-        {% else %}Aperçu évaluation en cours · {% endif %}
+        {% if resultat.evaluation %}Évaluée le {{ resultat.evaluation.date_cloture|date:"j F Y" }}
+          Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }}{% endif %}
+        {% else %}Aperçu évaluation en cours {% endif %}
         {{ total_agents }} agent{{ total_agents|pluralize }} enquêté{{ total_agents|pluralize }}
       </p>
       <hr class="rapport__rule">
@@ -90,7 +90,7 @@
     </section>
 
     <div class="rapport__foot">
-      <span>Document confidentiel — usage interne</span>
+      <span>Document confidentiel usage interne</span>
       <span>Généré le {{ genere_le|date:"j F Y à H:i" }}</span>
     </div>
   </div>
