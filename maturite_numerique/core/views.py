@@ -1086,9 +1086,12 @@ def formulaire_a_etape(request, numero):
         return redirect("formulaire_a_etape", numero=1)
 
     etape = etapes[numero - 1]
-    base_qs = Question.objects.filter(
-        version_formulaire=version_a, actif=True
-    ).select_related("type_champ").prefetch_related("options").order_by("ordre")
+    base_qs = (
+        Question.objects.filter(version_formulaire=version_a, actif=True)
+        .select_related("type_champ", "question_condition")
+        .prefetch_related("options")
+        .order_by("ordre")
+    )
     if etape["identification"]:
         questions = list(base_qs.filter(section="identification"))
         titre_etape = "Identification"
@@ -1101,15 +1104,26 @@ def formulaire_a_etape(request, numero):
         r.question_id: r.valeur
         for r in Reponse.objects.filter(evaluation=evaluation, question__in=questions)
     }
+    codes = {q.id: q.code for q in questions}
 
     if request.method == "POST":
         autosave = request.POST.get("autosave") == "1"
-        form = build_reponses_form(questions, data=request.POST, partiel=autosave)
+        # Conditions d'affichage : on ne valide/enregistre que les questions
+        # dont la condition est remplie par les valeurs soumises ; les réponses
+        # aux questions devenues masquées sont supprimées.
+        soumis = {q.code: request.POST.get(f"q_{q.id}", "") for q in questions}
+        actives = [q for q in questions if _condition_ok(q, soumis)]
+        masquees = [q for q in questions if q not in actives]
+        form = build_reponses_form(actives, data=request.POST, partiel=autosave)
         if form.is_valid():
             enregistrer_reponses(
-                form, questions, evaluation=evaluation,
+                form, actives, evaluation=evaluation,
                 administration=profil.administration, utilisateur=request.user,
             )
+            if masquees:
+                Reponse.objects.filter(
+                    evaluation=evaluation, question__in=masquees
+                ).delete()
             if autosave:
                 return HttpResponse(status=204)
             if "precedent" in request.POST and numero > 1:
@@ -1122,7 +1136,24 @@ def formulaire_a_etape(request, numero):
     else:
         form = build_reponses_form(questions, reponses=reponses_existantes)
 
-    champs = [{"q": question, "bf": form[f"q_{question.id}"]} for question in questions]
+    reponses_codes = {
+        code: reponses_existantes.get(qid, "") for qid, code in codes.items()
+    }
+    champs = []
+    for question in questions:
+        fname = f"q_{question.id}"
+        condition = None
+        if question.question_condition_id and question.valeur_condition:
+            condition = {
+                "trigger": f"q_{question.question_condition_id}",
+                "valeurs": question.valeur_condition,
+            }
+        champs.append({
+            "q": question,
+            "bf": form[fname] if fname in form.fields else None,
+            "condition": condition,
+            "visible": _condition_ok(question, reponses_codes),
+        })
     return render(request, "app/formulaire_a/etape.html", {
         "evaluation": evaluation,
         "titre_etape": titre_etape,
@@ -1199,27 +1230,34 @@ def _sections_agent(agent):
     return sections
 
 
+def _condition_ok(question, reponses_par_code):
+    """Vrai si la question doit s'afficher.
+
+    Sans condition -> toujours. Sinon la réponse à la question déclencheuse
+    doit figurer dans `valeur_condition` (une ou plusieurs valeurs séparées
+    par des virgules). Comparaison insensible à la casse et aux espaces : la
+    réponse d'un champ oui/non est stockée « Oui » alors qu'une condition peut
+    être saisie « oui » (seed ou back-office).
+    """
+    condition = question.question_condition
+    if not condition or not question.valeur_condition:
+        return True
+    donnee = (reponses_par_code.get(condition.code) or "").strip().lower()
+    attendus = {
+        v.strip().lower() for v in question.valeur_condition.split(",") if v.strip()
+    }
+    return donnee in attendus
+
+
 def _questions_section(version_b, section, reponses):
     """Questions actives d'une section, filtrées par leur condition d'affichage."""
-    visibles = []
     questions = (
         Question.objects.filter(version_formulaire=version_b, section=section, actif=True)
         .select_related("type_champ", "question_condition")
         .prefetch_related("options")
         .order_by("ordre")
     )
-    for question in questions:
-        condition = question.question_condition
-        if condition and question.valeur_condition:
-            # Comparaison insensible à la casse/aux espaces : la réponse d'un
-            # champ oui/non est stockée « Oui »/« Non » alors qu'une condition
-            # peut être saisie « oui » (seed ou back-office).
-            donnee = (reponses.get(condition.code) or "").strip().lower()
-            attendu = question.valeur_condition.strip().lower()
-            if donnee != attendu:
-                continue
-        visibles.append(question)
-    return visibles
+    return [q for q in questions if _condition_ok(q, reponses)]
 
 
 def _finaliser_enquete(agent):
