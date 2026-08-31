@@ -521,6 +521,17 @@ class EnqueteurTests(TestCase):
         self.assertEqual(response.status_code, 200)  # formulaire ré-affiché
         self.assertFalse(Agent.objects.filter(poste="Sans nom").exists())
 
+    def test_nouvel_agent_preremplit_le_profil_b1(self):
+        self.client.post("/enquetes/nouvel-agent/", {
+            "nom": "Ama Koffi", "administration": self.administration.pk,
+            "poste": "Agent d'accueil", "service": "État civil",
+        })
+        agent = Agent.objects.get(nom="Ama Koffi")
+        codes = {r.question.code: r.valeur for r in agent.reponses.select_related("question")}
+        self.assertEqual(codes.get("B1.0"), "Ama Koffi")
+        self.assertEqual(codes.get("B1.1"), "Agent d'accueil")
+        self.assertEqual(codes.get("B1.2"), "État civil")
+
     def test_enqueteur_voit_les_agents_de_toutes_ses_administrations(self):
         autre = Administration.objects.create(nom="Préfecture de Kloto", region="Plateaux")
         autre.enqueteurs.add(self.user)

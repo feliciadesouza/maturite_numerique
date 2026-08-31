@@ -61,7 +61,6 @@ OPT_ETUDES = [
     ("college", "Collège / BEPC"), ("bac", "Baccalauréat"),
     ("superieur", "Études supérieures"),
 ]
-OPT_MODE = [("autonome", "Autonome"), ("assiste", "Assisté par un enquêteur")]
 OPT_TEL = [("smartphone", "Smartphone"), ("basique", "Téléphone basique"), ("aucun", "Aucun")]
 OPT_ORDI_POSTE = [("oui", "Oui"), ("non", "Non"), ("partage", "Partagé avec des collègues")]
 OPT_FREINS = [
@@ -136,7 +135,6 @@ FORMULAIRE_B = [
     ("B1.3", "Tranche d'âge", "liste", OPT_AGE, "profil"),
     ("B1.4", "Ancienneté dans l'administration", "liste", OPT_ANCIENNETE, "profil"),
     ("B1.5", "Niveau d'études", "liste", OPT_ETUDES, "profil"),
-    ("B1.6", "Formulaire rempli en mode :", "liste", OPT_MODE, "profil"),
 
     ("B2.1", "Avez-vous déjà utilisé un ordinateur, ne serait-ce qu'une fois ?", "oui_non", None, "bases"),
     ("B2.2", "Disposez-vous d'un ordinateur à votre poste de travail (même si vous ne l'utilisez "
