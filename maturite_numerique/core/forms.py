@@ -148,9 +148,10 @@ class NouvelAgentForm(forms.ModelForm):
     """
     class Meta:
         model = Agent
-        fields = ["administration", "poste", "service", "tranche_age",
+        fields = ["nom", "administration", "poste", "service", "tranche_age",
                   "anciennete", "niveau_etudes"]
         labels = {
+            "nom": "Nom et prénom de l'agent enquêté",
             "administration": "Administration",
             "poste": "Poste occupé / fonction",
             "service": "Service / direction",
@@ -159,12 +160,16 @@ class NouvelAgentForm(forms.ModelForm):
             "niveau_etudes": "Niveau d'études",
         }
         widgets = {
+            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Ama Koffi"}),
             "poste": forms.TextInput(attrs={"placeholder": "Ex. : Agent d'accueil"}),
             "service": forms.TextInput(attrs={"placeholder": "Ex. : État civil"}),
         }
 
     def __init__(self, *args, administrations=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Le modèle autorise un nom vide (saisie autonome) ; en mode assisté
+        # l'enquêteur doit identifier la personne qu'il interroge.
+        self.fields["nom"].required = True
         if administrations is not None:
             self.fields["administration"].queryset = administrations
             self.fields["administration"].empty_label = None
