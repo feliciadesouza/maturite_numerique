@@ -478,15 +478,24 @@ class EnqueteurTests(TestCase):
 
     def test_nouvel_agent_cree_et_numerote(self):
         response = self.client.post("/enquetes/nouvel-agent/", {
+            "nom": "Ama Koffi",
             "administration": self.administration.pk,
             "poste": "Agent d'accueil", "service": "État civil",
         })
         self.assertEqual(response.status_code, 302)
         agent = Agent.objects.get(poste="Agent d'accueil")
+        self.assertEqual(agent.nom, "Ama Koffi")
         self.assertEqual(agent.numero, 1)
         self.assertEqual(agent.mode_saisie, "assiste")
         self.assertEqual(agent.enqueteur, self.user)
         self.assertEqual(agent.administration, self.administration)
+
+    def test_nouvel_agent_exige_le_nom(self):
+        response = self.client.post("/enquetes/nouvel-agent/", {
+            "administration": self.administration.pk, "poste": "Sans nom",
+        })
+        self.assertEqual(response.status_code, 200)  # formulaire ré-affiché
+        self.assertFalse(Agent.objects.filter(poste="Sans nom").exists())
 
     def test_enqueteur_voit_les_agents_de_toutes_ses_administrations(self):
         autre = Administration.objects.create(nom="Préfecture de Kloto", region="Plateaux")
