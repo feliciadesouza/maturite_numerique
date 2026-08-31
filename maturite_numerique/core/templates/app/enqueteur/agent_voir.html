@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} {{ agent.nom|default:agent.poste|default:"Agent" }}</h1>
+  <h1>Agent {{ agent.numero|default:agent.pk|stringformat:"03d" }} {% if agent.nom %}{{ agent.nom }} {{ agent.prenom }}{% else %}{{ agent.poste|default:"Agent" }}{% endif %}</h1>
   <p class="breadcrumb"><a href="{% url 'enqueteur_home' %}">Mes enquêtes</a> Récapitulatif{% if agent.nom %} {{ agent.poste }}{% endif %}</p>
 </div>
 

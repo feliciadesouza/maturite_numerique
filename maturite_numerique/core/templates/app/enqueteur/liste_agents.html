@@ -32,7 +32,7 @@
   {% if en_cours %}
   <div class="resume-card">
     <span class="eyebrow">Enquête en cours</span>
-    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} {{ en_cours.nom|default:en_cours.poste|default:"Agent" }}</h3>
+    <h3>Agent {{ en_cours.numero|default:en_cours.pk|stringformat:"03d" }} {% if en_cours.nom %}{{ en_cours.nom }} {{ en_cours.prenom }}{% else %}{{ en_cours.poste|default:"Agent" }}{% endif %}</h3>
     <p>{% if en_cours.nom %}{{ en_cours.poste }} {% endif %}{{ en_cours.service|default:"Service non précisé" }} Question {{ en_cours.progression|add:1 }} / {{ en_cours_total }}</p>
     <a href="{% url 'formulaire_b_assiste' agent_id=en_cours.pk index=en_cours.progression %}" class="btn btn--secondary">
       {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %} Reprendre l'enquête</a>
@@ -66,7 +66,7 @@
           <div class="row" style="gap: var(--sp-3);">
             <span class="agent-avatar">{% include "components/_icon.html" with name="user" cls="icon--sm" %}</span>
             <span class="who">
-              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} {{ agent.nom|default:agent.poste|default:"Agent" }}</b>
+              <b>{{ agent.numero|default:agent.pk|stringformat:"03d" }} {% if agent.nom %}{{ agent.nom }} {{ agent.prenom }}{% else %}{{ agent.poste|default:"Agent" }}{% endif %}</b>
               <span>{% if agent.nom %}{{ agent.poste }} {% endif %}{% if plusieurs_admins %}{{ agent.administration.nom }} {% endif %}{{ agent.service|default:"service non précisé" }}</span>
             </span>
           </div>

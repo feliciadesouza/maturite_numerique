@@ -76,7 +76,8 @@ OPT_FREINS = [
 # porté par la section "identification" (première étape, hors dimension).
 FORMULAIRE_A = {
     "identification": [
-        ("A0.1", "Nom et prénom du responsable", "texte_libre", None),
+        ("A0.1", "Nom du responsable", "texte_libre", None),
+        ("A0.1b", "Prénom(s) du responsable", "texte_libre", None),
         ("A0.2", "Fonction / poste occupé", "texte_libre", None),
     ],
     "Infrastructure TIC": [
@@ -129,7 +130,8 @@ FORMULAIRE_A = {
 FORMULAIRE_B = [
     ("B0.1", "À quelle administration appartenez-vous ?", "liste", None, "administration"),
 
-    ("B1.0", "Nom et prénom", "texte_libre", None, "profil"),
+    ("B1.0", "Nom", "texte_libre", None, "profil"),
+    ("B1.0b", "Prénom(s)", "texte_libre", None, "profil"),
     ("B1.1", "Poste occupé / fonction", "texte_libre", None, "profil"),
     ("B1.2", "Service / direction", "texte_libre", None, "profil"),
     ("B1.3", "Tranche d'âge", "liste", OPT_AGE, "profil"),

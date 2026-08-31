@@ -426,19 +426,21 @@ class PublicSiteTests(TestCase):
     def test_contact_enregistre_et_envoie_un_message(self):
         Administration.objects.create(nom="Mairie de Lomé")
         response = self.client.post("/contact/", {
-            "nom": "Kossi Amegan",
+            "nom": "Amegan", "prenom": "Kossi",
             "administration": "Mairie de Lomé",
             "email": "kossi@mairie.tg",
             "sujet": "rejoindre",
             "message": "Nous souhaitons rejoindre la démarche.",
         })
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(MessageContact.objects.filter(email="kossi@mairie.tg").exists())
+        contact = MessageContact.objects.get(email="kossi@mairie.tg")
+        self.assertEqual(contact.nom, "Amegan")
+        self.assertEqual(contact.prenom, "Kossi")
         self.assertEqual(len(mail.outbox), 1)
 
     def test_contact_administration_hors_liste_refusee(self):
         response = self.client.post("/contact/", {
-            "nom": "Test", "administration": "Structure inexistante",
+            "nom": "Test", "prenom": "Un", "administration": "Structure inexistante",
             "email": "t@example.tg", "sujet": "rejoindre", "message": "Bonjour.",
         })
         self.assertEqual(response.status_code, 200)  # formulaire ré-affiché
@@ -550,33 +552,42 @@ class EnqueteurTests(TestCase):
 
     def test_nouvel_agent_cree_et_numerote(self):
         response = self.client.post("/enquetes/nouvel-agent/", {
-            "nom": "Ama Koffi",
+            "nom": "Koffi", "prenom": "Ama Délali",
             "administration": self.administration.pk,
             "poste": "Agent d'accueil", "service": "État civil",
         })
         self.assertEqual(response.status_code, 302)
         agent = Agent.objects.get(poste="Agent d'accueil")
-        self.assertEqual(agent.nom, "Ama Koffi")
+        self.assertEqual(agent.nom, "Koffi")
+        self.assertEqual(agent.prenom, "Ama Délali")
         self.assertEqual(agent.numero, 1)
         self.assertEqual(agent.mode_saisie, "assiste")
         self.assertEqual(agent.enqueteur, self.user)
         self.assertEqual(agent.administration, self.administration)
 
-    def test_nouvel_agent_exige_le_nom(self):
-        response = self.client.post("/enquetes/nouvel-agent/", {
-            "administration": self.administration.pk, "poste": "Sans nom",
+    def test_nouvel_agent_exige_nom_et_prenom(self):
+        # nom seul -> refusé
+        r1 = self.client.post("/enquetes/nouvel-agent/", {
+            "nom": "Koffi", "administration": self.administration.pk, "poste": "X",
         })
-        self.assertEqual(response.status_code, 200)  # formulaire ré-affiché
-        self.assertFalse(Agent.objects.filter(poste="Sans nom").exists())
+        self.assertEqual(r1.status_code, 200)
+        # prénom seul -> refusé
+        r2 = self.client.post("/enquetes/nouvel-agent/", {
+            "prenom": "Ama", "administration": self.administration.pk, "poste": "X",
+        })
+        self.assertEqual(r2.status_code, 200)
+        self.assertFalse(Agent.objects.filter(poste="X").exists())
 
     def test_nouvel_agent_preremplit_le_profil_b1(self):
         self.client.post("/enquetes/nouvel-agent/", {
-            "nom": "Ama Koffi", "administration": self.administration.pk,
+            "nom": "Koffi", "prenom": "Ama Délali",
+            "administration": self.administration.pk,
             "poste": "Agent d'accueil", "service": "État civil",
         })
-        agent = Agent.objects.get(nom="Ama Koffi")
+        agent = Agent.objects.get(nom="Koffi")
         codes = {r.question.code: r.valeur for r in agent.reponses.select_related("question")}
-        self.assertEqual(codes.get("B1.0"), "Ama Koffi")
+        self.assertEqual(codes.get("B1.0"), "Koffi")
+        self.assertEqual(codes.get("B1.0b"), "Ama Délali")
         self.assertEqual(codes.get("B1.1"), "Agent d'accueil")
         self.assertEqual(codes.get("B1.2"), "État civil")
 
