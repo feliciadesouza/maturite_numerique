@@ -87,9 +87,9 @@ class UtilisateurAdmin(admin.ModelAdmin):
 
 @admin.register(Agent)
 class AgentAdmin(admin.ModelAdmin):
-    list_display = ("poste", "administration", "tranche_age", "mode_saisie", "niveau_maturite")
+    list_display = ("nom", "prenom", "poste", "administration", "mode_saisie", "niveau_maturite")
     list_filter = ("administration", "mode_saisie", "tranche_age")
-    search_fields = ("poste", "service", "administration__nom")
+    search_fields = ("nom", "prenom", "poste", "service", "administration__nom")
     autocomplete_fields = ("administration",)
 
 
@@ -131,9 +131,9 @@ class RegleRecommandationAdmin(admin.ModelAdmin):
 
 @admin.register(MessageContact)
 class MessageContactAdmin(admin.ModelAdmin):
-    list_display = ("nom", "administration", "sujet", "email", "date_creation", "traite")
+    list_display = ("nom", "prenom", "administration", "sujet", "email", "date_creation", "traite")
     list_filter = ("sujet", "traite")
     list_editable = ("traite",)
-    search_fields = ("nom", "administration", "email", "message")
+    search_fields = ("nom", "prenom", "administration", "email", "message")
     date_hierarchy = "date_creation"
     readonly_fields = ("date_creation",)

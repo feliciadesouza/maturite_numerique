@@ -101,21 +101,24 @@ class ContactForm(forms.ModelForm):
 
     class Meta:
         model = MessageContact
-        fields = ["nom", "administration", "email", "sujet", "message"]
+        fields = ["nom", "prenom", "administration", "email", "sujet", "message"]
         labels = {
-            "nom": "Nom complet",
+            "nom": "Nom",
+            "prenom": "Prénom(s)",
             "email": "E-mail professionnel",
             "sujet": "Sujet",
             "message": "Message",
         }
         widgets = {
-            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Kossi Amegan"}),
+            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Amegan"}),
+            "prenom": forms.TextInput(attrs={"placeholder": "Ex. : Kossi"}),
             "email": forms.EmailInput(attrs={"placeholder": "prenom.nom@administration.tg"}),
             "message": forms.Textarea(attrs={"placeholder": "Décrivez votre besoin en quelques lignes…", "rows": 5}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["prenom"].required = True
         noms = Administration.objects.order_by("nom").values_list("nom", flat=True)
         self.fields["administration"].choices = (
             [("", "— Sélectionner —")]
@@ -161,10 +164,11 @@ class NouvelAgentForm(forms.ModelForm):
     """
     class Meta:
         model = Agent
-        fields = ["nom", "administration", "poste", "service", "tranche_age",
-                  "anciennete", "niveau_etudes"]
+        fields = ["nom", "prenom", "administration", "poste", "service",
+                  "tranche_age", "anciennete", "niveau_etudes"]
         labels = {
-            "nom": "Nom et prénom de l'agent enquêté",
+            "nom": "Nom de l'agent enquêté",
+            "prenom": "Prénom(s) de l'agent enquêté",
             "administration": "Administration",
             "poste": "Poste occupé / fonction",
             "service": "Service / direction",
@@ -173,16 +177,18 @@ class NouvelAgentForm(forms.ModelForm):
             "niveau_etudes": "Niveau d'études",
         }
         widgets = {
-            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Ama Koffi"}),
+            "nom": forms.TextInput(attrs={"placeholder": "Ex. : Koffi"}),
+            "prenom": forms.TextInput(attrs={"placeholder": "Ex. : Ama Délali"}),
             "poste": forms.TextInput(attrs={"placeholder": "Ex. : Agent d'accueil"}),
             "service": forms.TextInput(attrs={"placeholder": "Ex. : État civil"}),
         }
 
     def __init__(self, *args, administrations=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # Le modèle autorise un nom vide (saisie autonome) ; en mode assisté
-        # l'enquêteur doit identifier la personne qu'il interroge.
+        # Le modèle autorise nom/prénom vides (saisie autonome) ; en mode
+        # assisté l'enquêteur doit identifier la personne qu'il interroge.
         self.fields["nom"].required = True
+        self.fields["prenom"].required = True
         if administrations is not None:
             self.fields["administration"].queryset = administrations
             self.fields["administration"].empty_label = None

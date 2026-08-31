@@ -18,6 +18,10 @@
               {{ form.nom.errors }}
             </div>
             <div class="field">
+              <label for="{{ form.prenom.id_for_label }}">{{ form.prenom.label }}</label>{{ form.prenom }}
+              {{ form.prenom.errors }}
+            </div>
+            <div class="field">
               <label for="{{ form.administration.id_for_label }}">{{ form.administration.label }}</label>{{ form.administration }}
               {{ form.administration.errors }}
             </div>

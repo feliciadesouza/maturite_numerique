@@ -593,7 +593,10 @@ def _prefiller_profil_agent(agent):
     version_b = _version_b()
     if not version_b:
         return
-    valeurs = {"B1.0": agent.nom, "B1.1": agent.poste, "B1.2": agent.service}
+    valeurs = {
+        "B1.0": agent.nom, "B1.0b": agent.prenom,
+        "B1.1": agent.poste, "B1.2": agent.service,
+    }
     for question in Question.objects.filter(
         version_formulaire=version_b, code__in=valeurs, actif=True
     ):
@@ -1198,8 +1201,8 @@ LIBELLES_SECTIONS_B = {
 # (Le mode de saisie n'est pas une question : il découle du contexte —
 # enquêteur assisté ou lien public autonome.)
 MAPPING_PROFIL_B = {
-    "B1.0": "nom", "B1.1": "poste", "B1.2": "service", "B1.3": "tranche_age",
-    "B1.4": "anciennete", "B1.5": "niveau_etudes",
+    "B1.0": "nom", "B1.0b": "prenom", "B1.1": "poste", "B1.2": "service",
+    "B1.3": "tranche_age", "B1.4": "anciennete", "B1.5": "niveau_etudes",
 }
 
 

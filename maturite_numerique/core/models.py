@@ -251,7 +251,8 @@ class Agent(models.Model):
     numero = models.PositiveIntegerField(
         null=True, blank=True, help_text="Numéro séquentiel de l'agent dans l'évaluation (ex. 037)."
     )
-    nom = models.CharField(max_length=150, blank=True, help_text="Nom et prénom de l'agent (B1.0).")
+    nom = models.CharField(max_length=150, blank=True, help_text="Nom de famille de l'agent (B1.0).")
+    prenom = models.CharField(max_length=150, blank=True, help_text="Prénom(s) de l'agent (B1.0b).")
     poste = models.CharField(max_length=150)
     service = models.CharField(max_length=150, blank=True)
     tranche_age = models.CharField(max_length=10, choices=TRANCHE_AGE_CHOICES, blank=True)
@@ -364,6 +365,7 @@ class MessageContact(models.Model):
         ("question", "Poser une question"),
     ]
     nom = models.CharField(max_length=150)
+    prenom = models.CharField(max_length=150, blank=True)
     administration = models.CharField(max_length=200, blank=True)
     email = models.EmailField()
     sujet = models.CharField(max_length=20, choices=SUJET_CHOICES, default="question")
@@ -377,4 +379,4 @@ class MessageContact(models.Model):
         verbose_name_plural = "Messages de contact"
 
     def __str__(self):
-        return f"{self.nom} {self.get_sujet_display()}"
+        return f"{self.nom} {self.prenom} {self.get_sujet_display()}".strip()
