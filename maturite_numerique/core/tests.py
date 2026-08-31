@@ -361,6 +361,7 @@ class PublicSiteTests(TestCase):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
     def test_contact_enregistre_et_envoie_un_message(self):
+        Administration.objects.create(nom="Mairie de Lomé")
         response = self.client.post("/contact/", {
             "nom": "Kossi Amegan",
             "administration": "Mairie de Lomé",
@@ -371,6 +372,14 @@ class PublicSiteTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(MessageContact.objects.filter(email="kossi@mairie.tg").exists())
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_contact_administration_hors_liste_refusee(self):
+        response = self.client.post("/contact/", {
+            "nom": "Test", "administration": "Structure inexistante",
+            "email": "t@example.tg", "sujet": "rejoindre", "message": "Bonjour.",
+        })
+        self.assertEqual(response.status_code, 200)  # formulaire ré-affiché
+        self.assertFalse(MessageContact.objects.filter(email="t@example.tg").exists())
 
     def test_accueil_redirige_un_compte_connecte(self):
         user = User.objects.create_user(username="dsi_home", password="testpass123")
