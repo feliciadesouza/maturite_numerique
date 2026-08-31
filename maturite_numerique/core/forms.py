@@ -93,22 +93,35 @@ def enregistrer_reponses(form, questions, *, evaluation=None, agent=None,
 
 
 class ContactForm(forms.ModelForm):
+    # Liste déroulante des administrations enregistrées (gérées par
+    # l'administrateur). « Autre » couvre une structure pas encore référencée.
+    administration = forms.ChoiceField(
+        label="Administration / structure", required=False,
+    )
+
     class Meta:
         model = MessageContact
         fields = ["nom", "administration", "email", "sujet", "message"]
         labels = {
             "nom": "Nom complet",
-            "administration": "Administration / structure",
             "email": "E-mail professionnel",
             "sujet": "Sujet",
             "message": "Message",
         }
         widgets = {
             "nom": forms.TextInput(attrs={"placeholder": "Ex. : Kossi Amegan"}),
-            "administration": forms.TextInput(attrs={"placeholder": "Ex. : Mairie de Lomé"}),
             "email": forms.EmailInput(attrs={"placeholder": "prenom.nom@administration.tg"}),
             "message": forms.Textarea(attrs={"placeholder": "Décrivez votre besoin en quelques lignes…", "rows": 5}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        noms = Administration.objects.order_by("nom").values_list("nom", flat=True)
+        self.fields["administration"].choices = (
+            [("", "— Sélectionner —")]
+            + [(n, n) for n in noms]
+            + [("Autre", "Autre (préciser dans le message)")]
+        )
 
 
 class AdministrationForm(forms.ModelForm):
