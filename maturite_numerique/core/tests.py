@@ -578,6 +578,18 @@ class EnqueteurTests(TestCase):
         self.assertEqual(r2.status_code, 200)
         self.assertFalse(Agent.objects.filter(poste="X").exists())
 
+    def test_nouvel_agent_anciennete_et_etudes_en_listes(self):
+        from django import forms
+        from core.forms import NouvelAgentForm
+
+        form = NouvelAgentForm(
+            administrations=Administration.objects.filter(pk=self.administration.pk)
+        )
+        for champ in ("anciennete", "niveau_etudes"):
+            self.assertIsInstance(form.fields[champ], forms.TypedChoiceField)
+        valeurs = [v for v, _ in form.fields["niveau_etudes"].choices]
+        self.assertIn("superieur", valeurs)
+
     def test_nouvel_agent_preremplit_le_profil_b1(self):
         self.client.post("/enquetes/nouvel-agent/", {
             "nom": "Koffi", "prenom": "Ama Délali",
