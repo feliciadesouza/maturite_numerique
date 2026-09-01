@@ -1046,6 +1046,32 @@ def _evaluation_en_cours(administration, user):
     return evaluation, version_a
 
 
+def _reporter_responsable(evaluation):
+    """Recopie les réponses A0.1 / A0.1b / A0.2 (identification) dans les
+    champs structurés de l'évaluation, pour que les rapports affichent le
+    responsable même quand le Formulaire A n'a pas été « finalisé »."""
+    if evaluation is None:
+        return
+    reps = {
+        r.question.code: r.valeur
+        for r in Reponse.objects.filter(
+            evaluation=evaluation, question__code__in=["A0.1", "A0.1b", "A0.2"]
+        ).select_related("question")
+    }
+    maj = []
+    for code, champ in (
+        ("A0.1", "responsable_nom"),
+        ("A0.1b", "responsable_prenom"),
+        ("A0.2", "responsable_fonction"),
+    ):
+        val = (reps.get(code) or "").strip()[:150]
+        if val and getattr(evaluation, champ) != val:
+            setattr(evaluation, champ, val)
+            maj.append(champ)
+    if maj:
+        evaluation.save(update_fields=maj)
+
+
 def _etapes_formulaire_a(version_a):
     """Étapes du Formulaire A : « Identification » puis une étape par dimension."""
     if not version_a:
@@ -1145,6 +1171,8 @@ def formulaire_a_etape(request, numero):
                 Reponse.objects.filter(
                     evaluation=evaluation, question__in=masquees
                 ).delete()
+            if etape["identification"]:
+                _reporter_responsable(evaluation)
             if autosave:
                 return HttpResponse(status=204)
             if "precedent" in request.POST and numero > 1:
