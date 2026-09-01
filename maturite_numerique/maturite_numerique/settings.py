@@ -160,6 +160,13 @@ if 'test' in sys.argv:
     }
 
 
+# Limitation de débit (django-ratelimit) : connexion, formulaire de contact,
+# démarrage d'enquête. Désactivée en test (les tests enchaînent les POST).
+RATELIMIT_ENABLE = config('RATELIMIT_ENABLE', default=True, cast=bool)
+if 'test' in sys.argv:
+    RATELIMIT_ENABLE = False
+
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

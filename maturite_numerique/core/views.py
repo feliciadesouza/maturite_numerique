@@ -18,6 +18,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
+from django_ratelimit.decorators import ratelimit
 
 from .forms import (
     ContactForm,
@@ -162,8 +163,16 @@ def acces_par_role(request):
     return render(request, "public/acces_role.html")
 
 
+@ratelimit(key="ip", rate="5/m", method="POST", block=False)
+@ratelimit(key="ip", rate="30/h", method="POST", block=False)
 def contact(request):
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            messages.error(
+                request,
+                "Trop de messages envoyés depuis cet appareil. Réessayez dans quelques minutes.",
+            )
+            return redirect("contact")
         form = ContactForm(request.POST)
         if form.is_valid():
             message = form.save()
@@ -193,26 +202,35 @@ def conditions(request):
 
 
 @never_cache
+@ratelimit(key="ip", rate="10/m", method="POST", block=False)
 def login_view(request):
     """Page de connexion basique pour les utilisateurs Django.
 
     ``never_cache`` empêche le navigateur (ou un proxy) de réutiliser une
     ancienne page contenant un jeton CSRF périmé, ce qui provoquerait un 403
-    à la soumission du formulaire.
+    à la soumission du formulaire. ``ratelimit`` freine le bourrinage
+    d'identifiants (10 tentatives/minute/IP).
     """
+    form = AuthenticationForm()
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = authenticate(request, username=form.cleaned_data["username"], password=form.cleaned_data["password"])
-            if user is not None:
-                login(request, user)
-                messages.success(request, "Connexion réussie.")
-                role_home = get_role_home_url(user)
-                if role_home:
-                    return redirect(role_home)
-                return redirect("home")
-    else:
-        form = AuthenticationForm()
+        if getattr(request, "limited", False):
+            messages.error(
+                request,
+                "Trop de tentatives de connexion. Patientez une minute avant de réessayer.",
+            )
+        else:
+            form = AuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                user = authenticate(
+                    request,
+                    username=form.cleaned_data["username"],
+                    password=form.cleaned_data["password"],
+                )
+                if user is not None:
+                    login(request, user)
+                    messages.success(request, "Connexion réussie.")
+                    role_home = get_role_home_url(user)
+                    return redirect(role_home) if role_home else redirect("home")
 
     return render(request, "core/connexion.html", {"form": form})
 
@@ -1295,10 +1313,17 @@ def enquete_intro(request):
     return render(request, "enquete/intro.html")
 
 
+@ratelimit(key="ip", rate="15/h", method="POST", block=False)
 def enquete_demarrer(request):
     """Étape 1 : choix de l'administration, puis création du brouillon d'agent."""
     administrations = Administration.objects.order_by("nom")
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            messages.error(
+                request,
+                "Trop de démarrages d'enquête depuis cet appareil. Réessayez plus tard.",
+            )
+            return redirect("enquete_intro")
         administration = Administration.objects.filter(
             pk=request.POST.get("administration")
         ).first()
