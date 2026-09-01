@@ -6,6 +6,9 @@ python-decouple==3.8
 dj-database-url==3.0.1
 gunicorn==23.0.0
 whitenoise==6.11.0
+# Limitation de débit (connexion, contact, création d'enquête) — s'appuie sur
+# le cache Django. Sans Redis, la limite est approximative (par worker gunicorn).
+django-ratelimit==4.1.0
 # Export PDF des rapports. Nécessite Pango/Cairo côté système (installés dans
 # l'image Docker) ; l'appli bascule sur l'impression navigateur si la
 # bibliothèque n'est pas chargeable (poste Windows sans GTK).

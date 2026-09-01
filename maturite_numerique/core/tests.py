@@ -1,7 +1,8 @@
 ﻿from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
-from django.test import Client, TestCase
+from django.core.cache import caches
+from django.test import Client, TestCase, override_settings
 
 from core.models import (
     Administration,
@@ -317,6 +318,42 @@ class FormulaireAConditionsTests(TestCase):
         self.assertFalse(
             Reponse.objects.filter(evaluation=evaluation, question=q22).exists()
         )
+
+
+@override_settings(
+    RATELIMIT_ENABLE=True,
+    CACHES={"default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "ratelimit-tests",
+    }},
+)
+class RateLimitTests(TestCase):
+    def setUp(self):
+        caches["default"].clear()
+
+    def test_connexion_bloquee_apres_trop_de_tentatives(self):
+        reponses = [
+            self.client.post("/connexion/", {"username": "x", "password": "y"})
+            for _ in range(15)
+        ]
+        corps = " ".join(r.content.decode() for r in reponses)
+        # Les premières tentatives passent (erreur d'identifiants), les
+        # dernières sont bloquées par la limitation de débit.
+        self.assertIn("Trop de tentatives de connexion", corps)
+        self.assertNotIn("Trop de tentatives", reponses[0].content.decode())
+
+    def test_contact_bloque_apres_trop_d_envois(self):
+        Administration.objects.create(nom="Mairie de Lomé")
+        payload = {
+            "nom": "T", "prenom": "U", "administration": "Mairie de Lomé",
+            "email": "t@example.tg", "sujet": "question", "message": "Bonjour.",
+        }
+        for _ in range(10):
+            self.client.post("/contact/", payload, follow=True)
+        r = self.client.post("/contact/", payload, follow=True)
+        self.assertContains(r, "Trop de messages")
+        # La 6e soumission et suivantes n'ont créé aucun message.
+        self.assertLessEqual(MessageContact.objects.filter(email="t@example.tg").count(), 5)
 
 
 class SeedDataTests(TestCase):
