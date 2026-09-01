@@ -245,8 +245,10 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    # HSTS : 0 par défaut au premier déploiement (on l'augmente une fois le
-    # domaine confirmé en HTTPS, sinon il « verrouille » un domaine mal configuré).
-    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+    # HSTS activé (1 an) : le domaine .onrender.com est stable en HTTPS depuis
+    # le déploiement. À REMETTRE À 0 avant de migrer vers un domaine
+    # personnalisé tant que son HTTPS n'est pas confirmé (sinon HSTS
+    # « verrouille » les navigateurs sur un domaine mal configuré).
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
     SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
