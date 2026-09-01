@@ -290,6 +290,25 @@ class FormulaireAConditionsTests(TestCase):
     def _q(self, code):
         return Question.objects.get(code=code, version_formulaire=self.version_a)
 
+    def test_identification_reporte_le_responsable_sur_l_evaluation(self):
+        from core.models import Evaluation
+
+        self.client.get("/formulaire-a/")  # ouvre l'évaluation
+        evaluation = Evaluation.objects.get(administration=self.admin)
+        q_nom, q_prenom, q_fonction = self._q("A0.1"), self._q("A0.1b"), self._q("A0.2")
+
+        resp = self.client.post("/formulaire-a/etape/1/", {
+            f"q_{q_nom.id}": "Koffi",
+            f"q_{q_prenom.id}": "Ama",
+            f"q_{q_fonction.id}": "Secrétaire générale",
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        evaluation.refresh_from_db()
+        self.assertEqual(evaluation.responsable_nom, "Koffi")
+        self.assertEqual(evaluation.responsable_prenom, "Ama")
+        self.assertEqual(evaluation.responsable_fonction, "Secrétaire générale")
+
     def test_seed_pose_les_conditions_sur_2_2_a_2_6_et_4_4(self):
         for code in ("2.2", "2.3", "2.4", "2.5", "2.6"):
             q = self._q(code)

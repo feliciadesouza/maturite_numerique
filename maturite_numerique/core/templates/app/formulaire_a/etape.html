@@ -7,7 +7,7 @@
 <div class="page-head">
   <h1>Formulaire A Fiche Administration</h1>
   <p class="breadcrumb">{{ evaluation.administration.nom }}
-    {% if evaluation.responsable_nom %} Responsable : {{ evaluation.responsable_nom }}{% endif %}</p>
+    {% if evaluation.responsable_nom %} Responsable : {{ evaluation.responsable_prenom }} {{ evaluation.responsable_nom }}{% if evaluation.responsable_fonction %}, {{ evaluation.responsable_fonction }}{% endif %}{% endif %}</p>
 </div>
 
 <div class="card" style="margin-bottom: var(--sp-6);">

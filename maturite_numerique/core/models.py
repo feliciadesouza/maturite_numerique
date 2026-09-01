@@ -178,7 +178,14 @@ class Evaluation(models.Model):
     date_ouverture = models.DateField(auto_now_add=True)
     date_cloture = models.DateField(null=True, blank=True)
     responsable_nom = models.CharField(
-        max_length=150, blank=True, help_text="Ex. « Chef de service informatique »."
+        max_length=150, blank=True, help_text="Nom du responsable (report de A0.1)."
+    )
+    responsable_prenom = models.CharField(
+        max_length=150, blank=True, help_text="Prénom(s) du responsable (report de A0.1b)."
+    )
+    responsable_fonction = models.CharField(
+        max_length=150, blank=True,
+        help_text="Fonction / poste du responsable (report de A0.2)."
     )
     cree_par = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,

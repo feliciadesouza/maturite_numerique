@@ -54,6 +54,9 @@
           Questionnaire {% if resultat.evaluation.version_formulaire_a %}v{{ resultat.evaluation.version_formulaire_a.numero_version }}{% endif %}
         {% else %}Aperçu évaluation en cours {% endif %}
         {{ total_agents }} agent{{ total_agents|pluralize }} enquêté{{ total_agents|pluralize }}
+        {% if resultat.evaluation.responsable_nom %}
+          Responsable : {{ resultat.evaluation.responsable_prenom }} {{ resultat.evaluation.responsable_nom }}{% if resultat.evaluation.responsable_fonction %}, {{ resultat.evaluation.responsable_fonction }}{% endif %}
+        {% endif %}
       </p>
       <hr class="rapport__rule">
     </section>
