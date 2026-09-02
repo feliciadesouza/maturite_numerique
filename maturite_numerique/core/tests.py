@@ -2,7 +2,9 @@
 from django.core import mail
 from django.core.management import call_command
 from django.core.cache import caches
+from django.db import connection
 from django.test import Client, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 
 from core.models import (
     Administration,
@@ -373,6 +375,45 @@ class RateLimitTests(TestCase):
         self.assertContains(r, "Trop de messages")
         # La 6e soumission et suivantes n'ont créé aucun message.
         self.assertLessEqual(MessageContact.objects.filter(email="t@example.tg").count(), 5)
+
+
+@override_settings(CACHES={"default": {
+    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    "LOCATION": "dsi-perf-tests",
+}})
+class DsiPerformanceTests(TestCase):
+    def setUp(self):
+        caches["default"].clear()
+        call_command("seed_data")
+        user = User.objects.create_user(username="dsi_perf", password="x")
+        Utilisateur.objects.create(user=user, role="dsi_decideur")
+        self.client.force_login(user)
+
+    def _administration_cloturee(self, nom):
+        adm = Administration.objects.create(nom=nom)
+        ev = Evaluation.objects.create(administration=adm, statut="en_cours")
+        Agent.objects.create(
+            administration=adm, evaluation=ev, poste="A", niveau_maturite=2
+        )
+        cloturer_evaluation(ev)
+        return adm
+
+    def test_liste_administrations_cout_par_admin_borne(self):
+        for i in range(3):
+            self._administration_cloturee(f"Adm {i}")
+        caches["default"].clear()
+        with CaptureQueriesContext(connection) as q3:
+            self.assertEqual(self.client.get("/administrations/").status_code, 200)
+
+        for i in range(3, 6):
+            self._administration_cloturee(f"Adm {i}")
+        caches["default"].clear()
+        with CaptureQueriesContext(connection) as q6:
+            self.assertEqual(self.client.get("/administrations/").status_code, 200)
+
+        # 3 administrations de plus ne doivent pas relancer la requête des
+        # dimensions à chaque itération : le surcoût reste modéré.
+        self.assertLess(len(q6) - len(q3), 15)
 
 
 class SeedDataTests(TestCase):
