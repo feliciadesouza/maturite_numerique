@@ -594,6 +594,17 @@ class DsiEspaceTests(TestCase):
         self.assertEqual(rap.status_code, 200)
         self.assertContains(rap, "Rapport de maturité numérique")
 
+    def test_liste_administrations_est_paginee(self):
+        for i in range(30):
+            Administration.objects.create(nom=f"Admin {i:02d}")
+        p1 = self.client.get("/administrations/")
+        self.assertEqual(p1.context["page_obj"].number, 1)
+        self.assertEqual(len(p1.context["lignes"]), 25)
+        self.assertContains(p1, "Suivant")
+        p2 = self.client.get("/administrations/?page=2")
+        self.assertGreaterEqual(len(p2.context["lignes"]), 5)  # >=31 admins au total
+        self.assertContains(p2, "Précédent")
+
     def test_admin_contenu_n_a_pas_acces_au_tableau_de_bord(self):
         user = User.objects.create_user(username="ac_u", password="testpass123")
         Utilisateur.objects.create(user=user, role="admin_contenu")
@@ -646,6 +657,17 @@ class EnqueteurTests(TestCase):
 
     def test_liste_des_enquetes_repond(self):
         self.assertEqual(self.client.get("/enquetes/").status_code, 200)
+
+    def test_liste_des_enquetes_est_paginee(self):
+        for i in range(30):
+            Agent.objects.create(
+                administration=self.administration, poste=f"Poste {i:02d}"
+            )
+        p1 = self.client.get("/enquetes/")
+        self.assertEqual(p1.context["page_obj"].number, 1)
+        self.assertEqual(len(p1.context["agents"]), 25)
+        p2 = self.client.get("/enquetes/?page=2")
+        self.assertEqual(len(p2.context["agents"]), 5)
 
     def test_nouvel_agent_cree_et_numerote(self):
         response = self.client.post("/enquetes/nouvel-agent/", {
