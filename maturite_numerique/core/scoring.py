@@ -7,6 +7,7 @@ maintenant, indépendamment de la maquette.
 """
 from dataclasses import dataclass
 
+from django.core.cache import cache
 from django.utils import timezone
 
 from .models import (
@@ -17,6 +18,23 @@ from .models import (
     RegleRecommandation,
     Reponse,
 )
+
+
+def dimensions_actives():
+    """Dimensions actives, triées, mises en cache 5 min.
+
+    Le référentiel change seulement en back-office (qui vide ce cache) ; sans
+    cela, chaque `resultat_administration` / `calculer_score_dimension`
+    relance la même requête — coûteux quand on itère sur les administrations
+    (tableau de bord, liste, comparaison, rapports).
+    """
+    return list(
+        cache.get_or_set(
+            "scoring:dimensions_actives",
+            lambda: list(Dimension.objects.filter(actif=True).order_by("ordre")),
+            300,
+        )
+    )
 
 
 @dataclass
@@ -84,8 +102,7 @@ def calculer_score_dimension(administration: Administration, dimension: Dimensio
 
 def calculer_score_global(administration: Administration) -> ScoreGlobal:
     """Calcule le score global d'une administration, dimension par dimension."""
-    dimensions = Dimension.objects.filter(actif=True)
-    scores = [calculer_score_dimension(administration, d) for d in dimensions]
+    scores = [calculer_score_dimension(administration, d) for d in dimensions_actives()]
 
     score_global = sum(s.score_pondere for s in scores)
     dimension_faible = min(scores, key=lambda s: s.score_brut).dimension if scores else None
@@ -209,7 +226,7 @@ def _instantane(evaluation, distribution):
     administration = evaluation.administration
     scores_par_id, scores_par_code = {}, {}
     poids_pris, somme_ponderee = 0.0, 0.0
-    for dimension in Dimension.objects.filter(actif=True):
+    for dimension in dimensions_actives():
         if dimension.code == "competences":
             brut = score_dimension_competences(distribution)
         else:
@@ -269,7 +286,7 @@ def resultat_administration(administration) -> ResultatAdministration:
         .order_by("-date_cloture", "-id")
         .first()
     )
-    dimensions = list(Dimension.objects.filter(actif=True).order_by("ordre"))
+    dimensions = dimensions_actives()
     distribution = {n: 0 for n in range(6)}
 
     if evaluation and evaluation.score_global is not None:
