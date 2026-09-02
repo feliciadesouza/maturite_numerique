@@ -2,6 +2,13 @@
    Maturité Numérique — Styles propres à l'application connectée
    ========================================================================= */
 
+/* ---------- Pagination ---------- */
+.pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+  gap: var(--sp-3); margin-top: var(--sp-4); font-size: var(--fs-sm); }
+.pagination__info { color: var(--text-subtle); }
+.pagination__info .text-muted { display: block; font-size: var(--fs-cap); }
+.pagination .is-disabled { opacity: 0.45; pointer-events: none; }
+
 /* ---------- Stepper (formulaires multi-étapes) ---------- */
 .stepper { display: flex; align-items: center; gap: 0; }
 .stepper__step { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }

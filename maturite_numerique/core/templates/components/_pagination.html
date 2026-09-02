@@ -1,0 +1,23 @@
+{% comment %} Pagination réutilisable. Params : page_obj (Page), params (querystring sans « ? » ni « page »). {% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page_obj.has_previous %}
+    <a class="btn btn--secondary" href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.previous_page_number }}">
+      {% include "components/_icon.html" with name="chevron-left" cls="icon--sm" %} Précédent</a>
+  {% else %}
+    <span class="btn btn--secondary is-disabled" aria-disabled="true">Précédent</span>
+  {% endif %}
+
+  <span class="pagination__info">
+    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+    <span class="text-muted">{{ page_obj.paginator.count }} au total</span>
+  </span>
+
+  {% if page_obj.has_next %}
+    <a class="btn btn--secondary" href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.next_page_number }}">
+      Suivant {% include "components/_icon.html" with name="chevron-right" cls="icon--sm" %}</a>
+  {% else %}
+    <span class="btn btn--secondary is-disabled" aria-disabled="true">Suivant</span>
+  {% endif %}
+</nav>
+{% endif %}

@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.staticfiles import finders
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.db.models import Avg, Max
 from django.http import HttpResponse
@@ -303,13 +304,15 @@ def dashboard(request):
 @login_required
 @role_required("dsi_decideur")
 def administrations_liste(request):
-    """Liste des administrations suivies avec leur niveau."""
+    """Liste des administrations suivies avec leur niveau (paginée)."""
     recherche = request.GET.get("q", "").strip()
     administrations = Administration.objects.order_by("nom")
     if recherche:
         administrations = administrations.filter(nom__icontains=recherche)
+
+    page_obj = Paginator(administrations, 25).get_page(request.GET.get("page"))
     lignes = []
-    for administration in administrations:
+    for administration in page_obj.object_list:
         res = resultat_administration(administration)
         lignes.append({
             "administration": administration,
@@ -319,7 +322,8 @@ def administrations_liste(request):
             "apercu": res.est_apercu,
         })
     return render(request, "app/dsi/administrations.html", {
-        "lignes": lignes, "recherche": recherche,
+        "lignes": lignes, "recherche": recherche, "page_obj": page_obj,
+        "params": f"q={recherche}" if recherche else "",
     })
 
 
@@ -577,7 +581,14 @@ def enqueteur_home(request):
     if recherche:
         agents = agents.filter(poste__icontains=recherche) | agents.filter(
             service__icontains=recherche
-        )
+        ) | agents.filter(nom__icontains=recherche)
+
+    _params = []
+    if statut != "tous":
+        _params.append(f"statut={statut}")
+    if recherche:
+        _params.append(f"q={recherche}")
+    page_obj = Paginator(agents, 25).get_page(request.GET.get("page"))
 
     en_cours = tous.filter(statut="en_cours").first()
     total_questions = len(_questions_agent_ordonnees(en_cours)) if en_cours else 0
@@ -593,7 +604,9 @@ def enqueteur_home(request):
         "administration": administration,
         "administrations": administrations,
         "plusieurs_admins": plusieurs_admins,
-        "agents": agents,
+        "agents": page_obj.object_list,
+        "page_obj": page_obj,
+        "params": "&".join(_params),
         "compteurs": compteurs,
         "termines": termines,
         "statut_actif": statut,
