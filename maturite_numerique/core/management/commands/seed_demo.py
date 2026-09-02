@@ -23,9 +23,11 @@ from core.models import (
 from core.scoring import cloturer_evaluation
 
 RESPONSABLES = [
-    "Kossi Amegan", "Ama Dossou", "Yao Mensah", "Afi Koudjo",
-    "Komlan Adjivon", "Essi Lawson", "Kodjo Bakari", "Adjo Nyaku",
+    ("Kossi", "Amegan"), ("Ama", "Dossou"), ("Yao", "Mensah"), ("Afi", "Koudjo"),
+    ("Komlan", "Adjivon"), ("Essi", "Lawson"), ("Kodjo", "Bakari"), ("Adjo", "Nyaku"),
 ]
+PRENOMS = [p for p, _ in RESPONSABLES]
+NOMS = [n for _, n in RESPONSABLES]
 POSTES = [
     "Agent d'accueil", "Secrétaire", "Chef de bureau", "Comptable",
     "Agent d'état civil", "Technicien", "Gestionnaire", "Archiviste",
@@ -126,43 +128,52 @@ class Command(BaseCommand):
             if Evaluation.objects.filter(administration=administration).exists():
                 continue
 
+            prenom, nom_famille = RESPONSABLES[i % len(RESPONSABLES)]
             evaluation = Evaluation.objects.create(
                 administration=administration,
                 version_formulaire_a=version_a,
                 version_formulaire_b=version_b,
                 statut="en_cours",
-                responsable_nom=f"{RESPONSABLES[i % len(RESPONSABLES)]}, chef du service informatique",
+                responsable_nom=nom_famille,
+                responsable_prenom=prenom,
+                responsable_fonction="Chef du service informatique",
             )
 
-            for question in questions_a:
-                cible = cibles.get(question.dimension.code, 3.0)
-                Reponse.objects.create(
+            Reponse.objects.bulk_create([
+                Reponse(
                     evaluation=evaluation, question=question,
                     administration=administration,
-                    valeur=_reponse_pour_cible(question, cible),
+                    valeur=_reponse_pour_cible(
+                        question, cibles.get(question.dimension.code, 3.0)
+                    ),
                 )
+                for question in questions_a
+            ])
 
             def _agent(numero, **extra):
-                return Agent.objects.create(
+                return Agent(
                     administration=administration, evaluation=evaluation, numero=numero,
-                    nom=f"{random.choice(RESPONSABLES).split()[0]} {random.choice('ABKMNPSY')}.",
+                    nom=random.choice(NOMS), prenom=random.choice(PRENOMS),
                     poste=random.choice(POSTES), service=random.choice(SERVICES),
                     mode_saisie="assiste", **extra,
                 )
 
-            numero = 0
+            lot_agents, numero = [], 0
             for niveau, effectif in enumerate(distrib):
                 for _ in range(effectif):
                     numero += 1
-                    _agent(numero, statut="terminee", niveau_maturite=niveau,
-                           reference=f"MN-2026-{administration.pk:03d}{numero:03d}")
+                    lot_agents.append(_agent(
+                        numero, statut="terminee", niveau_maturite=niveau,
+                        reference=f"MN-2026-{administration.pk:03d}{numero:03d}",
+                    ))
 
             # Quelques enquêtes non terminées pour l'écran de l'enquêteur.
             numero += 1
-            _agent(numero, statut="en_cours", progression=4)
+            lot_agents.append(_agent(numero, statut="en_cours", progression=4))
             for _ in range(3):
                 numero += 1
-                _agent(numero, statut="a_faire")
+                lot_agents.append(_agent(numero, statut="a_faire"))
+            Agent.objects.bulk_create(lot_agents)
 
             if cloturee:
                 cloturer_evaluation(evaluation)
