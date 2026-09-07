@@ -399,3 +399,26 @@ class MessageContact(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prenom} {self.get_sujet_display()}".strip()
+
+
+class CodeConnexion(models.Model):
+    """Code de vérification à usage unique envoyé par e-mail après le mot de
+    passe, pour finaliser la connexion (double authentification légère)."""
+    utilisateur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="codes_connexion"
+    )
+    code = models.CharField(max_length=6)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    expire_le = models.DateTimeField()
+    utilise = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-cree_le"]
+        verbose_name = "Code de connexion"
+        verbose_name_plural = "Codes de connexion"
+
+    def est_valide(self):
+        return not self.utilise and timezone.now() < self.expire_le
+
+    def __str__(self):
+        return f"{self.utilisateur} - {self.code}"

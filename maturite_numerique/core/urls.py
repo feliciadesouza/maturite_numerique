@@ -38,6 +38,7 @@ from .views import (
     profile,
     rapport_administration,
     rapports,
+    verification_code_view,
 )
 
 urlpatterns = [
@@ -49,6 +50,7 @@ urlpatterns = [
     path('confidentialite/', confidentialite, name='confidentialite'),
     path('conditions-utilisation/', conditions, name='conditions'),
     path('connexion/', login_view, name='connexion'),
+    path('connexion/verification/', verification_code_view, name='verification_code'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('tableau-de-bord/', dashboard, name='dashboard'),

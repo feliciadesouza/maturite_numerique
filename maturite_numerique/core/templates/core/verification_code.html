@@ -1,0 +1,42 @@
+{% extends "base_public.html" %}
+
+{% block title %}Vérification Maturité Numérique{% endblock %}
+
+{% block content %}
+<section class="public-section">
+  <div class="public-container public-container--narrow">
+    <div class="card" style="max-width:440px;margin:0 auto;">
+      <h1 style="font-size:var(--fs-h2);margin-bottom:4px;">Vérification</h1>
+      <p class="text-muted text-sm" style="margin-bottom:var(--sp-6);">
+        Un code à 6 chiffres a été envoyé à <b>{{ email }}</b>. Il est valable 10 minutes.
+      </p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors or form.code.errors %}
+          <div class="alert alert--error" style="margin-bottom:var(--sp-4);">
+            {% include "components/_icon.html" with name="alert-triangle" cls="icon--sm" %}
+            <span>{{ form.code.errors.0|default:"Code invalide." }}</span>
+          </div>
+        {% endif %}
+        <div class="field">
+          <label for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+          {{ form.code }}
+        </div>
+        <button type="submit" class="btn btn--primary btn--block btn--lg">Valider</button>
+      </form>
+
+      <form method="post" style="margin-top:var(--sp-4);text-align:center;">
+        {% csrf_token %}
+        <button type="submit" name="renvoyer" value="1" class="text-sm"
+          style="background:none;border:none;padding:0;color:var(--primary);font-weight:600;cursor:pointer;">
+          Renvoyer le code</button>
+      </form>
+    </div>
+
+    <p class="text-sm text-muted" style="text-align:center;margin-top:var(--sp-6);">
+      <a href="{% url 'connexion' %}">Retour à la connexion</a>
+    </p>
+  </div>
+</section>
+{% endblock %}
