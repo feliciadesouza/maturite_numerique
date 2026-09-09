@@ -16,7 +16,10 @@ TEST_USERS = [
 
 # Superuser de test : mot de passe connu, resynchronisé à chaque exécution
 # (contrairement aux comptes de rôle, on ne se fie pas au « if created »).
-SUPERUSER = ("admin", "Admin123!", "admin@maturite-numerique.tg")
+# E-mail réel (pas un placeholder @maturite-numerique.tg, domaine sans boîte) :
+# nécessaire pour recevoir le code de connexion (2e étape, voir login_view) —
+# resynchronisé à chaque boot comme le mot de passe.
+SUPERUSER = ("admin", "Admin123!", "feliciaodetted@gmail.com")
 
 # Rôles rattachés à une administration pour les parcours de collecte.
 ROLES_AVEC_ADMINISTRATION = {"agent_evaluateur", "enqueteur"}
@@ -34,6 +37,7 @@ class Command(BaseCommand):
         su, _ = User.objects.get_or_create(
             username=su_name, defaults={"email": su_email}
         )
+        su.email = su_email
         su.is_staff = su.is_superuser = su.is_active = True
         su.set_password(su_pwd)
         su.save()
