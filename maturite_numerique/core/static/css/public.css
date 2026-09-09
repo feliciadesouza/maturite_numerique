@@ -15,6 +15,8 @@
   display: flex; align-items: center; gap: 8px; }
 .hero__visual { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card);
   box-shadow: var(--shadow-lg); padding: var(--sp-4); }
+.hero__photo { border-radius: var(--r-control); overflow: hidden; margin-bottom: var(--sp-4); }
+.hero__photo img { display: block; width: 100%; height: 220px; object-fit: cover; }
 .hero__stats { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .hero__stat { flex: 1; border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-3);
   display: flex; align-items: center; gap: var(--sp-3); }
@@ -109,6 +111,14 @@
   .steps-flow .step-arrow { align-self: center; transform: rotate(90deg); }
 }
 
+/* Photos de terrain (section "Une démarche inclusive") */
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+.photo-grid figure { margin: 0; border-radius: var(--r-card); overflow: hidden; box-shadow: var(--shadow); background: var(--surface); }
+.photo-grid img { display: block; width: 100%; height: 220px; object-fit: cover; }
+.photo-grid figcaption { padding: var(--sp-4); }
+.photo-grid figcaption h3 { font-size: var(--fs-title); }
+.photo-grid figcaption p { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 4px; }
+
 .cta-band { display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap;
   border-radius: var(--r-card); padding: var(--sp-6) var(--sp-8); }
 .cta-band--green { background: var(--dim-services); color: #fff; }
@@ -171,7 +181,7 @@
 @media (max-width: 860px) {
   .hero, .contact-grid { grid-template-columns: 1fr; }
   .stat-band { grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); }
-  .card-grid--3, .card-grid--5, .card-grid--2, .form-2col { grid-template-columns: 1fr; }
+  .card-grid--3, .card-grid--5, .card-grid--2, .form-2col, .photo-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .public-footer nav { flex-direction: column; gap: var(--sp-3); }

@@ -1,4 +1,5 @@
 {% extends "base_public.html" %}
+{% load static %}
 
 {% block title %}Maturité Numérique Diagnostic des administrations publiques{% endblock %}
 
@@ -19,6 +20,9 @@
       </div>
 
       <div class="hero__visual">
+        <div class="hero__photo">
+          <img src="{% static 'img/public/hero.jpg' %}" alt="Agent d'une administration publique consultant ses outils numériques">
+        </div>
         <div class="hero__stats">
           <div class="hero__stat">
             {% include "components/_icon.html" with name="building" %}
@@ -107,21 +111,54 @@
   </div>
 </section>
 
+<section class="public-section">
+  <div class="public-container">
+    <div class="section-head">
+      <span class="eyebrow">Une démarche inclusive</span>
+      <h2>Le numérique pour toutes et tous, sur le terrain</h2>
+      <p>L'outil est conçu pour n'exclure personne : accompagnement humain, accès sans compte et
+        compatibilité mobile.</p>
+    </div>
+    <div class="photo-grid">
+      <figure>
+        <img src="{% static 'img/public/inclusive-1.webp' %}" alt="Un enquêteur accompagne une agente sur son ordinateur">
+        <figcaption>
+          <h3>Sur le terrain, avec chaque agent</h3>
+          <p>Un enquêteur accompagne les agents peu familiers du numérique - personne n'est laissé de côté.</p>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="{% static 'img/public/inclusive-2.jpg' %}" alt="Agents de différentes administrations réunis autour de leurs ordinateurs portables">
+        <figcaption>
+          <h3>Toutes les administrations, tous les profils</h3>
+          <p>Femmes et hommes, du guichet à la direction, à Lomé comme en région.</p>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="{% static 'img/public/inclusive-3.png' %}" alt="Réunion de travail autour d'un ordinateur portable">
+        <figcaption>
+          <h3>Pensé pour le contexte local</h3>
+          <p>Utilisable sur téléphone, en français, même en connectivité limitée.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
 <section class="public-section" id="acces">
   <div class="public-container">
     <div class="section-head">
       <span class="eyebrow">Accès par rôle</span>
       <h2>Chacun ne voit que ce qui le concerne</h2>
-      <p>Quatre rôles se connectent avec un compte fourni par l'administration ; l'agent enquêté, lui,
-        répond sans compte via un simple lien.</p>
+      <p>La navigation s'adapte au rôle connecté ; l'agent enquêté accède même sans compte, via un simple lien.</p>
     </div>
     <div class="card-grid card-grid--5">
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="clipboard" %}</span>
-        <b>Agent évaluateur</b><p>Avec un compte : remplit le Formulaire A pour son administration.</p></div>
+        <b>Agent évaluateur</b><p>Remplit le Formulaire A pour son administration.</p></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="users" %}</span>
-        <b>Enquêteur</b><p>Avec un compte : conduit l'enquête agents en mode assisté.</p></div>
+        <b>Enquêteur</b><p>Conduit l'enquête agents en mode assisté.</p></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="lock" %}</span>
-        <b>Agent enquêté</b><p>Sans compte : répond au Formulaire B par un lien public.</p>
+        <b>Agent enquêté</b><p>Répond via un lien public.</p>
         <a href="{% url 'formulaire_b_public' %}">Répondre à l'enquête</a></div>
       <div class="card role-mini"><span class="ico">{% include "components/_icon.html" with name="bar-chart" %}</span>
         <b>DSI / Décideur</b><p>Analyse les résultats et pilote le plan d'action.</p></div>
@@ -134,6 +171,7 @@
 <section class="public-section" id="contact" style="padding-top:0;">
   <div class="public-container">
     <div class="cta-band cta-band--green">
+      <span class="cta-band__ico">{% include "components/_icon.html" with name="clipboard" %}</span>
       <div>
         <h2>Vous êtes agent d'une administration ?</h2>
         <p>Participez à l'enquête en 5 minutes, sans compte ni mot de passe via le lien transmis
