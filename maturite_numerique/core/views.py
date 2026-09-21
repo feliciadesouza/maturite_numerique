@@ -2,10 +2,12 @@ import base64
 import math
 import os
 import re
+import secrets
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.staticfiles import finders
@@ -22,6 +24,7 @@ from django.views.decorators.gzip import gzip_page
 from django_ratelimit.decorators import ratelimit
 
 from .forms import (
+    CodeConnexionForm,
     ContactForm,
     DimensionForm,
     NouvelAgentForm,
@@ -34,6 +37,7 @@ from .forms import (
 from .models import (
     Administration,
     Agent,
+    CodeConnexion,
     Dimension,
     Evaluation,
     Formulaire,
@@ -202,6 +206,33 @@ def conditions(request):
     return render(request, "public/conditions.html")
 
 
+CODE_CONNEXION_VALIDITE_MINUTES = 10
+CODE_CONNEXION_SESSION_KEY = "code_connexion_user_id"
+
+
+def _envoyer_code_connexion(user):
+    """Génère un code à 6 chiffres, l'enregistre et l'envoie par e-mail.
+
+    ``secrets`` (et non ``random``) : même pour un simple code à 6 chiffres,
+    on évite un générateur pseudo-aléatoire prévisible.
+    """
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    CodeConnexion.objects.create(
+        utilisateur=user,
+        code=code,
+        expire_le=timezone.now() + timedelta(minutes=CODE_CONNEXION_VALIDITE_MINUTES),
+    )
+    send_mail(
+        subject="Votre code de connexion",
+        message=render_to_string("email/code_connexion.txt", {
+            "user": user, "code": code, "validite_minutes": CODE_CONNEXION_VALIDITE_MINUTES,
+        }),
+        from_email=None,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
 @never_cache
 @ratelimit(key="ip", rate="10/m", method="POST", block=False)
 def login_view(request):
@@ -211,6 +242,11 @@ def login_view(request):
     ancienne page contenant un jeton CSRF périmé, ce qui provoquerait un 403
     à la soumission du formulaire. ``ratelimit`` freine le bourrinage
     d'identifiants (10 tentatives/minute/IP).
+
+    Si le compte a une adresse e-mail, la connexion se termine par un code de
+    vérification envoyé par e-mail (``verification_code_view``) ; sinon
+    (comptes de test sans e-mail) elle reste directe, pour ne pas bloquer un
+    compte que l'administrateur n'a pas renseigné.
     """
     form = AuthenticationForm()
     if request.method == "POST":
@@ -228,12 +264,64 @@ def login_view(request):
                     password=form.cleaned_data["password"],
                 )
                 if user is not None:
+                    if user.email:
+                        try:
+                            _envoyer_code_connexion(user)
+                        except Exception:
+                            messages.error(
+                                request,
+                                "Impossible d'envoyer le code de vérification. Réessayez.",
+                            )
+                            return render(request, "core/connexion.html", {"form": form})
+                        request.session[CODE_CONNEXION_SESSION_KEY] = user.pk
+                        return redirect("verification_code")
                     login(request, user)
                     messages.success(request, "Connexion réussie.")
                     role_home = get_role_home_url(user)
                     return redirect(role_home) if role_home else redirect("home")
 
     return render(request, "core/connexion.html", {"form": form})
+
+
+@never_cache
+@ratelimit(key="ip", rate="10/m", method="POST", block=False)
+def verification_code_view(request):
+    """2e étape de la connexion : saisie du code reçu par e-mail."""
+    user_id = request.session.get(CODE_CONNEXION_SESSION_KEY)
+    if not user_id:
+        return redirect("connexion")
+    user = get_object_or_404(get_user_model(), pk=user_id)
+
+    form = CodeConnexionForm()
+    if request.method == "POST":
+        if getattr(request, "limited", False):
+            messages.error(
+                request,
+                "Trop de tentatives. Patientez une minute avant de réessayer.",
+            )
+        elif request.POST.get("renvoyer"):
+            _envoyer_code_connexion(user)
+            messages.info(request, "Un nouveau code vous a été envoyé.")
+        else:
+            form = CodeConnexionForm(request.POST)
+            if form.is_valid():
+                code_saisi = form.cleaned_data["code"]
+                code = CodeConnexion.objects.filter(
+                    utilisateur=user, code=code_saisi
+                ).order_by("-cree_le").first()
+                if code and code.est_valide():
+                    code.utilise = True
+                    code.save(update_fields=["utilise"])
+                    del request.session[CODE_CONNEXION_SESSION_KEY]
+                    login(request, user)
+                    messages.success(request, "Connexion réussie.")
+                    role_home = get_role_home_url(user)
+                    return redirect(role_home) if role_home else redirect("home")
+                messages.error(request, "Code invalide ou expiré.")
+
+    return render(request, "core/verification_code.html", {
+        "form": form, "email": user.email,
+    })
 
 
 @never_cache

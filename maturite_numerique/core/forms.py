@@ -280,6 +280,25 @@ class QuestionBackofficeForm(forms.ModelForm):
         return resultat
 
 
+class CodeConnexionForm(forms.Form):
+    """Saisie du code à 6 chiffres reçu par e-mail (2e étape de la connexion)."""
+    code = forms.CharField(
+        label="Code de vérification",
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            "inputmode": "numeric", "autocomplete": "one-time-code",
+            "autofocus": True, "placeholder": "123456",
+        }),
+    )
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].strip()
+        if not code.isdigit():
+            raise forms.ValidationError("Le code doit contenir 6 chiffres.")
+        return code
+
+
 def appliquer_options(question, paires):
     """Remplace les options d'une question par la liste (valeur, libellé) fournie."""
     if question.type_champ.code not in TYPES_AVEC_OPTIONS:

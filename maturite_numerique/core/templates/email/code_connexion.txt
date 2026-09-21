@@ -1,0 +1,10 @@
+Bonjour {{ user.get_full_name|default:user.username }},
+
+Voici votre code de connexion à Maturité Numérique :
+
+{{ code }}
+
+Ce code est valable {{ validite_minutes }} minutes. Si vous n'êtes pas à
+l'origine de cette demande, ignorez ce message.
+
+L'équipe Maturité Numérique
