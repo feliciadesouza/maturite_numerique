@@ -575,12 +575,46 @@ class ScoringEngineTests(TestCase):
             "B2.1": "Oui",
             "B3.4": "Oui",
             "B3.5": "Oui",
+            "B3.6": "Oui",
             "B4.1": "Souvent",
             "B4.2": "Souvent",
+            "B4.3": "Oui",
             "B4.4": "Oui",
+            "B4.5": "5",
             "B4.6": "Oui",
         }
         self.assertEqual(classifier_niveau_agent(reponses_agent), 5)
+
+    def test_classifier_niveau_agent_email_non_consulte_ne_compte_pas(self):
+        # B3.5 seul (possède un e-mail sans jamais le consulter) ne suffit
+        # plus à atteindre N2 — il faut aussi B3.6 (consultation hebdomadaire).
+        reponses_agent = {"B2.1": "Oui", "B3.5": "Oui", "B3.6": "Non"}
+        self.assertEqual(classifier_niveau_agent(reponses_agent), 1)
+
+    def test_classifier_niveau_agent_formulaire_en_ligne_atteint_n3(self):
+        # B4.3 (déjà rempli un formulaire administratif en ligne) suffit à
+        # atteindre N3, même sans usage de Word/Excel.
+        reponses_agent = {"B2.1": "Oui", "B3.4": "Oui", "B4.3": "Oui"}
+        self.assertEqual(classifier_niveau_agent(reponses_agent), 3)
+
+    def test_classifier_niveau_agent_rarement_seul_ne_suffit_plus(self):
+        reponses_agent = {"B2.1": "Oui", "B3.4": "Oui", "B4.1": "Rarement"}
+        self.assertEqual(classifier_niveau_agent(reponses_agent), 2)
+
+    def test_classifier_niveau_agent_ne_saute_pas_de_palier(self):
+        # Usage bureautique sans aucun signal de communication numérique
+        # (pas de réseaux sociaux, pas d'e-mail consulté) : reste à N1, ne
+        # saute pas directement à N3.
+        reponses_agent = {"B2.1": "Oui", "B4.1": "Souvent"}
+        self.assertEqual(classifier_niveau_agent(reponses_agent), 1)
+
+    def test_classifier_niveau_agent_n5_exige_capacite_d_apprentissage(self):
+        # B4.6=Oui seul (sans B4.5 élevé) ne suffit plus pour N5.
+        reponses_agent = {
+            "B2.1": "Oui", "B3.4": "Oui", "B4.1": "Souvent",
+            "B4.4": "Oui", "B4.6": "Oui", "B4.5": "2",
+        }
+        self.assertEqual(classifier_niveau_agent(reponses_agent), 4)
 
     def test_calculer_score_dimension_pondere_une_dimension(self):
         Reponse.objects.create(
