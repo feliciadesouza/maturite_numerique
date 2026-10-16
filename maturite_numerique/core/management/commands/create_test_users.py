@@ -54,9 +54,9 @@ class Command(BaseCommand):
                 profil.administration = administration
             profil.save()
             if role == "enqueteur":
-                # Affectation de l'enquêteur : sa Mairie + toute autre administration
-                # existante, pour exercer le cas « plusieurs administrations ».
-                administration.enqueteurs.add(user)
-                for autre in Administration.objects.exclude(pk=administration.pk)[:1]:
+                # Affectation de l'enquêteur : toutes les administrations
+                # existantes (démo comprise), pour exercer le cas « plusieurs
+                # administrations » sans se limiter à une poignée au hasard.
+                for autre in Administration.objects.all():
                     autre.enqueteurs.add(user)
             self.stdout.write(self.style.SUCCESS(f"Compte '{username}' prêt avec le rôle '{role}'."))

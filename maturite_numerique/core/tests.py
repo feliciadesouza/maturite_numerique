@@ -563,6 +563,31 @@ class RateLimitTests(TestCase):
         self.assertContains(resp, "Trop de tentatives de connexion")
 
 
+class SeedDemoTests(TestCase):
+    """seed_demo générait des agents 'terminée' sans aucune Reponse détaillée
+    (seul niveau_maturite était renseigné) : 'Voir' sur un agent de démo
+    affichait 'Aucune réponse enregistrée.' Corrigé en générant de vraies
+    réponses par niveau, vérifiées contre classifier_niveau_agent."""
+
+    def test_agents_termines_ont_des_reponses_coherentes_avec_leur_niveau(self):
+        from core.models import Agent, Reponse
+        from core.scoring import classifier_niveau_agent, reponses_par_code
+
+        call_command("seed_demo")
+
+        agents = Agent.objects.filter(statut="terminee").exclude(niveau_maturite=None)[:30]
+        self.assertTrue(agents.exists())
+        for agent in agents:
+            reponses = Reponse.objects.filter(agent=agent)
+            self.assertTrue(
+                reponses.exists(),
+                f"agent {agent.pk} (niveau {agent.niveau_maturite}) sans aucune réponse",
+            )
+            self.assertEqual(
+                classifier_niveau_agent(reponses_par_code(agent)), agent.niveau_maturite,
+            )
+
+
 @override_settings(CACHES={"default": {
     "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     "LOCATION": "dsi-perf-tests",
