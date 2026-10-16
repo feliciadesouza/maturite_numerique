@@ -94,6 +94,22 @@ class AuthenticationProfileTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_agent_evaluateur_sans_administration_est_oriente_vers_un_admin(self):
+        # Le champ administration n'est pas modifiable par l'utilisateur
+        # (ProfileForm) : le message ne doit pas lui laisser croire qu'il
+        # peut le faire lui-même.
+        user = User.objects.create_user(username="sans_admin", password="testpass123")
+        profil, _ = Utilisateur.objects.get_or_create(user=user)
+        profil.role = "agent_evaluateur"
+        profil.save()
+
+        self.client.force_login(user)
+        response = self.client.get("/formulaire-a/", follow=True)
+
+        self.assertRedirects(response, "/profile/")
+        messages = list(response.context["messages"])
+        self.assertIn("Contactez un administrateur", str(messages[0]))
+
 
 class CodeConnexionTests(TestCase):
     """Connexion en 2 étapes (mot de passe puis code par e-mail), uniquement

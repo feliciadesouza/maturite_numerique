@@ -1207,9 +1207,15 @@ def formulaire_a(request):
     """Point d'entrée : ouvre l'évaluation et redirige vers la première étape."""
     profil = get_object_or_404(Utilisateur, user=request.user)
     if not profil.administration:
+        # Le rattachement à une administration n'est pas modifiable par
+        # l'utilisateur (voir ProfileForm/profile.html) : seul un
+        # administrateur peut le faire. Le message doit donc l'orienter vers
+        # l'administrateur, pas vers son propre profil.
         messages.warning(
             request,
-            "Renseignez votre administration dans votre profil pour démarrer le Formulaire A.",
+            "Votre compte n'est rattaché à aucune administration. "
+            "Contactez un administrateur pour qu'il complète votre profil "
+            "avant de démarrer le Formulaire A.",
         )
         return redirect("profile")
 
