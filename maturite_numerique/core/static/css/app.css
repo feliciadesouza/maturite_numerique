@@ -10,7 +10,15 @@
 .pagination .is-disabled { opacity: 0.45; pointer-events: none; }
 
 /* ---------- Stepper (formulaires multi-étapes) ---------- */
-.stepper { display: flex; align-items: center; gap: 0; }
+/* overflow-x: contient le stepper dans sa carte au lieu de déborder sur le
+   contenu voisin quand les 5 libellés (ex. "Engagement institutionnel")
+   dépassent la largeur disponible ; scrollbar masquée car purement visuel
+   ici, l'étape courante reste accessible par les boutons du formulaire. */
+.stepper {
+  display: flex; align-items: center; gap: 0;
+  overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+}
+.stepper::-webkit-scrollbar { display: none; }
 .stepper__step { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .stepper__dot {
   width: 28px; height: 28px; border-radius: var(--r-pill); flex: none;
