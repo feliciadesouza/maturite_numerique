@@ -124,6 +124,14 @@ def classifier_niveau_agent(reponses_agent: dict) -> int:
 
     `reponses_agent` : dict {code_question: valeur}, ex. {"B2.1": "Non", "B3.1": "Oui", ...}
     La comparaison est insensible à la casse (les options peuvent être des slugs).
+
+    Grille cumulative : chaque palier n'est évalué que si le précédent est
+    déjà atteint (pas de saut de niveau, ex. impossible d'être classé N3 sans
+    être passé par N2). B3.6 (consultation réelle de l'e-mail, pas sa simple
+    possession via B3.5), B4.3 (usage concret d'un service public en ligne)
+    et B4.5 (capacité d'auto-apprentissage) sont pris en compte — ils ne
+    l'étaient pas dans une version antérieure, où ces 3 questions étaient
+    posées mais n'influençaient jamais le score.
     """
     def v(code):
         return (reponses_agent.get(code) or "").strip().lower()
@@ -133,17 +141,24 @@ def classifier_niveau_agent(reponses_agent: dict) -> int:
 
     niveau = 1  # sait allumer/utiliser un ordinateur (implicite si B2.1 = Oui)
 
-    if v("B3.4") == "oui" or v("B3.5") == "oui":
-        niveau = 2  # WhatsApp / réseaux sociaux / email de base
+    # Communication numérique de base : réseaux sociaux, ou un e-mail
+    # effectivement consulté (le posséder sans le consulter ne suffit pas).
+    if niveau >= 1 and (v("B3.4") == "oui" or (v("B3.5") == "oui" and v("B3.6") == "oui")):
+        niveau = 2
 
-    if v("B4.1") in ("souvent", "rarement") or v("B4.2") in ("souvent", "rarement"):
-        niveau = 3  # Word / Excel occasionnellement
+    # Usage bureautique régulier, ou service public en ligne déjà utilisé.
+    # « Rarement » seul ne suffit plus (il n'était auparavant pas distingué
+    # de « souvent »).
+    if niveau >= 2 and (v("B4.1") == "souvent" or v("B4.2") == "souvent" or v("B4.3") == "oui"):
+        niveau = 3
 
-    if v("B4.4") == "oui":
+    if niveau >= 3 and v("B4.4") == "oui":
         niveau = 4  # Outils métier, autonome
 
-    if v("B4.6") == "oui" and niveau >= 4:
-        niveau = 5  # Capable de former d'autres agents
+    # Capable de former d'autres agents ET confiant dans sa capacité à
+    # apprendre seul un nouvel outil (échelle 1-5, on exige 4 ou 5).
+    if niveau >= 4 and v("B4.6") == "oui" and v("B4.5") in ("4", "5"):
+        niveau = 5
 
     return niveau
 

@@ -94,10 +94,13 @@ classique ne peut pas leur être administré directement.
 |---|---|
 | 0 | N'a jamais utilisé un ordinateur |
 | 1 | Sait allumer/utiliser un ordinateur, usage smartphone basique |
-| 2 | Utilise WhatsApp/réseaux sociaux, email de base |
-| 3 | Utilise Word/Excel occasionnellement |
+| 2 | Utilise WhatsApp/réseaux sociaux, ou consulte réellement un e-mail (≥ 1×/semaine — le simple fait d'en posséder un ne suffit pas) |
+| 3 | Utilise souvent Word/Excel, ou a déjà rempli un formulaire administratif en ligne |
 | 4 | Utilise couramment des outils métier, autonome |
-| 5 | Autonome + capable de former d'autres agents |
+| 5 | Capable de former d'autres agents ET confiant dans sa capacité à apprendre seul un nouvel outil |
+
+Grille cumulative (chaque palier suppose le précédent atteint — pas de saut
+de niveau).
 
 **Important :** le score de la dimension "Compétences numériques" pour
 une administration = **distribution des agents sur ces 6 niveaux**, PAS
