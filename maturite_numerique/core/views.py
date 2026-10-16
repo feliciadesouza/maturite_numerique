@@ -1210,7 +1210,9 @@ def formulaire_a(request):
         )
         return redirect("profile")
 
-    _, version_a = _evaluation_en_cours(profil.administration, request.user)
+    evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    if evaluation.formulaire_a_termine:
+        return redirect("formulaire_a_recap")
     if not _etapes_formulaire_a(version_a):
         messages.error(request, "Le Formulaire A ne comporte pas encore de questions.")
         return redirect("home")
@@ -1226,6 +1228,8 @@ def formulaire_a_etape(request, numero):
         return redirect("formulaire_a")
 
     evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    if evaluation.formulaire_a_termine:
+        return redirect("formulaire_a_recap")
     etapes = _etapes_formulaire_a(version_a)
     if numero < 1 or numero > len(etapes):
         return redirect("formulaire_a_etape", numero=1)
@@ -1277,6 +1281,8 @@ def formulaire_a_etape(request, numero):
                 return redirect("formulaire_a_etape", numero=numero - 1)
             if numero < len(etapes):
                 return redirect("formulaire_a_etape", numero=numero + 1)
+            evaluation.formulaire_a_termine = True
+            evaluation.save(update_fields=["formulaire_a_termine"])
             return redirect("formulaire_a_fin")
         if autosave:
             return HttpResponse(status=204)
@@ -1324,6 +1330,39 @@ def formulaire_a_fin(request):
     nb_reponses = Reponse.objects.filter(evaluation=evaluation).count()
     return render(request, "app/formulaire_a/fin.html", {
         "evaluation": evaluation, "nb_reponses": nb_reponses,
+    })
+
+
+@login_required
+@role_required("agent_evaluateur")
+def formulaire_a_recap(request):
+    """Récapitulatif en lecture seule du Formulaire A, une fois soumis
+    (formulaire_a_termine) : l'agent évaluateur peut consulter ses réponses
+    mais ne peut plus les modifier."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        return redirect("formulaire_a")
+
+    evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    reponses_par_question = {
+        r.question_id: r.valeur
+        for r in Reponse.objects.filter(evaluation=evaluation)
+    }
+    sections = []
+    for etape in _etapes_formulaire_a(version_a):
+        qs = Question.objects.filter(version_formulaire=version_a, actif=True).order_by("ordre")
+        if etape["identification"]:
+            qs = qs.filter(section="identification")
+        else:
+            qs = qs.filter(dimension=etape["dimension"]).exclude(section="identification")
+        lignes = [
+            {"question": q, "valeur": reponses_par_question[q.id]}
+            for q in qs if q.id in reponses_par_question
+        ]
+        sections.append({"nom": etape["nom"], "lignes": lignes})
+
+    return render(request, "app/formulaire_a/recap.html", {
+        "evaluation": evaluation, "sections": sections,
     })
 
 

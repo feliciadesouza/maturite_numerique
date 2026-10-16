@@ -1,0 +1,36 @@
+{% extends "base_app.html" %}
+
+{% block title %}Formulaire A récapitulatif{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Formulaire A Fiche Administration</h1>
+  <p class="breadcrumb">{{ evaluation.administration.nom }} Récapitulatif</p>
+</div>
+
+<div class="row" style="gap: var(--sp-3); margin-bottom: var(--sp-6);">
+  <span class="badge badge--fort">Terminé</span>
+  {% if evaluation.reference %}<span class="badge badge--neutre">Réf. {{ evaluation.reference }}</span>{% endif %}
+</div>
+
+<p class="text-muted text-sm" style="margin-bottom: var(--sp-6);">
+  Vos réponses sont enregistrées et ne peuvent plus être modifiées. Contactez
+  un administrateur si une correction est nécessaire.
+</p>
+
+{% for section in sections %}
+<div class="card" style="margin-bottom: var(--sp-4);">
+  <h3 style="margin-bottom: var(--sp-3);">{{ section.nom }}</h3>
+  <div class="recap-list">
+    {% for ligne in section.lignes %}
+    <div class="recap-row">
+      <span class="q">{{ ligne.question.code }} {{ ligne.question.texte }}</span>
+      <span class="v">{{ ligne.valeur }}</span>
+    </div>
+    {% empty %}
+    <p class="text-muted">Aucune réponse enregistrée.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

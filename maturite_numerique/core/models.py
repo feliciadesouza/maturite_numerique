@@ -195,6 +195,13 @@ class Evaluation(models.Model):
         max_length=30, unique=True, null=True, blank=True,
         help_text="Identifiant du rapport, ex. MN-2026-000372.",
     )
+    formulaire_a_termine = models.BooleanField(
+        default=False,
+        help_text=(
+            "Le responsable a soumis la dernière étape du Formulaire A : "
+            "le formulaire passe en lecture seule (voir formulaire_a_recap)."
+        ),
+    )
     # Instantané figé à la clôture (jamais recalculé après archivage).
     score_global = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     score_par_dimension = models.JSONField(default=dict, blank=True)
