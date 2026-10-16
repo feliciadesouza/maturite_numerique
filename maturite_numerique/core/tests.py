@@ -1,10 +1,13 @@
-﻿from django.contrib.auth import get_user_model
+﻿from datetime import timedelta
+
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.core.cache import caches
 from django.db import connection
 from django.test import Client, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 
 from core.models import (
     Administration,
@@ -90,6 +93,99 @@ class AuthenticationProfileTests(TestCase):
         response = self.client.get("/formulaire-a/")
 
         self.assertEqual(response.status_code, 403)
+
+
+class CodeConnexionTests(TestCase):
+    """Connexion en 2 étapes (mot de passe puis code par e-mail), uniquement
+    pour les comptes ayant une adresse e-mail — voir login_view."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="avec_email", password="testpass123", email="avec_email@example.com",
+        )
+        profil, _ = Utilisateur.objects.get_or_create(user=self.user)
+        profil.role = "dsi_decideur"
+        profil.save()
+
+    def _dernier_code(self):
+        from core.models import CodeConnexion
+        return CodeConnexion.objects.filter(utilisateur=self.user).latest("cree_le")
+
+    def test_login_avec_email_redirige_vers_la_verification_sans_ouvrir_de_session(self):
+        response = self.client.post(
+            "/connexion/", {"username": "avec_email", "password": "testpass123"},
+        )
+
+        self.assertRedirects(response, "/connexion/verification/")
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self._dernier_code().code, mail.outbox[0].body)
+
+    def test_login_sans_email_reste_direct(self):
+        # Comportement inchangé pour les comptes de test/démo sans e-mail :
+        # pas de blocage introduit par la 2FA.
+        User.objects.create_user(username="sans_email", password="testpass123")
+
+        self.client.post(
+            "/connexion/", {"username": "sans_email", "password": "testpass123"},
+        )
+
+        self.assertIn("_auth_user_id", self.client.session)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_bon_code_ouvre_la_session(self):
+        self.client.post("/connexion/", {"username": "avec_email", "password": "testpass123"})
+        code = self._dernier_code().code
+
+        response = self.client.post("/connexion/verification/", {"code": code})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_mauvais_code_refuse(self):
+        self.client.post("/connexion/", {"username": "avec_email", "password": "testpass123"})
+
+        response = self.client.post("/connexion/verification/", {"code": "000000"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertContains(response, "Code invalide ou expiré.")
+
+    def test_code_expire_refuse(self):
+        self.client.post("/connexion/", {"username": "avec_email", "password": "testpass123"})
+        code = self._dernier_code()
+        code.expire_le = timezone.now() - timedelta(minutes=1)
+        code.save(update_fields=["expire_le"])
+
+        self.client.post("/connexion/verification/", {"code": code.code})
+
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_code_deja_utilise_refuse(self):
+        self.client.post("/connexion/", {"username": "avec_email", "password": "testpass123"})
+        code = self._dernier_code().code
+        self.client.post("/connexion/verification/", {"code": code})
+        self.client.logout()
+        # Ré-ouvre l'étape 2FA en session sans redemander le mot de passe,
+        # pour rejouer le même code déjà consommé.
+        session = self.client.session
+        session["code_connexion_user_id"] = self.user.pk
+        session.save()
+
+        self.client.post("/connexion/verification/", {"code": code})
+
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_renvoyer_le_code_envoie_un_nouvel_email(self):
+        self.client.post("/connexion/", {"username": "avec_email", "password": "testpass123"})
+
+        self.client.post("/connexion/verification/", {"renvoyer": "1"})
+
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_verification_sans_connexion_prealable_redirige(self):
+        response = self.client.get("/connexion/verification/")
+        self.assertRedirects(response, "/connexion/")
 
 
 class FormSubmissionTests(TestCase):
