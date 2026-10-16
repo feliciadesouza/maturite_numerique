@@ -279,6 +279,48 @@ class FormSubmissionTests(TestCase):
         self.assertEqual(evaluation.statut, "en_cours")
         self.assertTrue(Reponse.objects.filter(evaluation=evaluation, question=question, valeur="Oui").exists())
 
+    def test_formulaire_a_devient_lecture_seule_une_fois_termine(self):
+        from core.models import Evaluation, Formulaire, VersionFormulaire
+
+        dim = Dimension.objects.create(nom="Infrastructure TIC", code="infra", ordre=1)
+        tc, _ = TypeChamp.objects.get_or_create(code="oui_non", defaults={"libelle": "Oui/Non"})
+        form_a = Formulaire.objects.create(code="A", nom="Formulaire A")
+        version = VersionFormulaire.objects.create(formulaire=form_a, numero_version=1, est_active=True)
+        question = Question.objects.create(
+            dimension=dim, version_formulaire=version, code="1.1",
+            texte="Connexion internet stable ?", type_champ=tc, ordre=1,
+        )
+        user = User.objects.create_user(username="form_a_termine", password="testpass123")
+        Utilisateur.objects.create(
+            user=user, role="agent_evaluateur", administration=self.administration
+        )
+        self.client.force_login(user)
+
+        # Dernière (et unique) étape soumise : le formulaire est marqué terminé.
+        self.client.post("/formulaire-a/etape/1/", {f"q_{question.id}": "Oui"})
+        evaluation = Evaluation.objects.get(administration=self.administration)
+        self.assertTrue(evaluation.formulaire_a_termine)
+
+        # Impossible d'y revenir pour modifier : redirection vers le récap.
+        self.assertRedirects(
+            self.client.get("/formulaire-a/"), "/formulaire-a/recapitulatif/",
+        )
+        self.assertRedirects(
+            self.client.get("/formulaire-a/etape/1/"), "/formulaire-a/recapitulatif/",
+        )
+
+        recap = self.client.get("/formulaire-a/recapitulatif/")
+        self.assertEqual(recap.status_code, 200)
+        self.assertContains(recap, "Connexion internet stable ?")
+        self.assertContains(recap, "Oui")
+
+        # Une tentative de re-soumission directe sur l'étape ne change rien
+        # (l'URL redirige avant d'atteindre le formulaire).
+        self.client.post("/formulaire-a/etape/1/", {f"q_{question.id}": "Non"})
+        self.assertEqual(
+            Reponse.objects.get(evaluation=evaluation, question=question).valeur, "Oui",
+        )
+
     def test_formulaire_a_exige_une_administration_sur_le_profil(self):
         user = User.objects.create_user(username="sans_admin", password="testpass123")
         Utilisateur.objects.create(user=user, role="agent_evaluateur")
