@@ -94,6 +94,40 @@ class AuthenticationProfileTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_profil_est_en_lecture_seule(self):
+        # Les coordonnées comme le rôle/l'administration ne sont modifiables
+        # que par l'administrateur (console Django) : la page ne doit plus
+        # accepter de POST ni exposer de formulaire d'édition.
+        user = User.objects.create_user(
+            username="lecture_seule", password="testpass123",
+            first_name="Avant", email="avant@example.com",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/profile/")
+        self.assertNotIn("form", response.context)
+        self.assertContains(response, "Avant")
+
+        self.client.post("/profile/", {"first_name": "Apres"})
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, "Avant")
+
+    def test_agent_evaluateur_sans_administration_est_oriente_vers_un_admin(self):
+        # Le champ administration n'est pas modifiable par l'utilisateur
+        # (ProfileForm) : le message ne doit pas lui laisser croire qu'il
+        # peut le faire lui-même.
+        user = User.objects.create_user(username="sans_admin", password="testpass123")
+        profil, _ = Utilisateur.objects.get_or_create(user=user)
+        profil.role = "agent_evaluateur"
+        profil.save()
+
+        self.client.force_login(user)
+        response = self.client.get("/formulaire-a/", follow=True)
+
+        self.assertRedirects(response, "/profile/")
+        messages = list(response.context["messages"])
+        self.assertIn("Contactez un administrateur", str(messages[0]))
+
 
 class CodeConnexionTests(TestCase):
     """Connexion en 2 étapes (mot de passe puis code par e-mail), uniquement
@@ -244,6 +278,48 @@ class FormSubmissionTests(TestCase):
         evaluation = Evaluation.objects.get(administration=self.administration)
         self.assertEqual(evaluation.statut, "en_cours")
         self.assertTrue(Reponse.objects.filter(evaluation=evaluation, question=question, valeur="Oui").exists())
+
+    def test_formulaire_a_devient_lecture_seule_une_fois_termine(self):
+        from core.models import Evaluation, Formulaire, VersionFormulaire
+
+        dim = Dimension.objects.create(nom="Infrastructure TIC", code="infra", ordre=1)
+        tc, _ = TypeChamp.objects.get_or_create(code="oui_non", defaults={"libelle": "Oui/Non"})
+        form_a = Formulaire.objects.create(code="A", nom="Formulaire A")
+        version = VersionFormulaire.objects.create(formulaire=form_a, numero_version=1, est_active=True)
+        question = Question.objects.create(
+            dimension=dim, version_formulaire=version, code="1.1",
+            texte="Connexion internet stable ?", type_champ=tc, ordre=1,
+        )
+        user = User.objects.create_user(username="form_a_termine", password="testpass123")
+        Utilisateur.objects.create(
+            user=user, role="agent_evaluateur", administration=self.administration
+        )
+        self.client.force_login(user)
+
+        # Dernière (et unique) étape soumise : le formulaire est marqué terminé.
+        self.client.post("/formulaire-a/etape/1/", {f"q_{question.id}": "Oui"})
+        evaluation = Evaluation.objects.get(administration=self.administration)
+        self.assertTrue(evaluation.formulaire_a_termine)
+
+        # Impossible d'y revenir pour modifier : redirection vers le récap.
+        self.assertRedirects(
+            self.client.get("/formulaire-a/"), "/formulaire-a/recapitulatif/",
+        )
+        self.assertRedirects(
+            self.client.get("/formulaire-a/etape/1/"), "/formulaire-a/recapitulatif/",
+        )
+
+        recap = self.client.get("/formulaire-a/recapitulatif/")
+        self.assertEqual(recap.status_code, 200)
+        self.assertContains(recap, "Connexion internet stable ?")
+        self.assertContains(recap, "Oui")
+
+        # Une tentative de re-soumission directe sur l'étape ne change rien
+        # (l'URL redirige avant d'atteindre le formulaire).
+        self.client.post("/formulaire-a/etape/1/", {f"q_{question.id}": "Non"})
+        self.assertEqual(
+            Reponse.objects.get(evaluation=evaluation, question=question).valeur, "Oui",
+        )
 
     def test_formulaire_a_exige_une_administration_sur_le_profil(self):
         user = User.objects.create_user(username="sans_admin", password="testpass123")
@@ -485,6 +561,31 @@ class RateLimitTests(TestCase):
         resp = login_view(req)
         self.assertEqual(resp.status_code, 200)  # pas de redirection = pas connecté
         self.assertContains(resp, "Trop de tentatives de connexion")
+
+
+class SeedDemoTests(TestCase):
+    """seed_demo générait des agents 'terminée' sans aucune Reponse détaillée
+    (seul niveau_maturite était renseigné) : 'Voir' sur un agent de démo
+    affichait 'Aucune réponse enregistrée.' Corrigé en générant de vraies
+    réponses par niveau, vérifiées contre classifier_niveau_agent."""
+
+    def test_agents_termines_ont_des_reponses_coherentes_avec_leur_niveau(self):
+        from core.models import Agent, Reponse
+        from core.scoring import classifier_niveau_agent, reponses_par_code
+
+        call_command("seed_demo")
+
+        agents = Agent.objects.filter(statut="terminee").exclude(niveau_maturite=None)[:30]
+        self.assertTrue(agents.exists())
+        for agent in agents:
+            reponses = Reponse.objects.filter(agent=agent)
+            self.assertTrue(
+                reponses.exists(),
+                f"agent {agent.pk} (niveau {agent.niveau_maturite}) sans aucune réponse",
+            )
+            self.assertEqual(
+                classifier_niveau_agent(reponses_par_code(agent)), agent.niveau_maturite,
+            )
 
 
 @override_settings(CACHES={"default": {

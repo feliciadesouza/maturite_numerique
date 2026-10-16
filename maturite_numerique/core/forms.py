@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth import get_user_model
 
 from .models import (
     Administration,
@@ -136,23 +135,6 @@ class AdministrationForm(forms.ModelForm):
             "secteur": "Secteur",
             "region": "Région",
             "pays": "Pays",
-        }
-
-
-class ProfileForm(forms.ModelForm):
-    """Coordonnées de l'utilisateur.
-
-    Le rôle métier et l'administration de rattachement ne sont PAS modifiables
-    ici : ils sont attribués par l'administrateur (console Django). Les exposer
-    en libre-service permettrait à un compte de s'octroyer un rôle.
-    """
-    class Meta:
-        model = get_user_model()
-        fields = ["first_name", "last_name", "email"]
-        labels = {
-            "first_name": "Prénom",
-            "last_name": "Nom",
-            "email": "E-mail",
         }
 
 

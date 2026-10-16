@@ -6,7 +6,7 @@
       <span class="stepper__dot">
         {% if forloop.counter < numero %}{% include "components/_icon.html" with name="check" cls="icon--sm" %}{% else %}{{ forloop.counter }}{% endif %}
       </span>
-      <span class="stepper__label">{{ dim.nom }}</span>
+      <span class="stepper__label">{% if dim.dimension.code == "engagement" %}Engagement{% else %}{{ dim.nom }}{% endif %}</span>
     </div>
   {% endfor %}
 </div>

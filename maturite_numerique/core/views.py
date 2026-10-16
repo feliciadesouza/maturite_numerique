@@ -28,7 +28,6 @@ from .forms import (
     ContactForm,
     DimensionForm,
     NouvelAgentForm,
-    ProfileForm,
     QuestionBackofficeForm,
     appliquer_options,
     build_reponses_form,
@@ -1095,20 +1094,12 @@ def rapport_administration(request, administration_id):
 
 @login_required
 def profile(request):
-    """Profil : coordonnées éditables par l'utilisateur ; rôle métier et
-    administration de rattachement en lecture seule (attribués par l'administrateur)."""
+    """Profil : consultation seule. Le compte (coordonnées, rôle métier,
+    administration de rattachement) est entièrement géré par l'administrateur
+    (console Django) ; l'exposer en libre-service, même pour les coordonnées,
+    permettrait de contourner ce contrôle — voir formulaire_a."""
     profil, _ = Utilisateur.objects.get_or_create(user=request.user)
-
-    if request.method == "POST":
-        form = ProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Profil mis à jour.")
-            return redirect(get_role_home_url(request.user) or "home")
-    else:
-        form = ProfileForm(instance=request.user)
-
-    return render(request, "core/profile.html", {"form": form, "profil": profil})
+    return render(request, "core/profile.html", {"profil": profil})
 
 
 def _evaluation_en_cours(administration, user):
@@ -1207,13 +1198,21 @@ def formulaire_a(request):
     """Point d'entrée : ouvre l'évaluation et redirige vers la première étape."""
     profil = get_object_or_404(Utilisateur, user=request.user)
     if not profil.administration:
+        # Le rattachement à une administration n'est pas modifiable par
+        # l'utilisateur (profil en lecture seule, voir profile.html) : seul
+        # un administrateur peut le faire. Le message doit donc l'orienter
+        # vers l'administrateur, pas vers son propre profil.
         messages.warning(
             request,
-            "Renseignez votre administration dans votre profil pour démarrer le Formulaire A.",
+            "Votre compte n'est rattaché à aucune administration. "
+            "Contactez un administrateur pour qu'il complète votre profil "
+            "avant de démarrer le Formulaire A.",
         )
         return redirect("profile")
 
-    _, version_a = _evaluation_en_cours(profil.administration, request.user)
+    evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    if evaluation.formulaire_a_termine:
+        return redirect("formulaire_a_recap")
     if not _etapes_formulaire_a(version_a):
         messages.error(request, "Le Formulaire A ne comporte pas encore de questions.")
         return redirect("home")
@@ -1229,6 +1228,8 @@ def formulaire_a_etape(request, numero):
         return redirect("formulaire_a")
 
     evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    if evaluation.formulaire_a_termine:
+        return redirect("formulaire_a_recap")
     etapes = _etapes_formulaire_a(version_a)
     if numero < 1 or numero > len(etapes):
         return redirect("formulaire_a_etape", numero=1)
@@ -1280,6 +1281,8 @@ def formulaire_a_etape(request, numero):
                 return redirect("formulaire_a_etape", numero=numero - 1)
             if numero < len(etapes):
                 return redirect("formulaire_a_etape", numero=numero + 1)
+            evaluation.formulaire_a_termine = True
+            evaluation.save(update_fields=["formulaire_a_termine"])
             return redirect("formulaire_a_fin")
         if autosave:
             return HttpResponse(status=204)
@@ -1327,6 +1330,39 @@ def formulaire_a_fin(request):
     nb_reponses = Reponse.objects.filter(evaluation=evaluation).count()
     return render(request, "app/formulaire_a/fin.html", {
         "evaluation": evaluation, "nb_reponses": nb_reponses,
+    })
+
+
+@login_required
+@role_required("agent_evaluateur")
+def formulaire_a_recap(request):
+    """Récapitulatif en lecture seule du Formulaire A, une fois soumis
+    (formulaire_a_termine) : l'agent évaluateur peut consulter ses réponses
+    mais ne peut plus les modifier."""
+    profil = get_object_or_404(Utilisateur, user=request.user)
+    if not profil.administration:
+        return redirect("formulaire_a")
+
+    evaluation, version_a = _evaluation_en_cours(profil.administration, request.user)
+    reponses_par_question = {
+        r.question_id: r.valeur
+        for r in Reponse.objects.filter(evaluation=evaluation)
+    }
+    sections = []
+    for etape in _etapes_formulaire_a(version_a):
+        qs = Question.objects.filter(version_formulaire=version_a, actif=True).order_by("ordre")
+        if etape["identification"]:
+            qs = qs.filter(section="identification")
+        else:
+            qs = qs.filter(dimension=etape["dimension"]).exclude(section="identification")
+        lignes = [
+            {"question": q, "valeur": reponses_par_question[q.id]}
+            for q in qs if q.id in reponses_par_question
+        ]
+        sections.append({"nom": etape["nom"], "lignes": lignes})
+
+    return render(request, "app/formulaire_a/recap.html", {
+        "evaluation": evaluation, "sections": sections,
     })
 
 
