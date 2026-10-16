@@ -94,6 +94,24 @@ class AuthenticationProfileTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_profil_est_en_lecture_seule(self):
+        # Les coordonnées comme le rôle/l'administration ne sont modifiables
+        # que par l'administrateur (console Django) : la page ne doit plus
+        # accepter de POST ni exposer de formulaire d'édition.
+        user = User.objects.create_user(
+            username="lecture_seule", password="testpass123",
+            first_name="Avant", email="avant@example.com",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/profile/")
+        self.assertNotIn("form", response.context)
+        self.assertContains(response, "Avant")
+
+        self.client.post("/profile/", {"first_name": "Apres"})
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, "Avant")
+
     def test_agent_evaluateur_sans_administration_est_oriente_vers_un_admin(self):
         # Le champ administration n'est pas modifiable par l'utilisateur
         # (ProfileForm) : le message ne doit pas lui laisser croire qu'il

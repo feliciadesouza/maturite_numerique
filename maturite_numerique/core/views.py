@@ -28,7 +28,6 @@ from .forms import (
     ContactForm,
     DimensionForm,
     NouvelAgentForm,
-    ProfileForm,
     QuestionBackofficeForm,
     appliquer_options,
     build_reponses_form,
@@ -1095,20 +1094,12 @@ def rapport_administration(request, administration_id):
 
 @login_required
 def profile(request):
-    """Profil : coordonnées éditables par l'utilisateur ; rôle métier et
-    administration de rattachement en lecture seule (attribués par l'administrateur)."""
+    """Profil : consultation seule. Le compte (coordonnées, rôle métier,
+    administration de rattachement) est entièrement géré par l'administrateur
+    (console Django) ; l'exposer en libre-service, même pour les coordonnées,
+    permettrait de contourner ce contrôle — voir formulaire_a."""
     profil, _ = Utilisateur.objects.get_or_create(user=request.user)
-
-    if request.method == "POST":
-        form = ProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Profil mis à jour.")
-            return redirect(get_role_home_url(request.user) or "home")
-    else:
-        form = ProfileForm(instance=request.user)
-
-    return render(request, "core/profile.html", {"form": form, "profil": profil})
+    return render(request, "core/profile.html", {"profil": profil})
 
 
 def _evaluation_en_cours(administration, user):
@@ -1208,9 +1199,9 @@ def formulaire_a(request):
     profil = get_object_or_404(Utilisateur, user=request.user)
     if not profil.administration:
         # Le rattachement à une administration n'est pas modifiable par
-        # l'utilisateur (voir ProfileForm/profile.html) : seul un
-        # administrateur peut le faire. Le message doit donc l'orienter vers
-        # l'administrateur, pas vers son propre profil.
+        # l'utilisateur (profil en lecture seule, voir profile.html) : seul
+        # un administrateur peut le faire. Le message doit donc l'orienter
+        # vers l'administrateur, pas vers son propre profil.
         messages.warning(
             request,
             "Votre compte n'est rattaché à aucune administration. "
